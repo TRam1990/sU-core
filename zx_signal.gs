@@ -498,7 +498,12 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			Junction jun1 = cast<Junction>( Router.GetGameObject(AttachedJunction) );
 
 			if(jun1)
-				PostMessage(jun1,"Object", "Leave",0);
+				{
+				if(TrainzScript.GetTrainzVersion() < 3.7)
+					PostMessage(jun1,"Object", "Leave",0);
+				else
+					PostMessage(jun1,"Object", "InnerLeave",0);
+				}
 
 			AttachedJunction = "";
 			}
