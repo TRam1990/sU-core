@@ -10,10 +10,10 @@ class zxLibruary_core isclass Library
 {
 public BinarySortedStrings Stations;		//массив станций
 public BinarySortedArraySl Signals;		//массив сигналов
-public BinarySortedArraySl OpenedSignals;	//массив открытых сигналов, 
-						//перед которыми контроллируется поезд 
+public BinarySortedArraySl OpenedSignals;	//массив открытых сигналов,
+						//перед которыми контроллируется поезд
 
-public BinarySortedArraySu train_arr; 
+public BinarySortedArraySu train_arr;
 
 
 
@@ -132,9 +132,9 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 		{
 		TrainContainer[] ts4=new TrainContainer[1];
 		ts4[0]= new TrainContainer();
-		
+
 		train_arr.AddElement(name,cast<GSObject>ts4[0]);
-		
+
 		train_nmb= train_arr.Find(name,false);
 		if(train_nmb<0)
 			{
@@ -143,7 +143,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 			}
 
 		Vehicle[] veh_arr=curr_train.GetVehicles();
-		
+
 		bool stopped=false;
 		if(veh_arr.size()>0 and veh_arr[0] and veh_arr[0].GetVelocity()==0)
 			stopped=true;
@@ -230,7 +230,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 void RemoveTrain(Message msg)
 	{
-	
+
 	Train curr_train=msg.src;
 
 	if(!curr_train)  // поезд потерян
@@ -241,23 +241,23 @@ void RemoveTrain(Message msg)
 	string name =curr_train.GetId()+"";
 	int train_nmb=train_arr.Find(name,false);
 
-	if(train_nmb>=0)	// поезд, стоящий на светофоре, ещё не удалён	
+	if(train_nmb>=0)	// поезд, стоящий на светофоре, ещё не удалён
 		{
 		int i = 0;
 
 		for(i=0;i<(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal.size();i++)
 			{
 			int number = (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[i];
-			
+
 			UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,-1);
 			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(curr_train.GetId());
 			}
 
-		
+
 
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal = null;
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state = null;
-		
+
 		train_arr.DeleteElementByNmb(train_nmb);
 
 
@@ -336,7 +336,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 			{
 
 					// проверка того, что поезд только с одной стороны от светофора
-			
+
 			int train_position = SearchForTrain(entered_sign, curr_train.GetId() );
 
 			if(  (TrainzScript.GetTrainzVersion() < 3.7) or (train_position == 0 and (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1] == 0)  )
@@ -344,7 +344,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[num1,num1+1]=null;
 				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1,num1+1]=null;
 
-			
+
 				(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(curr_train.GetId());
 
 				UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,-1);
@@ -360,8 +360,8 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 					{
 
 					train_arr.DeleteElementByNmb(train_nmb);
-	
-	
+
+
 					Sniff(curr_train, "Train", "StartedMoving", false);
 					Sniff(curr_train, "Train", "StoppedMoving", false);
 					Sniff(curr_train, "Train", "Cleanup", false);
@@ -369,7 +369,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 //	err="removed train ! "+train_nmb;
 //	Interface.Log(err);
 
-	
+
 					}
 				}
 			}
@@ -392,7 +392,7 @@ void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object
 
 public void SetProperties(Soup soup)
 	{
-	inherited(soup);	
+	inherited(soup);
 	}
 
 
@@ -433,7 +433,7 @@ void TrainStarting(Message msg)
 	string name =curr_train.GetId()+"";
 	int train_nmb=train_arr.Find(name,false);
 
-	if(train_nmb>=0)	
+	if(train_nmb>=0)
 		{
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).IsStopped=false;
 		}
@@ -453,10 +453,10 @@ void TrainStopping(Message msg)
 	string name =curr_train.GetId()+"";
 	int train_nmb=train_arr.Find(name,false);
 
-	if(train_nmb>=0)	
+	if(train_nmb>=0)
 		{
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).IsStopped=true;
-		}	
+		}
 	}
 
 
@@ -477,7 +477,7 @@ void TrainStopping(Message msg)
 */
 
 
-int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад от светофоров!    
+int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад от светофоров!
 	{						// for_front - поиск головы/хвоста поезда
 	Vehicle veh1;
 	float vel_ty;
@@ -509,7 +509,7 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 
 		if(GSTS.GetFacingRelativeToSearchDirection())
 			vel_ty = -vel_ty;
-	
+
 		if(vel_ty < 0)
 			vel_dir = true;
 
@@ -535,8 +535,8 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 
 		veh1= cast<Vehicle>MO;
 		vel_ty = veh1.GetVelocity();
-		
-		
+
+
 		if(!GSTS.GetFacingRelativeToSearchDirection())
 			vel_ty = -vel_ty;
 
@@ -579,7 +579,7 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 		}
 
 
-		
+
 	return 0;
 	}
 
@@ -604,7 +604,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 					{
 					zxSignal sig1 = (cast<zxSignalLink>(Signals.DBSE[ (TC.signal[j]) ].Object)).sign;
 
-					int state = TC.state[j];  	
+					int state = TC.state[j];
 /*
 
 1 - поезд подъезжает к светофору
@@ -624,7 +624,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 
 					if( new_state != state)
-						{ 
+						{
 						priority = (cast<Train> (Router.GetGameObject( Str.ToInt(train_arr.DBSE[i].a) ) ) ).GetTrainPriorityNumber();
 
 						if(priority > 1)
@@ -635,7 +635,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 					if(new_state == 2 and (state == 1 or state == 6 or state == 0) )
 						{
 						UpdateSignState(sig1,1,priority);
-						sig1.train_is_l = true;						
+						sig1.train_is_l = true;
 						}
 
 
@@ -648,7 +648,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 					else if((new_state == 3 and (state == 2 or state == 5)) or (new_state == 0 and state == 2))
 						{
 						UpdateSignState(sig1,2,priority);
-						sig1.train_is_l = false;						
+						sig1.train_is_l = false;
 						}
 
 					else if((new_state == 6 and (state == 2 or state == 5)) or (new_state == 0 and state == 5))
@@ -660,7 +660,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 						{
 						UpdateSignState(sig1,1,priority);
 						UpdateSignState(sig1,2,priority);
-						sig1.train_is_l = false;						
+						sig1.train_is_l = false;
 						}
 
 					else if((new_state == 6 and (state == 3 or state == 4)) or (new_state == 0 and state == 4))
@@ -673,7 +673,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject( Str.ToInt(train_arr.DBSE[i].a) ) ) )  );
 
 
-					
+
 					TC.state[j]=new_state;
 
 					}
@@ -688,7 +688,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 
 
-public string  LibraryCall(string function, string[] stringParam, GSObject[] objectParam) 
+public string  LibraryCall(string function, string[] stringParam, GSObject[] objectParam)
 	{
 	if(!IsInited)
 		{
@@ -726,7 +726,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		for(i=0;i<10;i++)
 			tabl_str[i]="tabl"+i;
-			
+
 		}
 
 	if(function=="name_str")
@@ -742,12 +742,12 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		if(!Stations.AddElement(stringParam[0]))
 			{
 			//Interface.Exception("station "+stringParam[0]+" already exist!");
-			
+
 			return "false";
 			}
 		//Interface.Log("'"+stringParam[0]+"'");
 
-		
+
 		if((Stations.N+20) > Stations.SE.size())			// расширяем массив
 			Stations.UdgradeArraySize(2*Stations.SE.size());
 
@@ -794,11 +794,11 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		int i;
 		int size1=Stations.N;
 
-		
+
 
 		for(i=0;i<size1;i++)
 			stringParam[i]=Stations.SE[i];
-			
+
 		return size1+"";
 		}
 
@@ -853,7 +853,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 			Signals.AddElement(name,cast<GSObject>sign_link[0]);
 			}
-	
+
 		number= Signals.Find(name,false);
 		if(number<0)
 			{
@@ -862,21 +862,21 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 
 
-		
+
 		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign = cast<zxSignal>objectParam[0];
 		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.OwnId = -1;
 
 //	err="added sign " + Signals.DBSE[number].a + " intNum "+number;
 //	Interface.Log(err);
 
-		
+
 
 
 		if((Signals.N+20) > Signals.DBSE.size())			// расширяем массив
 			Signals.UdgradeArraySize(2*Signals.DBSE.size());
 
 
-		
+
 		Sniff(objectParam[0], "Object", "Enter", true);
 		Sniff(objectParam[0], "Object", "Leave", true);
 		Sniff(objectParam[0], "CTRL", "", true);
@@ -898,7 +898,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 
 		GSTrackSearch GSTS = sig1.BeginTrackSearch(true);
-	
+
 		MapObject MO = GSTS.SearchNext();
 		bool temp_dir;
 
@@ -922,7 +922,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 					return "";
 
 
-				if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and ((cast<zxSignal>MO).MainState == 19)  )		// если есть маршрутный с синим		
+				if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and ((cast<zxSignal>MO).MainState == 19)  )		// если есть маршрутный с синим
 					{
 					if(marker % 10 == 7)
 						{
@@ -988,7 +988,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						marker = 20;
 
 
-					marker = 10*(int)(marker / 10) + n_mrk;						
+					marker = 10*(int)(marker / 10) + n_mrk;
 					}
 				}
 
@@ -1005,7 +1005,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			else
 				MO = null;
 
-			
+
 
 			}
 
@@ -1017,7 +1017,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			sig1.Cur_next=cast<zxSignal>MO;
 
 
-		
+
 		}
 	else if(function=="find_prev_signal")
 		{
@@ -1125,7 +1125,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 							marker= marker/10;
 						}
 					else
-						marker = 10*(int)(marker / 10) + n_mrk;						
+						marker = 10*(int)(marker / 10) + n_mrk;
 
 					}
 				}
@@ -1204,7 +1204,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 //Interface.Print("sign" +sig1.privateName+"@"+sig1.stationName  +" train "+stringParam[0] );
 
 		GSTrackSearch GSTS = sig1.BeginTrackSearch(true);
-	
+
 		MapObject MO = GSTS.SearchNext();
 		bool temp_dir;
 
@@ -1217,7 +1217,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		else
 			{
 			limit = sig1.SetSpeedLim(Str.ToInt(stringParam[0]));
-			
+
 			}
 
 		int i=0;
@@ -1271,17 +1271,18 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				MO = GSTS.SearchNext();
 			else
 				return "";
-			}		
+			}
 
 		}
 	else if(function=="add_extra_obj")
 		{
-		zxExtra[zxExtra.size(),zxExtra.size()+1]=new zxExtraLink[0];
-		zxExtra[(zxExtra.size()-1)]= cast<zxExtraLink> objectParam[0];
+		//zxExtra[zxExtra.size(),zxExtra.size()+1]=new zxExtraLink[0];
+		//zxExtra[(zxExtra.size()-1)]= cast<zxExtraLink> objectParam[0];
+    zxExtra[zxExtra.size()]= cast<zxExtraLink>objectParam[0];
 		}
 
 
-	
+
 	return "";
 	}
 
