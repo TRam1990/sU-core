@@ -29,7 +29,14 @@ class zxSpeedBoard isclass Trackside
 	public bool SetNewSpeed(float speed, bool extra)
 		{
 		if(speed == 0.0f)
+			{
+			if(ExtraSpeed > MainSpeed)
+				SetSpeedLimit( ExtraSpeed );
+			else
+				SetSpeedLimit( MainSpeed );
+
 			return false;
+			}
 			
 		if(extra)
 			ExtraSpeed=speed;
@@ -63,7 +70,13 @@ class zxSpeedLimit isclass Trackside
 	public void SetLimitFor(float speed, bool pass)
 		{
 		if(speed == 0.0f)
+			{
+			if(pass)
+				SetSpeedLimit( max_speed_pass );
+			else
+				SetSpeedLimit( max_speed_cargo );
 			return;
+			}
 
 		if(!is_limit_start)
 			{

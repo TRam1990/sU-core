@@ -951,8 +951,16 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 		{
 
-		if((trmrk_flag & zxMarker.MRHALFBL) and possible_sig[13])	// жёлтый - жёлтый - жёлтый
-			return 13;
+		if(trmrk_flag & zxMarker.MRHALFBL)
+			{
+			if(possible_sig[13])	// жёлтый - жёлтый - жёлтый
+				return 13;
+
+			if(possible_sig[1])	// красный
+				return 1;
+
+			return 0;
+			}
 
 
 		if(trmrk_flag & zxMarker.MRWW)	// неправильный путь
@@ -993,13 +1001,11 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 			return 0;
 			}
 
-		else if(trmrk_flag & zxMarker.MRDAB)	// на неправильный путь с АБ
-			{
-			if(possible_sig[1])		// красный
-				return 1;
-
-			return 0;
+		else if((trmrk_flag & zxMarker.MRDAB) and (possible_sig[15] or !possible_sig[6]) and possible_sig[1])	// на неправильный путь с АБ 
+			{												// если есть 2 зелёных или нет жёлтого
+			return 1;		// красный
 			}
+
 		else if(trmrk_flag & zxMarker.MRT)		// отклонение
 			{
 
@@ -1094,7 +1100,7 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 			return 0;
 			}
 
-		else if(trmrk_flag & zxMarker.MRDAB)	// на неправильный путь с АБ
+		else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[15])	// на неправильный путь с АБ
 			{
 			if(possible_sig[11])		// жёлтый мигающий
 				return 11;
@@ -1218,15 +1224,9 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		return 0;
 		}
 
-	else if(trmrk_flag & zxMarker.MRDAB)		// на неправильный путь с АБ
+	else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[15])		// на неправильный путь с АБ
 		{
-		if(possible_sig[15])		// зелёный зелёный
-			return 15;
-
-		if(possible_sig[14])		 
-			return 14;		// зелёный
-
-		return 0;
+		return 15;		// зелёный зелёный
 		}
 
 	else if(trmrk_flag & zxMarker.MRT)	// отклонение

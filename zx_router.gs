@@ -434,9 +434,6 @@ public string FindMRN(zxSignal sign)
 		mo=GS.SearchNext();        	
 		}
 
-
-Interface.Print("ret is "+ret);
-
 	return ret;
 	}
 
