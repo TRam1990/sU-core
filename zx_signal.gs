@@ -567,24 +567,6 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			SetSignal(true);	
 			}
 		}
-
-
-
-/*	if( reason==2 or reason==4 )
-		{
-		if( AttachedJunction != "")
-			{
-			Junction jun1 = cast<Junction>( Router.GetGameObject(AttachedJunction) );
-			AttachedJunction = "";
-
-			if(jun1)
-				{
-				PostMessage(jun1,"Object", "InnerLeave",0);
-				}
-			}
-		}
-*/
-
 	}
 
 
@@ -1170,6 +1152,7 @@ public void GenerateSpan(bool recurs)
 			if(GSTS.GetFacingRelativeToSearchDirection() == false)
 				{
 				span_soup.SetNamedTag("sub_sign_"+Extra_sign,MO.GetName());
+				(cast<zxSignal_main>MO).stationName = stationName;
 				Extra_sign++;
 				}
 			else

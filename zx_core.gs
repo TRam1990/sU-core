@@ -319,7 +319,7 @@ void RemoveTrain(Message msg)
 
 
 
-void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда поезда с сигнала, ловля Object,Leave
+void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // ожидание съезда поезда с сигнала, ловля Object,Leave
 	{
 	if(!entered_sign or MP_NotServer)
 		return;
@@ -368,7 +368,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 		int i = 0;
 		int num1 = -1;
 		int size1 = (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal.size();
-		while(i<size1 and num1<0)
+		while(num1<0 and i<size1)
 			{
 			if((cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[i] == number)
 				num1 = i;
@@ -380,15 +380,18 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 
 					// проверка того, что поезд только с одной стороны от светофора
 
-			int q = 1;
+			int train_position = 0;
 
-			if((cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).HighSpeed)
-				q = 2;
+			if(recheck)
+				{
+				int q = 1;
+				if((cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).HighSpeed)
+					q = 2;
 
+				train_position = SearchForTrain(entered_sign, curr_train.GetId(), q );
+				}
 
-			int train_position = SearchForTrain(entered_sign, curr_train.GetId(), q );
-
-			if(  train_position == 0 and (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1] == 0  )
+			if(!recheck or (train_position == 0 and (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1] == 0 ) )
 				{
 
 				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[num1,num1+1]=null;
@@ -420,7 +423,7 @@ void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object
 	zxSignal entered_sign=cast<zxSignal>(msg.dst);
 	Train curr_train=msg.src;
 
-	TrainCleaner( entered_sign, curr_train );
+	TrainCleaner( entered_sign, curr_train, true );
 	}
 
 
@@ -716,7 +719,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 					if(new_state == 0 and state == 0)
 						{
-						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject(train_arr.DBSE[i].a) ) )  );
+						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject(train_arr.DBSE[i].a) ) ) , false );
 						}
 					else
 						{
