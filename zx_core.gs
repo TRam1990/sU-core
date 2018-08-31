@@ -10,52 +10,38 @@ include "multiplayersessionmanager.gs"
 class zxLibruary_core isclass Library
 {
 
-public BinarySortedArraySl Signals;		//массив сигналов
-public BinarySortedArraySu train_arr;		//массив поездов
+public BinarySortedArraySl Signals;											//массив сигналов
+public BinarySortedArraySu train_arr;											//массив поездов
 
 
-public BinarySortedStrings Stations;		//массив станций
-public BinarySortedStrings ProtectGroups;	//массив групп заградительных
+public BinarySortedStrings Stations;										//массив станций
+public BinarySortedStrings ProtectGroups;									//массив групп заградительных
 
 MultiplayerSessionManager mp_lib;
 
-
 public float str_distance = 40.0;
 
-
 string err;
-
 string last_edited_station = "";
-
 
 bool IsInited=false;
 bool All_added=false;
 
-
 public bool MP_started = false;
-public bool MP_NotServer = false;	// не является сервером в мультиплеерной игре (отключение логики)
-
+public bool MP_NotServer = false;											// не является сервером в мультиплеерной игре (отключение логики)
 
 zxSignal_Cache[] sig_cache;
 
 bool objectRunningDriver = false;
-
-
 Soup temp_speed_sp;
 string[] tabl_str;
 
 zxExtraLink[] zxExtra;
 
 
-
 int SearchForTrain(zxSignal sig1, int train_id, int multiplicator);
 void SendMessagesToClients(Soup data, string type);
 void SendMessageToServer(Soup data, string type);
-
-
-
-
-
 
 void UpdateSignState(zxSignal zxSign, int state, int priority)
 	{

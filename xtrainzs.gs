@@ -1,20 +1,18 @@
 include "gs.gs"
 
-
-
 class BinarySortedStrings
 	{
-	public string[] SE=new string[0];	// основной массив элементов
+	public string[] SE=new string[0];												// основной массив элементов
 
-	public int N=0;			// число инициализированных элементов
+	public int N=0;																	// число инициализированных элементов
 
 
-	public void UdgradeArraySize(int NewN )			// мастер предварительного выделения места массиву
+	public void UdgradeArraySize(int NewN )											// мастер предварительного выделения места массиву
 		{
 		int i;
 		string[] SE2= new string[NewN];
 
-		for(i=0;i<N;i++)			// пересохраняем старый массив
+		for(i=0;i<N;i++)															// пересохраняем старый массив
 			{
 			SE2[i]=SE[i];
 			SE[i]=null;
@@ -26,7 +24,6 @@ class BinarySortedStrings
 
 		SE2=null;
 		}
-
 
 	bool Comp_str_Fu(string a,string b)
 		{
@@ -45,13 +42,10 @@ class BinarySortedStrings
 				return true;
 			++i;
 			}
-
-
 		return false;
 		}
 
-
-	public int Find(string a, bool mode) // при mode = true указывает место, где мог бы находиться новый элемент 
+	public int Find(string a, bool mode)											 // при mode = true указывает место, где мог бы находиться новый элемент 
 		{
 		int i=0,f=0,b=N-1;
 		if(N>0)

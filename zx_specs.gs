@@ -195,15 +195,6 @@ class zxSignal isclass Signal, ALSN_Provider
 		}
 
 
-/*
-
-	public bool SetSpeedLim(int prior)
-		{
-		speed_limit = GetSpeedLim(prior);
-
-*/
-
-
 	public bool SetSpeedLim(float speed_limit_new)
 		{
 		if(speed_limit != speed_limit_new)

@@ -227,7 +227,7 @@ public void CheckPrevSignals(bool no_train)
 
 	}
 
-void CheckMySignal(float dt1,float dt2, bool train_entered)
+void CheckMySignal(bool train_entered)
 	{
 
 	string[] track_params = new string[2];
@@ -446,7 +446,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 			if((track_params[0])[0]=='+')
 				{					// если перед светофором есть поезд, открываем в обычном порядке
-				CheckMySignal(0,0.7,false);
+				CheckMySignal(false);
 				CheckPrevSignals(false);
 				}
 			else
@@ -462,7 +462,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			}
 		else
 			{
-			CheckMySignal(0,0.7,false);
+			CheckMySignal(false);
 
 			if(MainState == 19)
 				{
@@ -505,7 +505,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		if(!(Type & ST_PERMOPENED))
 			train_open = false;
 
-		CheckMySignal(0,1.5,true);
+		CheckMySignal(true);
 
 		type_ToFind[0]=priority;
 		type_ToFind[1]="-";
@@ -531,7 +531,11 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		if(reason==3)
 			CheckPrevSignals(true);
 		else if(reason==4)
-			CheckMySignal(0,1.5,false);
+			{
+			CheckMySignal(false);
+
+			SetSignal(true);	
+			}
 		}
 
 
