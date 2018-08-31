@@ -45,6 +45,8 @@ string head_conf;
 float head_rot = 0;
 float head_krepl_rot = 0;
 
+bool station_edited = false;
+
 
 bool dis_koz;
 bool[] koz_mesh;
@@ -491,21 +493,15 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		{
 		GSTrackSearch GSTS1;
 
-		if(reason==4)
-			GSTS1 = me.BeginTrackSearch(true);
-		else
-			GSTS1 = me.BeginTrackSearch(false);
-
-		MapObject MO = GSTS1.SearchNext();
-
-		while(MO and !MO.isclass(Junction) and !( MO.isclass(zxSignal)  and ((cast<zxSignal>MO).Type & (ST_IN+ST_OUT+ST_ROUTER))  ) )
-			MO = GSTS1.SearchNext();
-
-		if(MO and MO.isclass(Junction))
+		if( AttachedJunction != "")
 			{
-			PostMessage(MO,"Object", "Leave",0);
-			}
+			Junction jun1 = cast<Junction>( Router.GetGameObject(AttachedJunction) );
 
+			if(jun1)
+				PostMessage(jun1,"Object", "Leave",0);
+
+			AttachedJunction = "";
+			}
 		}
 
 	}
@@ -1347,6 +1343,9 @@ public string GetDescriptionHTML(void)
 {
 
 	HTMLWindow hw=HTMLWindow;
+
+	station_edited = true;
+
  	string s="";
         s=s+"<html><body>";
 
@@ -3122,6 +3121,20 @@ public void SetProperties(Soup soup)
 	def_path_priority = soup.GetNamedTagAsInt("def_path_priority",0);
 
 
+	AttachedJunction = soup.GetNamedTag("AttachedJunction");
+
+
+	if(station_edited and stationName!="")
+		{
+		station_edited = false;
+
+		string[] obj_p=new string[1];
+		obj_p[0]=stationName;
+		mainLib.LibraryCall("station_edited_set",obj_p,null);
+		obj_p[0]=null;
+
+		}
+
 	Inited=true;
 	}
 
@@ -3164,11 +3177,7 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("kor_BU_1",kor_BU_1);
 	retSoup.SetNamedTag("kor_BU_2",kor_BU_2);
 
-
-
-
-	//retSoup.SetNamedTag("name_decoded",name_decoded);
-
+	retSoup.SetNamedTag("AttachedJunction",AttachedJunction);
 
 	if(isMacht)
 		{
@@ -3254,6 +3263,8 @@ public void Init(Asset asset)
 
 	tex=asset.FindAsset("tex_tabl");
 	tabl_m=asset.FindAsset("tabl");
+
+	AttachedJunction ="";
 
 
 	ST = asset.GetStringTable();

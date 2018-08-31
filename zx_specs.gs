@@ -91,6 +91,8 @@ class zxSignal isclass Signal
 	public zxSpeedBoard zxSP;
 	public Trackside linkedMU;
 
+	public string AttachedJunction;
+
 	public bool train_is_l;
 
 	public int code_freq;		// частота кодирования АЛС (0 - не кодируется)

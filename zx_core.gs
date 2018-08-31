@@ -734,9 +734,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 		//Interface.Log("'"+stringParam[0]+"'");
 
-		last_edited_station = stringParam[0];
-
-
+		
 		if((Stations.N+20) > Stations.SE.size())			// расширяем массив
 			Stations.UdgradeArraySize(2*Stations.SE.size());
 
