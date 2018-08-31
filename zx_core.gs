@@ -244,7 +244,7 @@ void RemoveTrain(Message msg)
 			{
 			int number = (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[i];
 			
-			UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,2);
+			UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,-1);
 			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(curr_train.GetId());
 			}
 
@@ -300,13 +300,11 @@ void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object
 			if(!tr1)
 				{
 				int train_id1 = entered_sign.TC_id[i];
-
 				int train_nmb=train_arr.Find( train_id1+"" ,false);
 
 
 				entered_sign.RemoveTrainId(curr_train.GetId());
 				UpdateSignState(entered_sign,5,-1);
-
 
 				train_arr.DeleteElementByNmb(train_nmb);
 				}
@@ -622,14 +620,14 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 						}
 
 
-					if(new_state == 2 and (state == 1 or state == 6) )
+					if(new_state == 2 and (state == 1 or state == 6 or state == 0) )
 						{
 						UpdateSignState(sig1,1,priority);
 						sig1.train_is_l = true;						
 						}
 
 
-					else if(new_state == 5 and (state == 3 or state == 4) )
+					else if(new_state == 5 and (state == 3 or state == 4 or state == 0) )
 						{
 						UpdateSignState(sig1,3,priority);
 						}
