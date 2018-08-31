@@ -190,7 +190,7 @@ public void SetSignal(bool set_auto_state)
 		NewSignal(set_lens,0,0.7);
 
 		if(IsServer)
-			mainLib.LibraryCall("mult_state",null,GSO);
+			mainLib.LibraryCall("mult_settings",null,GSO);
 		}
 	}
 
@@ -244,7 +244,7 @@ public void CheckPrevSignals(bool no_train)
 		if(IsServer)
 			{
 			GSO[0] = Cur_prev;
-			mainLib.LibraryCall("mult_speed",null,GSO);
+			mainLib.LibraryCall("mult_settings",null,GSO);
 			GSO[0] = me;
 			}
 		}
@@ -271,8 +271,7 @@ void CheckMySignal(float dt1,float dt2, bool train_entered)
 
 	MainState = LC.FindSignalState(((type_ToFind[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(type_ToFind[1]), train_open, shunt_open, (type_ToFind[0])[1]=='+', next_state);
 
-	if(SetOwnSignalState(true))
-		NewSignal(set_lens,dt1,dt2);
+	SetSignal(true);
 
 
 	}
@@ -389,7 +388,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				if(IsServer)
 					{
 					GSO[0] = Cur_prev;
-					mainLib.LibraryCall("mult_speed",null,GSO);
+					mainLib.LibraryCall("mult_settings",null,GSO);
 					GSO[0] = me;
 					}
 				}
@@ -452,7 +451,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 					if(IsServer)
 						{
 						GSO[0] = Cur_prev;
-						mainLib.LibraryCall("mult_speed",null,GSO);
+						mainLib.LibraryCall("mult_settings",null,GSO);
 						GSO[0] = me;
 						}
 
@@ -553,8 +552,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				{
 				MainState = 19;
 
-				if(SetOwnSignalState(true))
-					NewSignal(set_lens,0,0.7);			// иначе включаем синюю линзу
+				SetSignal(true);			// иначе включаем синюю линзу
 
 
 
@@ -1082,7 +1080,12 @@ public void Deswitch_span()
 
 	wrong_dir = true;
 
-	SetSignal(true);
+	if(SetOwnSignalState(true))
+		NewSignal(set_lens,0,0.7);
+
+	
+	if(IsServer)
+		mainLib.LibraryCall("mult_settings",null,GSO);
 
 }
 
@@ -1140,6 +1143,10 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 
 	UpdateState(0, -1);
 
+
+	if(IsServer)
+		mainLib.LibraryCall("mult_settings",null,GSO);
+
 	return true;
 }
 
@@ -1172,6 +1179,9 @@ public void Switch_span2()		// повернуть светофор в сторону этого светофора
 	wrong_dir=false;
 
 	UpdateState(0,-1);
+
+	if(IsServer)
+		mainLib.LibraryCall("mult_settings",null,GSO);
 }
 
 
@@ -3520,6 +3530,9 @@ public void SetProperties(Soup soup)
 
 		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
 		NewSignal(set_lens,0,0.7);
+
+		if(IsServer)
+			mainLib.LibraryCall("mult_settings",null,GSO);
 		}
 
 	if(Type & ST_IN)

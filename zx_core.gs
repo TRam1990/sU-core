@@ -5,7 +5,7 @@ include "zx_specs.gs"
 include "xtrainz02su.gs"
 include "xtrainz02sl.gs"
 include "xtrainzs.gs"
-include "multiplayergame.gs"
+include "multiplayersessionmanager.gs"
 
 class zxLibruary_core isclass Library
 {
@@ -16,6 +16,8 @@ public BinarySortedArraySu train_arr;		//массив поездов
 
 public BinarySortedStrings Stations;		//массив станций
 public BinarySortedStrings ProtectGroups;	//массив групп заградительных
+
+MultiplayerSessionManager mp_lib;
 
 
 public float str_distance = 40.0;
@@ -50,21 +52,6 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator);
 void SendMessagesToClients(Soup data, string type);
 void SendMessageToServer(Soup data, string type);
 
-
-
-void ModuleInitHandler(Message msg)
-	{
-        if (objectRunningDriver)
-        	return;
-     
-	if (World.GetCurrentModule() == World.DRIVER_MODULE)
-        	{
-		objectRunningDriver =true;
-		Soup send_data = Constructors.NewSoup();
-		SendMessageToServer(send_data, "sU_Sync_me");
-		AddHandler(me, "World", "ModuleInit", "");
-		}
-	}
 
 
 
@@ -211,10 +198,12 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 		}
 
 	int state1 = SearchForTrain(entered_sign, curr_train.GetId(), 1 );
+	bool high_speed = false;
 
 	if(state1 == 0)
 		{
 		state1 = SearchForTrain(entered_sign, curr_train.GetId(), 2 );
+		high_speed = true;		
 		if(state1 == 0)
 			{
 			Interface.Print("Unable to find a train at "+ entered_sign.privateName + "@" + entered_sign.stationName);
@@ -247,6 +236,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).IsStopped=stopped;
 
+		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).HighSpeed=high_speed;
 
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal=new int[1];
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[0]=number;
@@ -285,6 +275,8 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1]=number;
 			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1]=state1;
+
+			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).HighSpeed=high_speed;
 
 			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetId());
 			}
@@ -404,7 +396,13 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 
 					// проверка того, что поезд только с одной стороны от светофора
 
-			int train_position = SearchForTrain(entered_sign, curr_train.GetId(), 1 );
+			int q = 1;
+
+			if((cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).HighSpeed)
+				q = 2;
+
+
+			int train_position = SearchForTrain(entered_sign, curr_train.GetId(), q );
 
 			if(  train_position == 0 and (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1] == 0  )
 				{
@@ -649,6 +647,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 				{
 
 				int j = 0;
+				bool any_not_found = false;
 
 				while(j<TC.signal.size())
 					{
@@ -667,7 +666,16 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 
 */
+
+
 					int new_state = SearchForTrain(sig1,Str.ToInt(train_arr.DBSE[i].a), 1);
+
+
+					if(new_state == 0 and TC.HighSpeed)
+						{
+						new_state = SearchForTrain(sig1,Str.ToInt(train_arr.DBSE[i].a), 2);
+						any_not_found = true;
+						}
 
 					//Interface.Log("usual check "+sig1.privateName + "@" + sig1.stationName+ " state "+state+" new state "+new_state);
 
@@ -733,6 +741,9 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 						}
 
 					}
+				if(TC.HighSpeed and !any_not_found)
+					(cast<TrainContainer>(train_arr.DBSE[i].Object)).HighSpeed = false;
+
 				}
 			}
 		Sleep(0.5);
@@ -745,8 +756,6 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 void SetClient()
 	{
-	MP_NotServer = true;
-
 	AddHandler(me, "Object", "Enter", "");
 	AddHandler(me, "Object", "Leave", "");
 	AddHandler(me, "CTRL", "", "");
@@ -758,7 +767,7 @@ void SetClient()
 
 	int i,j;
 
-	for(i = train_arr.N; i >= 0; i--)
+	for(i = train_arr.N - 1; i >= 0; i--)
 		{
 		int train_ID = Str.ToInt(train_arr.DBSE[i].a);
 		
@@ -785,32 +794,46 @@ void SetClient()
 		{
 		(cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.TC_id[0, ] = null;
 		(cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.MP_NotServer = true;
-		(cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.SetSignalState(2, "");
 		}
 
 	}
 
 
+
+
+
 Soup GetChangeSoup()
 	{
-	Soup sp = Constructors.NewSoup();
+	Soup Temp_soup = Constructors.NewSoup();
 
 	int i, j = 0;
 
 	for(i = 0; i < Signals.N; i++)
 		{
-		if( sig_cache[i].MainState != (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.MainState or sig_cache[i].speed_limit != (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.speed_limit )
+		if( sig_cache[i].MainState != (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.MainState)
 			{
-			sp.SetNamedTag("id"+j, Signals.DBSE[i].a);
-			sp.SetNamedTag("state"+j, (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.MainState );
-			sp.SetNamedTag("limit"+j, (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.speed_limit );
+
+			zxSignal temp_sign = (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign;
+
+			
+			Temp_soup.SetNamedTag("id"+j, Signals.DBSE[i].a );
+			Temp_soup.SetNamedTag("state"+j,temp_sign.MainState);
+
+			Temp_soup.SetNamedTag("limit"+j, temp_sign.speed_limit);
+			Temp_soup.SetNamedTag("default_state"+j,  temp_sign.GetSpeedLimit());
+			Temp_soup.SetNamedTag("train_open"+j,temp_sign.train_open);
+			Temp_soup.SetNamedTag("shunt_open"+j,temp_sign.shunt_open);
+			Temp_soup.SetNamedTag("barrier_closed"+j,temp_sign.barrier_closed);
+			Temp_soup.SetNamedTag("wrong_dir"+j,temp_sign.wrong_dir);
+
+
 
 			j++;
 			}
 		}
 
-	sp.SetNamedTag("number",j);
-	return sp;
+	Temp_soup.SetNamedTag("number",j);
+	return Temp_soup;
 	}
 
 
@@ -823,11 +846,37 @@ void SetChangeSoup(Soup sp)
 		{
 		int num = Signals.Find( sp.GetNamedTag("id"+i) ,false);
 
+
+		float speed_limit = sp.GetNamedTagAsFloat("limit"+i, -1);
+		float old_limit = (cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.GetSpeedLimit();
+
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.speed_limit = speed_limit;
+
+		if((cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.zxSP)
+			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.zxSP.SetNewSpeed(speed_limit, true);
+
+
+
+		if((speed_limit > 0) and (old_limit != speed_limit))
+			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( speed_limit );
+
+		if(((speed_limit == 0) and (old_limit > 0)) or (speed_limit < 0))
+			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( -1 );
+
+
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSignalState( sp.GetNamedTagAsInt("default_state"+i,2) , "");
+
+
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.train_open = sp.GetNamedTagAsFloat("train_open"+i,false);
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.shunt_open = sp.GetNamedTagAsFloat("shunt_open"+i,false);
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.barrier_closed = sp.GetNamedTagAsFloat("barrier_closed"+i,false);
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.wrong_dir = sp.GetNamedTagAsFloat("wrong_dir"+i,false);
+
+
+
 		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.MainState = sp.GetNamedTagAsInt("state"+i, 0);
 		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSignal(false);
 
-		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.speed_limit = sp.GetNamedTagAsFloat("limit"+i, -1);
-		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( (cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.speed_limit );
 		}
 	}
 
@@ -846,14 +895,23 @@ void SendMessagesToClients(Soup data, string type_msg)
 
 
 
-void SendNewSignalState(string sig_name, int state)
+
+
+void SendNewSignalSettings(string sig_name, int state, float limit, int default_state, bool train_open, bool shunt_open, bool wrong_dir, bool barrier_closed)
 	{
 	Soup Temp_soup = Constructors.NewSoup();
 
 	Temp_soup.SetNamedTag("id",sig_name);
 	Temp_soup.SetNamedTag("state",state);
 
-	SendMessagesToClients(Temp_soup, "sU_SetState");
+	Temp_soup.SetNamedTag("limit",limit);
+	Temp_soup.SetNamedTag("default_state",default_state);
+	Temp_soup.SetNamedTag("train_open",train_open);
+	Temp_soup.SetNamedTag("shunt_open",shunt_open);
+	Temp_soup.SetNamedTag("wrong_dir",wrong_dir);
+	Temp_soup.SetNamedTag("barrier_closed",barrier_closed);
+
+	SendMessagesToClients(Temp_soup, "sU_SetSettings");
 	}
 
 
@@ -886,13 +944,51 @@ void MultiplayerClientHandler1(Message msg)
 	string type = sp.GetNamedTag("type_msg");
 
 
-	if(type == "sU_SetState")
+	if(type == "sU_SetSettings")
 		{
 		int num = Signals.Find( sp.GetNamedTag("id") ,false);
 
+
+		float speed_limit = sp.GetNamedTagAsFloat("limit", -1);
+		float old_limit = (cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.GetSpeedLimit();
+
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.speed_limit = speed_limit;
+
+		if((cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.zxSP)
+			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.zxSP.SetNewSpeed(speed_limit, true);
+
+
+
+		if((speed_limit > 0) and (old_limit != speed_limit))
+			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( speed_limit );
+
+		if(((speed_limit == 0) and (old_limit > 0)) or (speed_limit < 0))
+			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( -1 );
+
+
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSignalState( sp.GetNamedTagAsInt("default_state",2) , "");
+
+
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.train_open = sp.GetNamedTagAsFloat("train_open",false);
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.shunt_open = sp.GetNamedTagAsFloat("shunt_open",false);
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.barrier_closed = sp.GetNamedTagAsFloat("barrier_closed",false);
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.wrong_dir = sp.GetNamedTagAsFloat("wrong_dir",false);
+
+
+
 		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.MainState = sp.GetNamedTagAsInt("state", 0);
 		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSignal(false);
+
+
+		if(zxExtra.size() > 0)
+			{
+			int i;
+			for(i=0;i<zxExtra.size();i++)
+				zxExtra[i].UpdateSignalState( (cast<zxSignalLink>(Signals.DBSE[num].Object)).sign , 0, -1);
+			}
+
 		}
+
 	else if(type == "sU_SetSpeed")
 		{
 		int num = Signals.Find( sp.GetNamedTag("id") ,false);
@@ -949,11 +1045,9 @@ void MultiplayerServerHandler1(Message msg)
 	if(type == "sU_Sync_me")
 		{
 		string client = Temp_soup.GetNamedTag("__sender");
-
 		Soup send_data = GetChangeSoup();
-
 		send_data.SetNamedTag("type_msg","sU_Sync");
-		
+
 		MultiplayerGame.SendGameplayMessageToClient(client, "sU_signals", "mult_client", send_data);
 		}
 	}
@@ -973,30 +1067,48 @@ void ServerInitBase()
 		sig_cache[i] = new zxSignal_Cache();
 
 		sig_cache[i].MainState = (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.MainState;
-		sig_cache[i].speed_limit = (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.speed_limit;
 		}
 	}
 
+thread void Waiter()
+	{
+	while(MultiplayerGame.IsActive() and MultiplayerGame.IsLoadingClient())
+		Sleep(5);
 
+	if(MultiplayerGame.IsActive())
+		{
+		SetClient();
+		Soup send_data = Constructors.NewSoup();
+		SendMessageToServer(send_data, "sU_Sync_me");
+		}
+	}
 
 void MultiplayerSessionHandler(Message msg)
 	{
-	if(msg.minor == "UsersChange" and MultiplayerGame.IsActive() )
+	if((msg.minor == "UsersChange" or msg.minor == "ClientReady") and MultiplayerGame.IsActive() )
 		{
+
 		if(!MP_started)
 			{
 			MP_started = true;
+
 			if(!MultiplayerGame.IsServer())
 				{
-				SetClient();
+				MP_NotServer = true;
+
 				AddHandler(me,"sU_signals", "mult_client","MultiplayerClientHandler1");
-				AddHandler(me, "World", "ModuleInit", "ModuleInitHandler");
+
+				Waiter();
+
 				return;
 				}
 
 			ServerInitBase();
-			AddHandler(me,"sU_signals", "mult_client","MultiplayerServerHandler1");
+			AddHandler(me,"sU_signals", "mult_server" ,"MultiplayerServerHandler1");
 			}
+
+			
+
 		}
 	
 	}
@@ -1045,6 +1157,11 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		for(i=0;i<10;i++)
 			tabl_str[i]="tabl"+i;
 
+
+
+		KUID mplibKUID = me.GetAsset().LookupKUIDTable("mp_library");
+		mp_lib = cast<MultiplayerSessionManager>World.GetLibrary(mplibKUID);
+		Sniff(mp_lib, "MultiplayerSession", "", true);
 
 		AddHandler(me, "MultiplayerSession", "", "MultiplayerSessionHandler");
 		}
@@ -1491,20 +1608,13 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 
 
-	else if(function=="mult_state")
+	else if(function=="mult_settings")
 		{
 		zxSignal sig1=cast<zxSignal>objectParam[0];
 
 		if(sig1)
 			{
-			SendNewSignalState(sig1.GetName(), sig1.MainState);
-
-			if(zxExtra.size() > 0)
-				{
-				int i;
-				for(i=0;i<zxExtra.size();i++)
-					zxExtra[i].UpdateSignalState(sig1, 0, -1);
-				}
+			SendNewSignalSettings(sig1.GetName(), sig1.MainState, sig1.speed_limit, sig1.GetSignalState(), sig1.train_open, sig1.shunt_open, sig1.wrong_dir, sig1.barrier_closed);
 			}
 		}
 
@@ -1713,13 +1823,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			sig1.protect_soup.Clear();
 			sig1.ProtectGroup = "";
 			}
-
-
-
-
-//   public native void SendGameplayMessageToClient(string clientName, string msgMajor, string msgMinor, Soup data);
-
-
 
 		}
 

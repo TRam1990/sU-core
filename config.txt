@@ -21,6 +21,7 @@ thumbnails
 script-include-table
 {
   0                                     <kuid:151055:60049>
+  1                                     <kuid:30501:1020>
 }
 
 string-table
@@ -92,10 +93,11 @@ string-table
 extensions
 {
 }
-kuid                                    <kuid2:400260:100120:17>
+kuid                                    <kuid2:400260:100120:18>
 
 kuid-table
 {
+  mp_library                            <kuid:30501:1020>
   0                                     <kuid2:236443:103204:1>
   1                                     <kuid2:236443:103206:1>
   2                                     <kuid2:236443:103210:1>

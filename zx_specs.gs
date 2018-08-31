@@ -11,6 +11,8 @@ class TrainContainer isclass GSObject
 	public int[] signal;		// внутренний идентификатор светофора
 	public int[] state;  		// 0 - подошедший к светофору, 1 - проехавший головой светофор, 2 - заехавший за светофор
 
+	public bool HighSpeed;
+
 };
 
 
@@ -55,6 +57,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 	public bool train_open;		// светофор открыт в поездном режиме
 	public bool shunt_open;		// светофор открыт в маневровом режиме
+	public bool wrong_dir;		// входной противонаправлен перегону
 	public bool barrier_closed;	// заградительный закрыт
 
 	public string stationName;
@@ -80,8 +83,6 @@ class zxSignal isclass Signal, ALSN_Provider
 	public int[] TC_id = new int[0];
 
 	public Browser mn = null;
-
-	public bool wrong_dir;
 
 	public int def_path_priority;	// приоритет маршрутов к светофору по умолчанию
 
