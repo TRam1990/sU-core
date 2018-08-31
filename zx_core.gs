@@ -34,6 +34,9 @@ string[] tabl_str;
 zxExtraLink[] zxExtra;
 
 
+int SearchForTrain(zxSignal sig1, int train_id);
+
+
 
 void UpdateSignState(zxSignal zxSign, int state, int priority)
 	{
@@ -269,19 +272,14 @@ void RemoveTrain(Message msg)
 
 
 
-void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object,Leave
+void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда поезда с сигнала, ловля Object,Leave
 	{
-	zxSignal entered_sign=cast<zxSignal>(msg.dst);
 	if(!entered_sign)
 		return;
-
-
 
 	int number=entered_sign.OwnId;
 	if(number<0)							// база светофоров ещё непроиндексирована
 		number=Signals.Find(entered_sign.GetName(),false);
-
-	Train curr_train=msg.src;
 
 	if(!curr_train)  // поезд потерян
 		{
@@ -334,13 +332,20 @@ void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object
 
 		if(num1>=0)		// поезд действительно наехал на этот светофор
 			{
-			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[num1,num1+1]=null;
-			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1,num1+1]=null;
+
+					// проверка того, что поезд только с одной стороны от светофора
+			
+			int train_position = SearchForTrain(entered_sign, curr_train.GetId() );
+
+			if(train_position != 2 and train_position != 5)
+				{
+				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[num1,num1+1]=null;
+				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1,num1+1]=null;
 
 			
-			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(curr_train.GetId());
+				(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(curr_train.GetId());
 
-			UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,-1);
+				UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,-1);
 
 
 
@@ -349,23 +354,34 @@ void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object
 //	Interface.Log(err);
 
 
-			if((cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal.size()==0)
-				{
+				if((cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal.size()==0)
+					{
 
-				train_arr.DeleteElementByNmb(train_nmb);
-
-
-				Sniff(curr_train, "Train", "StartedMoving", false);
-				Sniff(curr_train, "Train", "StoppedMoving", false);
-				Sniff(curr_train, "Train", "Cleanup", false);
+					train_arr.DeleteElementByNmb(train_nmb);
+	
+	
+					Sniff(curr_train, "Train", "StartedMoving", false);
+					Sniff(curr_train, "Train", "StoppedMoving", false);
+					Sniff(curr_train, "Train", "Cleanup", false);
 
 //	err="removed train ! "+train_nmb;
 //	Interface.Log(err);
 
-
+	
+					}
 				}
 			}
 		}
+	}
+
+
+
+void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object,Leave
+	{
+	zxSignal entered_sign=cast<zxSignal>(msg.dst);
+	Train curr_train=msg.src;
+
+	TrainCleaner( entered_sign, curr_train );
 	}
 
 
@@ -657,7 +673,8 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 						UpdateSignState(sig1,4,priority);
 						}
 
-
+					if(new_state == 0 and state == 0)
+						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject( Str.ToInt(train_arr.DBSE[i].a) ) ) )  );
 
 
 					
