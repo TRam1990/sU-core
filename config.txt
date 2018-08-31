@@ -20,8 +20,8 @@ thumbnails
 
 script-include-table
 {
-  0                                     <kuid2:151055:60038:3>
-  1                                     <kuid2:151055:60049:1>
+  0                                     <kuid2:151055:60038:5>
+  1                                     <kuid2:151055:60049:2>
   2                                     <kuid:30501:1020>
 }
 
@@ -96,11 +96,15 @@ string-table
 extensions
 {
 }
-kuid                                    <kuid2:400260:100120:32>
+kuid                                    <kuid2:400260:100120:33>
 
 kuid-table
 {
   mp_library                            <kuid:30501:1020>
-  0                                     <kuid2:151055:60038:3>
-  1                                     <kuid2:151055:60049:1>
+  label0                                <kuid2:236443:103204:1>
+  label1                                <kuid2:236443:103206:1>
+  label2                                <kuid2:236443:103210:1>
+  label3                                <kuid2:236443:103209:1>
+  0                                     <kuid2:151055:60038:5>
+  1                                     <kuid2:151055:60049:2>
 }

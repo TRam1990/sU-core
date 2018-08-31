@@ -570,7 +570,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 
 
-	if( reason==2 or reason==4 )
+/*	if( reason==2 or reason==4 )
 		{
 		if( AttachedJunction != "")
 			{
@@ -583,6 +583,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				}
 			}
 		}
+*/
 
 	}
 
@@ -3551,8 +3552,7 @@ public void SetProperties(Soup soup)
 	code_dev = soup.GetNamedTagAsInt("code_dev");
 	def_path_priority = soup.GetNamedTagAsInt("def_path_priority",0);
 
-
-	AttachedJunction = soup.GetNamedTag("AttachedJunction");
+//	AttachedJunction = soup.GetNamedTag("AttachedJunction");
 
 
 	if(station_edited and stationName!="")
@@ -3646,7 +3646,7 @@ public Soup GetProperties(void)
 
 	retSoup.SetNamedTag("pause_bef_red",pause_bef_red);
 
-	retSoup.SetNamedTag("AttachedJunction",AttachedJunction);
+//	retSoup.SetNamedTag("AttachedJunction",AttachedJunction);
 
 	if(isMacht)
 		{
@@ -3753,7 +3753,7 @@ public void Init(Asset asset)
 	tex=asset.FindAsset("tex_tabl");
 	tabl_m=asset.FindAsset("tabl");
 
-	AttachedJunction ="";
+//	AttachedJunction ="";
 
 
 	ST = asset.GetStringTable();

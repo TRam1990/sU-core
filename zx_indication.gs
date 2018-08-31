@@ -1114,6 +1114,10 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 				return 7;
 
 
+			if(possible_sig[14])		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
+				return 14;
+
+
 			if(possible_sig[11])		// жёлтый мигающий
 				return 11;
 
@@ -1128,6 +1132,11 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 			if(possible_sig[7])		// жёлтый мигающий - жёлтый
 				return 7;
+
+
+			if(possible_sig[14])		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
+				return 14;
+
 
 			if(possible_sig[11])		// жёлтый мигающий
 				return 11;
@@ -1168,6 +1177,8 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 		return 0;
 		}
+
+
 
 
 

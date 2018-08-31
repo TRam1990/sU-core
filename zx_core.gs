@@ -1230,7 +1230,9 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 	else if(function=="add_signal")		// механизм добавления сигнала
 		{
-		if( !(cast<zxSignal>objectParam[0]) )
+		zxSignal curr_signal = cast<zxSignal>objectParam[0];
+
+		if( !curr_signal  )
 			{
 			Interface.Exception("signal with error!");
 			return "";
@@ -1270,9 +1272,9 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 
 
-		Sniff(objectParam[0], "Object", "Enter", true);
-		Sniff(objectParam[0], "Object", "Leave", true);
-		Sniff(objectParam[0], "CTRL", "", true);
+		Sniff(curr_signal, "Object", "Enter", true);
+		Sniff(curr_signal, "Object", "Leave", true);
+		Sniff(curr_signal, "CTRL", "", true);
 
 
 		return "true";
