@@ -26,6 +26,9 @@ class zxSpeedBoard isclass Trackside
 
 	public void SetNewSpeed(float speed, bool extra)
 		{
+		if(speed == 0.0f)
+			return;
+			
 		if(extra)
 			ExtraSpeed=speed;
 		else
@@ -34,7 +37,7 @@ class zxSpeedBoard isclass Trackside
 		if(ExtraSpeed > MainSpeed)
 			SetSpeedLimit( ExtraSpeed );
 		else
-			SetSpeedLimit( -1 );
+			SetSpeedLimit( MainSpeed );
 		}
 };
 
@@ -292,8 +295,6 @@ class zxMarker isclass Trackside
 
 /*
 
-trmrk_mod
-
 
 0 прямой путь
 1 отклонение      - доп
@@ -306,10 +307,46 @@ trmrk_mod
 8 конец АБ
 9 маркер направления
 
+
+public int trmrk_mod;
+
 */
 
 
-	public int trmrk_mod;
+/*
+
+
+0 прямой путь
+1 отклонение
+2 отклонение пологое
+4 нет сковозного пропуска
+8 неправильный
+16 ПАБ (ЗЗ)
+32 АЛС
+64 неправильного с двух сторонней АБ
+128 маркер "располовиненого" пути (для ЖЖЖ)
+256 конец АБ
+512 нет 4-значной АБ
+1024 маркер направления
+
+
+*/
+
+	public define int MRFT		= 0;
+	public define int MRT		= 1;
+	public define int MRT18		= 2;
+	public define int MRNOPR		= 4;
+	public define int MRWW		= 8;
+	public define int MRPAB		= 16;
+	public define int MRALS		= 32;
+	public define int MRDAB		= 64;
+	public define int MRHALFBL	= 128;
+	public define int MRENDAB	= 256;
+	public define int MREND4AB	= 512;
+	public define int MRN		= 1024;
+
+	public int trmrk_flag;
+
 	public string info;
 
 };

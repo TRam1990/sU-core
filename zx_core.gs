@@ -7,6 +7,13 @@ include "xtrainz02sl.gs"
 include "xtrainzs.gs"
 include "multiplayersessionmanager.gs"
 
+
+include "zx_specs.gs"
+include "zx_mrk.gs"
+include "zx_router.gs"
+include "zx_signal.gs"
+include "zx_speedboard.gs"
+
 class zxLibruary_core isclass Library
 {
 
@@ -1305,13 +1312,8 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and ((cast<zxSignal>MO).MainState == 19)  )		// если есть маршрутный с синим
 						{
-						if(marker % 10 == 7)
-							{
-							marker = marker - 7;												// то ж-ж-ж не используем
-
-							if(marker >=10)
-								marker = marker/10;
-							}
+						if(marker & zxMarker.MRHALFBL)
+							marker = marker ^ zxMarker.MRHALFBL;
 						}
 					}
 				else
@@ -1334,50 +1336,10 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			zxMrk= cast<zxMarker>MO;
 			if(zxMrk and GSTS.GetFacingRelativeToSearchDirection() == true)
 				{
-				int n_mrk= zxMrk.trmrk_mod;
+				marker = marker | zxMrk.trmrk_flag;
 
-				if((int)(n_mrk / 10) == 1)		// маркер номера невидим
-					{
-					n_mrk = n_mrk - 10;
-					}
-
-				if(n_mrk == 1)
-					{
-
-					if( (int)(marker / 10) == 2)
-						marker=marker - 10;
-
-					else if(marker % 10 == 0 or marker % 10 == 2)
-						marker = 1;
-
-
-					else if( (int)(marker / 10) == 0 )
-						marker=marker + 10;
-					}
-				else if(n_mrk == 2)
-					{
-					if((int)(marker / 10) == 0 and marker != 1)
-						{
-						if(marker % 10 == 0)
-							marker=marker + 2;
-						else
-							marker=marker + 20;
-						}
-					}
-				else if(n_mrk != 0 and n_mrk != (marker % 10) )		// выбор последнего маркера
-					{
-
-					if(marker == 1)
-						{
-						marker= 10;
-						}
-					else if(marker == 2)
-
-						marker = 20;
-
-
-					marker = 10*(int)(marker / 10) + n_mrk;
-					}
+				if((marker & zxMarker.MRT) and (marker & zxMarker.MRT18)  )
+					marker = marker ^ zxMarker.MRT18;	
 				}
 
 
@@ -1388,7 +1350,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				}
 
 
-			if( marker % 10 != 8 )
+			if(! (marker & zxMarker.MRENDAB) )
 				MO = GSTS.SearchNext();
 			else
 				MO = null;
@@ -1452,7 +1414,17 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 
 					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT) ) and ((cast<zxSignal>MO).MainState == 19))
+						{
+						int old_m_st = sig1.MainState;
+
+						if(old_m_st != 0 and old_m_st != 1 and old_m_st != 2 and old_m_st != 3 and old_m_st != 20)
+							{
+							sig1.Cur_prev=cast<zxSignal>MO;
+							stringParam[1] = marker+"";
+							return "";
+							}
 						blue_signal=true;							// то ж-ж-ж не используем
+						}
 
 					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (cast<zxSignal>MO).shunt_open and ((cast<zxSignal>MO).MainState == 1 or (cast<zxSignal>MO).MainState == 19) and ((stringParam[0])[1]!='+'))
 						(cast<zxSignal>MO).UpdateState(0, -1);
@@ -1482,58 +1454,13 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			zxMrk= cast<zxMarker>MO;
 			if(zxMrk and GSTS.GetFacingRelativeToSearchDirection() == false)
 				{
-				int n_mrk= zxMrk.trmrk_mod;
+				marker = marker | zxMrk.trmrk_flag;
 
-				if((int)(n_mrk / 10) == 1)		// маркер номера невидим
-					{
-					n_mrk = n_mrk - 10;
-					}
+				if((marker & zxMarker.MRT) and (marker & zxMarker.MRT18)  )
+					marker = marker ^ zxMarker.MRT18;
 
-				if(n_mrk == 1)
-					{
-
-					if( (int)(marker / 10) == 2)
-						marker=marker - 10;
-
-					else if(marker % 10 == 0)
-						marker = 1;
-
-					else if( (int)(marker / 10) == 0 )
-						marker=marker + 10;
-					}
-				else if(n_mrk == 2)
-					{
-					if((int)(marker / 10) == 0 and marker != 1)
-						{
-						if(marker % 10 == 0)
-							marker=marker + 2;
-						else
-							marker=marker + 20;
-						}
-					}
-				else if(n_mrk != 0 and ( (marker% 10) == 0 or marker == 1 or marker == 2) )
-					{
-
-					if(marker == 1)
-						{
-						marker= 10;
-						}
-					else if(marker == 2)
-
-						marker = 20;
-
-
-					if(n_mrk == 7)
-						{
-						if(!blue_signal)
-							marker = 10*(int)(marker / 10) + 7;
-						else
-							marker= marker/10;
-						}
-					else
-						marker = 10*(int)(marker / 10) + n_mrk;
-
-					}
+				if((marker & zxMarker.MRHALFBL) and blue_signal)
+					marker = marker ^ zxMarker.MRHALFBL;
 				}
 
 
@@ -1544,7 +1471,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				GSTS = (cast<Trackside>MO).BeginTrackSearch(temp_dir);
 				}
 
-			if( marker % 10 != 8 )
+			if( !(marker & zxMarker.MRENDAB) )
 				MO = GSTS.SearchNext();
 			else
 				MO = null;
@@ -1710,7 +1637,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 
 			zxMarker zxMrk= cast<zxMarker>MO;
-			if(!zxMrk or (zxMrk.trmrk_mod % 10 ) != 8 )
+			if(!zxMrk or !(zxMrk.trmrk_flag & zxMarker.MRENDAB))
 				MO = GSTS.SearchNext();
 			else
 				return "";
@@ -1842,8 +1769,11 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			for(i=0;i<N;i++)
 				{
 				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
-
-				temp.protect_soup.Clear();
+				
+				if(temp.protect_soup)
+					temp.protect_soup.Clear();
+				else
+					temp.protect_soup = Constructors.NewSoup();
 				temp.protect_soup.Copy(tempsoup);
 				}
 			

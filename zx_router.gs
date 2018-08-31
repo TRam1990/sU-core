@@ -383,7 +383,7 @@ public zxSignal FindOwnerSignal(bool ToJunction)
 			{
 			int stype=(cast<zxSignal>mo).Type;
 
-			if(stype>0 and (stype & (2+4+8+32)))
+			if( stype>0 and ((stype & (zxSignal.ST_IN | zxSignal.ST_OUT | zxSignal.ST_ROUTER)) or  ((stype & zxSignal.ST_PERMOPENED) and !(stype & zxSignal.ST_UNLINKED))) )
 				{
 				return cast<zxSignal>mo;
 				}
@@ -409,7 +409,6 @@ public string FindMRN(zxSignal sign)
 	MapObject mo=GS.SearchNext();
 	string ret="";
 
-	
 
 	while(mo)
 		{
@@ -419,7 +418,7 @@ public string FindMRN(zxSignal sign)
 			{
 			int stype=(cast<zxSignal>mo).Type;
 
-			if( stype>0 and (stype & (2+4+8+32)) )
+			if( stype>0 and ((stype & (zxSignal.ST_IN | zxSignal.ST_OUT | zxSignal.ST_ROUTER)) or  ((stype & zxSignal.ST_PERMOPENED) and !(stype & zxSignal.ST_UNLINKED))) )
 				{
 				break;
 				}
@@ -427,13 +426,17 @@ public string FindMRN(zxSignal sign)
 			}
 		else if(mo.isclass(zxMarker) and (GS.GetFacingRelativeToSearchDirection() == dir ) )
 			{
-			if(  (int)((cast<zxMarker>mo).trmrk_mod / 10) == 1)
+			if(  (cast<zxMarker>mo).trmrk_flag &  zxMarker.MRN)
 				{
 				ret=(cast<zxMarker>mo).info;       		
 				}
 			}
 		mo=GS.SearchNext();        	
 		}
+
+
+Interface.Print("ret is "+ret);
+
 	return ret;
 	}
 
@@ -572,6 +575,13 @@ Asset tabl_m,tex;
 
 Library mainLib;
 
+float displacement;
+
+float def_displ;
+
+float vert_displ;
+float along_displ;
+
 
 public void ShowName(bool reset);
 
@@ -659,6 +669,25 @@ public void SetProperties(Soup db)
 		RouterO.OwnerSignal= cast<zxSignal>Router.GetGameObject(signal_name);
 		}
 
+
+	displacement = db.GetNamedTagAsFloat("displacement",0);
+
+	def_displ = db.GetNamedTagAsFloat("def_displ",0);
+	if(def_displ == 0)
+		{
+		def_displ = GetAsset().GetConfigSoup().GetNamedTagAsFloat("trackside",0);
+
+		displacement = def_displ;
+		}
+
+
+	vert_displ = db.GetNamedTagAsFloat("vert_displ",0);
+	along_displ = db.GetNamedTagAsFloat("along_displ",0);
+
+	SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+
+
+
 	SetSoup();	
 	}
 
@@ -675,7 +704,14 @@ public Soup GetProperties(void)
 	sp.SetNamedTag("privateName",privateName);
 	sp.SetNamedTag("Inited",true);
 
-	sp.SetNamedTag("Signal",signal_name);		
+	sp.SetNamedTag("Signal",signal_name);
+
+
+	sp.SetNamedTag("displacement",displacement);
+	sp.SetNamedTag("def_displ",def_displ);
+	sp.SetNamedTag("vert_displ",vert_displ);
+	sp.SetNamedTag("along_displ",along_displ);
+		
 		
 	return sp;
 	}
@@ -1026,16 +1062,65 @@ public string GetCntName(void)
 	}
 
 
+
+public string GetExtraSetTable()
+{
+	HTMLWindow hw=HTMLWindow;
+	string s="";
+
+       s=s+hw.StartTable("border='1' width='90%'");
+
+	s=s+hw.StartRow();
+	s=s+hw.MakeCell(hw.MakeLink("live://property/displace",  ST.GetString("displace")),"bgcolor='#666666' colspan='6'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/displace",   displacement ),"bgcolor='#AAAAAA'  align='center' ");
+	s=s+hw.EndRow();
+
+
+
+	s=s+hw.StartRow();
+	s=s+hw.MakeCell(hw.MakeLink("live://property/displace1/-3.2", "-3.2" ),"bgcolor='#BBAAAA' align='center'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/displace1/-2.65", "-2.65" ),"bgcolor='#BBAAAA' align='center'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/displace1/-2.5", "-2.5" ),"bgcolor='#BBAAAA' align='center'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/displace1/2.5", "2.5" ),"bgcolor='#BBAAAA' align='center'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/displace1/2.65", "2.65" ),"bgcolor='#BBAAAA' align='center'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/displace1/2.85", "2.85" ),"bgcolor='#BBAAAA' align='center'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/displace1/3.2", "3.2" ),"bgcolor='#BBAAAA' align='center'");
+
+	s=s+hw.EndRow();
+
+
+	s=s+hw.EndTable();
+
+
+	s=s+"<br>";
+
+
+	s=s+hw.StartTable("border='1' width=90%");
+
+	s=s+hw.StartRow();
+	s=s+hw.MakeCell(hw.MakeLink("live://property/vert_displ",  ST.GetString("vert_displ")),"bgcolor='#666666'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/vert_displ",   vert_displ ),"bgcolor='#AAAAAA'  align='center' ");
+	s=s+hw.EndRow();
+
+
+	s=s+hw.StartRow();
+	s=s+hw.MakeCell(hw.MakeLink("live://property/along_displ",  ST.GetString("along_displ")),"bgcolor='#666666'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/along_displ",   along_displ ),"bgcolor='#AAAAAA'  align='center' ");
+	s=s+hw.EndRow();
+
+	s=s+hw.EndTable();
+	s=s+"<br>";
+
+	return s;
+}
+
+
 public string GetContent(void)
 	{
 	string s="<br>";
 	HTMLWindow hw=HTMLWindow;
 
 	s=s+GetCntName();
-
-
-
-
 
 	s=s+hw.StartTable("border='1' width=300");
 
@@ -1117,6 +1202,9 @@ public string GetContent(void)
 	s=s+hw.EndRow();
 		
 	s=s+hw.EndTable()+"<br>";
+
+	s=s+GetExtraSetTable();
+
 	return s;
 	}
 
@@ -1145,11 +1233,38 @@ public string GetPropertyType(string id)
 
 	else if (id=="twait")
 		ret="int,0,500,1";
+
+	else if(id=="displace" or id=="vert_displ")
+		{
+		ret="float,-10,10,0.05";
+		}
+	else if(id=="along_displ")
+		{
+		ret="float,-100,100,0.1";
+		}
+
 	return ret;
 	}
 
 
-
+public void SetPropertyValue(string id, float val)
+{
+	if(id == "displace")
+		{
+		displacement=val;
+		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+		}
+	else if(id == "vert_displ")
+		{
+		vert_displ=val;
+		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+		}
+	else if(id == "along_displ")
+		{
+		along_displ=val;
+		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+		}
+}
 
 public void LinkPropertyValue(string id)
 	{
@@ -1200,6 +1315,17 @@ public void LinkPropertyValue(string id)
 
 		RouterO.UpdateMU();
 		}
+	else
+		{
+		string[] str_a = Str.Tokens(id+"","/");
+
+		if(str_a[0]=="displace1")
+			{
+ 			displacement=Str.ToFloat(str_a[1]);
+			SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+			}
+		}
+
 	}
 
 

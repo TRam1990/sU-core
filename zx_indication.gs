@@ -1,6 +1,4 @@
-include "gs.gs"
-
-include "common.gs"
+include "zx_specs.gs"
 
 
 class zxIndication isclass GSObject
@@ -788,7 +786,7 @@ public void FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 	}
 
 
-public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_mod, bool is_opend, bool is_shunt, bool sup_closed, int NextState)
+public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool sup_closed, int NextState)
 // определение типа сигнала по 
 	{
 
@@ -880,15 +878,10 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	int trmrk_mod_2 = trmrk_mod;
-
-	trmrk_mod_2 = trmrk_mod_2/10;
-
-	trmrk_mod =  trmrk_mod % 10;
-
-
-	if(trmrk_mod == 8)		// АБ нету
+	if(trmrk_flag & zxMarker.MRENDAB)	// АБ нету
 		{
+		if( possible_sig[20] )	// отправление по белому
+			return 20;
 
 		if(possible_sig[1])	// красный
 			return 1;
@@ -903,10 +896,10 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	if(trmrk_mod == 4)		// если ПАБ то не зависит от следующего сигнала
+	if(trmrk_flag & zxMarker.MRPAB)		// если ПАБ то не зависит от следующего сигнала
 		{
 
-		if(trmrk_mod_2 == 1)
+		if(trmrk_flag & zxMarker.MRT)
 			{
 			if(possible_sig[4])		// жёлтый - жёлтый
 				return 4;
@@ -924,89 +917,19 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	if(NextState == 1 or NextState == 3 or NextState == 18 or NextState == 20 or NextState == 21) // следующий красный, три жёлтых, белый или Жм+Б
+	if(NextState == 1 or NextState == 3 or NextState == 18 or NextState == 20 or NextState == 21 or (trmrk_flag & zxMarker.MRNOPR))
+
+// следующий красный, три жёлтых, белый или Жм+Б, или путь без пропуска
+
 		{
 
-
-/*
-
-trmrk_mod 
-
-
-0 прямой путь
-1 отклонение
-2 отклонение пологое
-3 неправильное (ЖмБ)
-4 ПАБ (ЗЗ)
-5 АЛС
-6 неправильное с 2-сторонней блокировкой (ЗЗ)
-7 маркер "располовиненого" пути (для ЖЖЖ)
-8 конец АБ
-
-
-*/
-
-		if(trmrk_mod == 7 and possible_sig[13])	// жёлтый - жёлтый - жёлтый
+		if((trmrk_flag & zxMarker.MRHALFBL) and possible_sig[13])	// жёлтый - жёлтый - жёлтый
 			return 13;
 
 
-		if(trmrk_mod == 0)
+		if(trmrk_flag & zxMarker.MRWW)	// неправильный путь
 			{
-
-
-
-			if(possible_sig[6])		// жёлтый
-				return 6;
-
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
-				return 14;
-
-			if(possible_sig[19])	// синий
-				return 19;
-
-
-			return 0;
-			}
-
-		if(trmrk_mod == 1)		// отклонение
-			{
-
-			if(possible_sig[4])		// жёлтый - жёлтый
-				return 4;
-
-
-			if(possible_sig[6])		// жёлтый
-				return 6;
-
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
-				return 14;
-
-			if(possible_sig[19])	// синий
-				return 19;
-
-
-			return 0;
-
-			}
-
-		if(trmrk_mod == 2)		// отклонение пологое
-			{
-
-			if(possible_sig[5])		// жёлтый - жёлтый - полоса
-				return 5;
-
-			if(possible_sig[4])		// жёлтый - жёлтый
-				return 4;
-
-			if(possible_sig[6])		// жёлтый
-				return 6;
-
-			return 0;
-			}
-
-		if(trmrk_mod == 3)
-			{
-			if(trmrk_mod_2 == 2 and possible_sig[24]) // жёлтый + жёлтый + белый + полоса	
+			if((trmrk_flag & zxMarker.MRT) and possible_sig[24]) // жёлтый + жёлтый + белый + полоса	
 				return 24;
 
 			if(possible_sig[18])		// жёлтый миг. + белый
@@ -1024,15 +947,13 @@ trmrk_mod
 			return 0;
 
 			}
-
-
-		if(trmrk_mod == 5)			// АЛС
+		else if(trmrk_flag & zxMarker.MRALS)	// АЛС
 			{
 
-			if(trmrk_mod_2 == 1 and possible_sig[22]) // жёлтый + жёлтый + белый	
+			if((trmrk_flag & zxMarker.MRT) and possible_sig[22]) // жёлтый + жёлтый + белый	
 				return 22;
 
-			if(trmrk_mod_2 == 2 and possible_sig[24]) // жёлтый + жёлтый + белый + полоса	
+			if((trmrk_flag & zxMarker.MRT18) and possible_sig[24]) // жёлтый + жёлтый + белый + полоса	
 				return 24;
 
 			if(possible_sig[16])		// жёлтый + белый	
@@ -1044,14 +965,63 @@ trmrk_mod
 			return 0;
 			}
 
-		if(trmrk_mod == 6)			// на неправильный путь с АБ
+		else if(trmrk_flag & zxMarker.MRDAB)	// на неправильный путь с АБ
 			{
 			if(possible_sig[1])		// красный
 				return 1;
 
 			return 0;
 			}
+		else if(trmrk_flag & zxMarker.MRT)		// отклонение
+			{
 
+			if(possible_sig[4])		// жёлтый - жёлтый
+				return 4;
+
+
+			if(possible_sig[6])		// жёлтый
+				return 6;
+
+			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
+				return 14;
+
+			if(possible_sig[19])	// синий
+				return 19;
+
+
+			return 0;
+
+			}
+
+		else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
+			{
+
+			if(possible_sig[5])		// жёлтый - жёлтый - полоса
+				return 5;
+
+			if(possible_sig[4])		// жёлтый - жёлтый
+				return 4;
+
+			if(possible_sig[6])		// жёлтый
+				return 6;
+
+			return 0;
+			}
+
+		else 					// модификаций нет
+			{
+			if(possible_sig[6])		// жёлтый
+				return 6;
+
+			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
+				return 14;
+
+			if(possible_sig[19])	// синий
+				return 19;
+
+
+			return 0;
+			}
 		}
 
 
@@ -1061,23 +1031,49 @@ trmrk_mod
 	if(NextState == 4 or NextState == 7   or NextState == 13   or NextState == 22   or NextState == 23)		// следующее отклонение
 		{
 
-		if(trmrk_mod == 0)
+		if(trmrk_flag & zxMarker.MRWW)
 			{
+			if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
+				return 25;
+
+			if(possible_sig[18])		// жёлтый миг. + белый
+				return 18;
+			
+			if(possible_sig[7])		// жёлтый мигающий - жёлтый
+				return 7;
 
 			if(possible_sig[11])		// жёлтый мигающий
 				return 11;
 
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
-				return 14;
+			return 0;
 
-			if(possible_sig[19])	// синий
-				return 19;
+			}
+		else if(trmrk_flag & zxMarker.MRALS)			// АЛС 
+			{
+			if((trmrk_flag & zxMarker.MRT) and possible_sig[23])
+				return 23;
+
+			if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
+				return 25;
+
+
+			if(possible_sig[17])		// зелёный + белый	
+				return 17;
+
+			if(possible_sig[11])		// жёлтый мигающий
+				return 11;
 
 			return 0;
 			}
 
+		else if(trmrk_flag & zxMarker.MRDAB)	// на неправильный путь с АБ
+			{
+			if(possible_sig[11])		// жёлтый мигающий
+				return 11;
 
-		if(trmrk_mod == 1)		// отклонение
+			return 0;
+			}
+		else if(trmrk_flag & zxMarker.MRT)		// отклонение
 			{
 
 			if(possible_sig[7])		// жёлтый мигающий - жёлтый
@@ -1090,10 +1086,7 @@ trmrk_mod
 
 			return 0;
 			}
-
-
-
-		if(trmrk_mod == 2)		// отклонение пологое
+		else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
 			{
 			if(possible_sig[8])		// жёлтый миг. - жёлтый - полоса
 				return 8;
@@ -1109,60 +1102,29 @@ trmrk_mod
 			return 0;
 
 			}
-
-
-
-		if(trmrk_mod == 3)
+		else					// модификаций нет
 			{
-			if(trmrk_mod_2 == 2 and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
-				return 25;
-
-			if(possible_sig[18])		// жёлтый миг. + белый
-				return 18;
-			
-			if(possible_sig[7])		// жёлтый мигающий - жёлтый
-				return 7;
 
 			if(possible_sig[11])		// жёлтый мигающий
 				return 11;
 
-			return 0;
+			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
+				return 14;
 
-			}
-
-
-
-		if(trmrk_mod == 5)			// АЛС 
-			{
-			if(trmrk_mod_2 == 1 and possible_sig[23])
-				return 23;
-
-			if(trmrk_mod_2 == 2 and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
-				return 25;
-
-
-			if(possible_sig[17])		// зелёный + белый	
-				return 17;
-
-			if(possible_sig[11])		// жёлтый мигающий
-				return 11;
-
-			return 0;
-			}
-
-
-		if(trmrk_mod == 6)			// на неправильный путь с АБ
-			{
-			if(possible_sig[11])		// жёлтый мигающий
-				return 11;
+			if(possible_sig[19])	// синий
+				return 19;
 
 			return 0;
 			}
 
 		}
 
+	int NoState = zxMarker.MRT | zxMarker.MRT18 | zxMarker.MRWW | zxMarker.MRALS | zxMarker.MRDAB;
 
-	if((NextState == 5 or NextState == 8 or NextState == 12 or NextState == 24 or NextState == 25 ) and trmrk_mod == 0)
+
+	if((NextState == 5 or NextState == 8 or NextState == 12 or NextState == 24 or NextState == 25 ) and 
+	  (trmrk_flag & NoState)== 0)
+
 		{
 		if(possible_sig[10])		// зелёный мигающий
 			return 10;
@@ -1175,89 +1137,26 @@ trmrk_mod
 
 
 
+	if(ab4 and (NextState == 6  or NextState == 10 or NextState == 11 or NextState == 15 or NextState ==  16) and !(trmrk_flag & zxMarker.MREND4AB) and ((trmrk_flag & NoState) == 0))
+			// 4-значная АБ
 
-
-	if(ab4 and (NextState == 6  or NextState == 10 or NextState == 11 or NextState == 15 or NextState ==  16))			// 4-значная АБ
 		{
+		if(possible_sig[9])		// жёлтый зелёный
+			return 9;
 
+		if(possible_sig[14])		// зелёный
+			return 14;
 
-		if(trmrk_mod == 0)
-			{
-			if(possible_sig[9])		// жёлтый зелёный
-				return 9;
-
-			if(possible_sig[14])		// зелёный
-				return 14;
-
-			return 0;
-			}
-
+		return 0;
 		}
 
 
 
 // в остальных случаях зелёный (или модифицированный)
 
-
-
-	if(trmrk_mod == 0)
+	if(trmrk_flag & zxMarker.MRWW)
 		{
-		if(possible_sig[14])		 
-			return 14;		// зелёный
-
-		if(possible_sig[19])	// синий
-			return 19;
-
-		if(possible_sig[6])		// жёлтый
-			return 6;
-
-		return 0;
-		}
-
-
-	if(trmrk_mod == 1)	// отклонение
-		{
-		if(possible_sig[7])		// жёлтый мигающий - жёлтый
-			return 7;
-
-
-		if(possible_sig[14])		 
-			return 14;		// зелёный
-
-		if(possible_sig[19])	// синий
-			return 19;
-
-		if(possible_sig[6])		// жёлтый
-			return 6;
-
-
-
-		return 0;
-
-		}
-
-
-
-	if(trmrk_mod == 2)		// отклонение пологое
-		{
-		if(possible_sig[12])		// зелёный миг. - жёлтый - полоса
-			return 12;
-
-
-		if(possible_sig[7])		// жёлтый мигающий - жёлтый
-			return 7;
-
-		if(possible_sig[14])		 
-			return 14;		// зелёный
-
-		return 0;
-		}
-
-
-
-	if(trmrk_mod == 3)
-		{
-		if(trmrk_mod_2 == 2 and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
+		if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
 			return 25;
 
 		if(possible_sig[18])		// жёлтый миг. + белый
@@ -1270,17 +1169,13 @@ trmrk_mod
 			return 11;
 
 		return 0;
-
 		}
-
-
-
-	if(trmrk_mod == 5)			// АЛС 
+	else if(trmrk_flag & zxMarker.MRALS)		// АЛС 
 		{
-		if(trmrk_mod_2 == 1 and possible_sig[23])
+		if((trmrk_flag & zxMarker.MRT) and possible_sig[23])
 			return 23;
 
-		if(trmrk_mod_2 == 2 and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
+		if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
 			return 25;
 
 		if(possible_sig[17])		// зелёный + белый	
@@ -1295,8 +1190,7 @@ trmrk_mod
 		return 0;
 		}
 
-
-	if(trmrk_mod == 6)			// на неправильный путь с АБ
+	else if(trmrk_flag & zxMarker.MRDAB)		// на неправильный путь с АБ
 		{
 		if(possible_sig[15])		// зелёный зелёный
 			return 15;
@@ -1307,6 +1201,55 @@ trmrk_mod
 		return 0;
 		}
 
+	else if(trmrk_flag & zxMarker.MRT)	// отклонение
+		{
+		if(possible_sig[7])		// жёлтый мигающий - жёлтый
+			return 7;
+
+
+		if(possible_sig[14])		 
+			return 14;		// зелёный
+
+		if(possible_sig[19])	// синий
+			return 19;
+
+		if(possible_sig[6])		// жёлтый
+			return 6;
+
+
+
+		return 0;
+
+		}
+
+	else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
+		{
+		if(possible_sig[12])		// зелёный миг. - жёлтый - полоса
+			return 12;
+
+
+		if(possible_sig[7])		// жёлтый мигающий - жёлтый
+			return 7;
+
+		if(possible_sig[14])		 
+			return 14;		// зелёный
+
+		return 0;
+		}
+
+	else
+		{
+		if(possible_sig[14])		 
+			return 14;		// зелёный
+
+		if(possible_sig[19])	// синий
+			return 19;
+
+		if(possible_sig[6])		// жёлтый
+			return 6;
+
+		return 0;
+		}
 
 
 	return 0;

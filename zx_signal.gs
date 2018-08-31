@@ -34,6 +34,7 @@ float displacement;
 float def_displ;
 
 float vert_displ;
+float along_displ;
 
 string zxSP_name;
 string MU_name;
@@ -354,10 +355,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			mainLib.LibraryCall("find_next_signal",track_params,GSO);
 
 			if(Cur_next)
-				{
-				MainState = Cur_next.MainState;
 				Cur_next.CheckPrevSignals(false);
-				}
 
 			
 			SetSignal(false);
@@ -1406,6 +1404,13 @@ public string GetExtraSetTable()
 	s=s+hw.MakeCell(hw.MakeLink("live://property/vert_displ",   vert_displ ),"bgcolor='#AAAAAA'  align='center' ");
 	s=s+hw.EndRow();
 
+
+	s=s+hw.StartRow();
+	s=s+hw.MakeCell(hw.MakeLink("live://property/along_displ",  STT.GetString("along_displ")),"bgcolor='#666666'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/along_displ",   along_displ ),"bgcolor='#AAAAAA'  align='center' ");
+	s=s+hw.EndRow();
+
+
 	if(isMacht)
 		{
 		s=s+hw.StartRow();
@@ -1905,6 +1910,10 @@ public string GetPropertyType(string id)
 		{
 		s="float,-10,10,0.05";
 		}
+	else if(id=="along_displ")
+		{
+		s="float,-100,100,0.1";
+		}
 	else if(id=="head_rot" or id=="head_krepl_rot")
 		{
 		s="int,-180,180,1";
@@ -1933,14 +1942,18 @@ public void SetPropertyValue(string id, float val)
 	if(id == "displace")
 		{
 		displacement=val;
-		SetMeshTranslation("default", displacement-def_displ, 0, vert_displ);
+		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
 		}
 	else if(id == "vert_displ")
 		{
 		vert_displ=val;
-		SetMeshTranslation("default", displacement-def_displ, 0, vert_displ);
+		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
 		}
-
+	else if(id == "along_displ")
+		{
+		along_displ=val;
+		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+		}
 }
 
 
@@ -2584,7 +2597,7 @@ public void LinkPropertyValue(string id)
 					{
 					Type = Type + ST_PROTECT;
 
-					ProtectGroup = "";
+					ProtectGroup = "NewGroup";
 					protect_soup = Constructors.NewSoup();
 
 					}
@@ -2594,7 +2607,7 @@ public void LinkPropertyValue(string id)
 		else if(str_a[0]=="displace1")
 			{
  			displacement=Str.ToFloat(str_a[1]);
-			SetMeshTranslation("default", displacement-def_displ, 0, vert_displ);
+			SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
 			}
 		else if(str_a[0]=="code_freq")
 			{
@@ -2769,9 +2782,9 @@ public string GetImgMayOpen(bool state)
  	HTMLWindow hw=HTMLWindow;
  	string s="";
  	if(state)
-	 	s=hw.MakeImage("<kuid:236443:103204>",true,32,32);
+	 	s=hw.MakeImage("<kuid2:236443:103204:1>",true,32,32);
 	else
-		s=hw.MakeImage("<kuid:236443:103206>",true,32,32);
+		s=hw.MakeImage("<kuid2:236443:103206:1>",true,32,32);
 
  	return s;
  }
@@ -2784,9 +2797,9 @@ public string GetImgShuntMode(bool state)
  	string s="";
 
 	if(state)
-	 	s=hw.MakeImage("<kuid:236443:103210>",true,32,32);
+	 	s=hw.MakeImage("<kuid2:236443:103210:1>",true,32,32);
 	else
-		s=hw.MakeImage("<kuid:236443:103209>",true,32,32);
+		s=hw.MakeImage("<kuid2:236443:103209:1>",true,32,32);
 
  	return s;
 }
@@ -3212,7 +3225,7 @@ void GetDefaultSignalLimits()
 
 public void SetProperties(Soup soup)
 	{
-	inherited(soup);
+	//inherited(soup);
 	stationName = soup.GetNamedTag("stationName");
 
 // добавляем станцию светофора
@@ -3391,7 +3404,9 @@ public void SetProperties(Soup soup)
 
 
 	vert_displ = soup.GetNamedTagAsFloat("vert_displ",0);
-	SetMeshTranslation("default", displacement-def_displ, 0, vert_displ);
+	along_displ = soup.GetNamedTagAsFloat("along_displ",0);
+
+	SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
 
 	if(isMacht)
 		{
@@ -3498,7 +3513,7 @@ public void SetProperties(Soup soup)
 
 public Soup GetProperties(void)
 	{
-	Soup retSoup = inherited();
+	Soup retSoup = Constructors.NewSoup();
 	retSoup.SetNamedTag("train_open",train_open);
 	retSoup.SetNamedTag("shunt_open",shunt_open);
 	retSoup.SetNamedTag("barrier_closed",barrier_closed);
@@ -3523,6 +3538,7 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("displacement",displacement);
 	retSoup.SetNamedTag("def_displ",def_displ);
 	retSoup.SetNamedTag("vert_displ",vert_displ);
+	retSoup.SetNamedTag("along_displ",along_displ);
 
 	retSoup.SetNamedTag("wrong_dir",wrong_dir);
 	retSoup.SetNamedTag("train_is_l",train_is_l);
@@ -3632,7 +3648,6 @@ void OffMU(Message msg)
 public void Init(Asset asset)
 	{
 	inherited(asset);
-
 	GSO=new GSObject[1];
 	GSO[0] = cast<GSObject>me;
 	string[] return_str = new string[1];
@@ -3684,11 +3699,15 @@ public void Init(Asset asset)
 	AddHandler(me,"UpdateMU","Off","OffMU");
 
 	NullSoup = Constructors.NewSoup();
+
 	}
 
 
 public void Init(void)
 	{
+	//Asset asset = GetAsset();
+
+
 	}
 
 public Soup DetermineUpdatedState(void)

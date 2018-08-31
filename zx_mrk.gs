@@ -10,19 +10,18 @@ StringTable ST;
 /*
 
 
-trmrk_mod
-info
-
-
 0 прямой путь
 1 отклонение
 2 отклонение пологое
-3 неправильное (ЖмБ)
-4 ПАБ (ЗЗ)
-5 АЛС
-6 неправильное с 2-сторонней блокировкой (ЗЗ)
-7 маркер "располовиненого" пути (для ЖЖЖ)
-8 конец АБ
+4 нет сковозного пропуска
+8 неправильный
+16 ПАБ (ЗЗ)
+32 АЛС
+64 неправильного с двух сторонней АБ
+128 маркер "располовиненого" пути (для ЖЖЖ)
+256 конец АБ
+512 нет 4-значной АБ
+1024 маркер направления
 
 
 */
@@ -44,10 +43,21 @@ public string GetDescriptionHTML(void)
 {
         HTMLWindow hw=HTMLWindow;
 	int i;
-	string tp="MRFT,MRT,MRT18,MRWW,MRPAB,MRALS,MRDAB,MRHALFBL,MRENDAB,MRN";
 
+	string[] tok = new string[12];
 
-	string[] tok=Str.Tokens(tp,",");
+	tok[0] = "MRFT";
+	tok[1] = "MRT";
+	tok[2] = "MRT18";
+	tok[3] = "MRNOPR";
+	tok[4] = "MRWW";
+	tok[5] = "MRPAB";
+	tok[6] = "MRALS";
+	tok[7] = "MRDAB";
+	tok[8] = "MRHALFBL";
+	tok[9] = "MRENDAB";
+	tok[10] = "MREND4AB";
+	tok[11] = "MRN";
 
         string str="<html><body>";
         str=str+"<font size=\"10\" color=\"#00EFBF\"><b>"+ST.GetString("object_desc");
@@ -56,27 +66,32 @@ public string GetDescriptionHTML(void)
 
         str=str+hw.StartTable("border='1' width=400");
 
-	int q = tok.size() - 1;
+	int q = 1;
 
-	for(i=1;i<q;i++)
+	int mrn_Mark = 11;
+
+
+	for(i=1;i<mrn_Mark;i++)
 		{
 	        str=str+hw.StartRow();
         	str=str+hw.StartCell("bgcolor='#888888' colspan=2");
-		str=str+hw.RadioButton("live://property/marker_type/"+i,i == (trmrk_mod % 10) );
+		str=str+hw.CheckBox("live://property/marker_type/"+i, (trmrk_flag & q) );
 		str=str+" "+hw.MakeLink("live://property/marker_type/"+i, ST.GetString("marker_type-"+i))+" "+tok[i];
         	str=str+hw.EndCell();
 	        str=str+hw.EndRow();
+
+		q = q * 2;
         	}
 	
 	str=str+hw.StartRow();
         str=str+hw.StartCell("bgcolor='#888888' colspan=2");
-	str=str+hw.CheckBox("live://property/marker_type/"+10, (trmrk_mod / 10) == 1);
-	str=str+" "+hw.MakeLink("live://property/marker_type/"+10, ST.GetString("marker_type-"+q))+" "+tok[q];
+	str=str+hw.CheckBox("live://property/marker_type/"+mrn_Mark, (trmrk_flag & MRN));
+	str=str+" "+hw.MakeLink("live://property/marker_type/"+mrn_Mark, ST.GetString("marker_type-"+mrn_Mark))+" "+tok[mrn_Mark];
        	str=str+hw.EndCell();
         str=str+hw.EndRow();
 
 	
-	if((trmrk_mod / 10) == 1)
+	if(trmrk_flag & MRN)
 		{
 	        str=str+hw.StartRow();
         	str=str+hw.StartCell("bgcolor='#888899'");
@@ -98,13 +113,42 @@ public string GetDescriptionHTML(void)
 
 void SetName()
 	{
-	string tp="MRFT,MRT,MRT18,MRWW,MRPAB,MRALS,MRDAB,MRHALFBL,MRENDAB,MRN ";
-	string[] tok=Str.Tokens(tp,",");
+	string[] tok = new string[12];
 
-	if( (trmrk_mod / 10) == 1 )
-		SetFXNameText("name0",tok[(trmrk_mod-10)]+" "+info);
+	tok[0] = "MRFT ";
+	tok[1] = "MRT ";
+	tok[2] = "MRT18 ";
+	tok[3] = "MRNOPR ";
+	tok[4] = "MRWW ";
+	tok[5] = "MRPAB ";
+	tok[6] = "MRALS ";
+	tok[7] = "MRDAB ";
+	tok[8] = "MRHALFBL ";
+	tok[9] = "MRENDAB ";
+	tok[10] = "MREND4AB ";
+	tok[11] = "MRN";
+
+	string res = "";
+
+	if(trmrk_flag == 0)
+		res = tok[0];
 	else
-		SetFXNameText("name0",tok[trmrk_mod]);	
+		{
+		int q = 1;
+		int i;
+		for(i = 1; i < 12; i++)
+			{
+			if(trmrk_flag & q)
+				res = res + tok[i];
+			q = q * 2;
+			}
+
+		if(trmrk_flag & MRN)
+			res = res + " " + info;
+		}
+
+
+	SetFXNameText("name0",res);	
 	}
 
 
@@ -120,18 +164,18 @@ void  LinkPropertyValue (string id)
 		{
 		int a1 = Str.ToInt(tok[1]);
 
-		if(a1 == 10)
+		int q = 1;
+		int i;
+		for(i = 1; i < a1; i++)
 			{
-			if((trmrk_mod / 10) == 1)
-				trmrk_mod= trmrk_mod - 10;
-			else
-				trmrk_mod= 10;
+			q = q * 2;
 			}
-		else
-			{
 
-				trmrk_mod= 10*(int)(trmrk_mod/10)+a1;
-			}
+		trmrk_flag = trmrk_flag ^ q;
+
+		if((trmrk_flag & MRT) and (trmrk_flag & MRT18)  )
+			trmrk_flag = trmrk_flag ^ MRT18;
+
 
 		SetName();
 		}
@@ -153,8 +197,57 @@ public void SetPropertyValue(string id, string val)
 public void  SetProperties (Soup soup)
 {
 	inherited(soup);
-	trmrk_mod=soup.GetNamedTagAsInt("trmrk_mod",1);
-	info=soup.GetNamedTag("info");
+
+	trmrk_flag = soup.GetNamedTagAsInt("trmrk_flag",-1);
+	info = soup.GetNamedTag("info");
+
+	if(trmrk_flag == -1)
+		{
+		int trmrk_mod=soup.GetNamedTagAsInt("trmrk_mod",0);
+
+		if(trmrk_mod == 0)
+			{
+			if(info != "")
+				trmrk_flag = MRN;
+			else
+				trmrk_flag = MRT;
+			}
+		else
+			{
+			trmrk_flag = 0;
+
+			if((trmrk_mod / 10) == 1)
+				trmrk_flag = trmrk_flag | MRN;
+		
+			trmrk_mod = trmrk_mod % 10;
+
+			if(trmrk_mod == 1)
+				trmrk_flag = trmrk_flag | MRT;
+
+			if(trmrk_mod == 2)
+				trmrk_flag = trmrk_flag | MRT18;
+
+			if(trmrk_mod == 3)
+				trmrk_flag = trmrk_flag | MRWW;
+
+			if(trmrk_mod == 4)
+				trmrk_flag = trmrk_flag | MRPAB;
+
+			if(trmrk_mod == 5)
+				trmrk_flag = trmrk_flag | MRALS;
+
+			if(trmrk_mod == 6)
+				trmrk_flag = trmrk_flag | MRDAB;
+
+			if(trmrk_mod == 7)
+				trmrk_flag = trmrk_flag | MRHALFBL;
+
+			if(trmrk_mod == 8)
+				trmrk_flag = trmrk_flag | MRENDAB;
+				
+			}
+
+		}
 
 	SetName();
 }
@@ -162,7 +255,7 @@ public void  SetProperties (Soup soup)
 public Soup  GetProperties (void)
 {
 	Soup ret=inherited();
-	ret.SetNamedTag("trmrk_mod",trmrk_mod);
+	ret.SetNamedTag("trmrk_flag",trmrk_flag);
 	ret.SetNamedTag("info",info);
 	return ret;	
 }
