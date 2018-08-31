@@ -1484,9 +1484,11 @@ public string GetProtectTable()
 	s=s+hw.MakeCell( hw.MakeLink("live://property/protect_delete", "X"),"align='center' bgcolor='#BBAAAA' width='5%' ");
 	s=s+hw.EndRow();
 
-	int N = protect_soup.GetNamedTagAsInt("number",0);
+	int N = 0;
 	int i;
 
+	if(protect_soup)
+		N = protect_soup.GetNamedTagAsInt("number",0);
 
 	for(i=0;i<N;i++)
 		{
