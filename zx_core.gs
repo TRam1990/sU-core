@@ -918,6 +918,17 @@ void SendNewRepeaterSpeed(string rep_name, float speed)
 	SendMessagesToClients(Temp_soup, "sU_SetRepSpeed");
 	}
 
+void SendLimitSpeed(string rep_name, float speed, bool train_pass)
+	{
+	Soup Temp_soup = Constructors.NewSoup();
+
+	Temp_soup.SetNamedTag("id",rep_name);
+	Temp_soup.SetNamedTag("limit",speed);
+	Temp_soup.SetNamedTag("train_pass",train_pass);
+
+	SendMessagesToClients(Temp_soup, "sU_SetLimitSpeed");
+	}
+
 
 void MultiplayerClientHandler1(Message msg)
 	{
@@ -976,6 +987,14 @@ void MultiplayerClientHandler1(Message msg)
 		zxSpeedBoard sp_board = cast<zxSpeedBoard>( Router.GetGameObject( sp.GetNamedTag("id") ) );
 		sp_board.SetNewSpeed(sp.GetNamedTagAsFloat("limit",-1), false);
 		}
+
+
+	else if(type == "sU_SetLimitSpeed")
+		{
+		zxSpeedLimit sp_limit = cast<zxSpeedLimit>( Router.GetGameObject( sp.GetNamedTag("id") ) );
+		sp_limit.SetLimitFor(sp.GetNamedTagAsFloat("limit",-1), sp.GetNamedTagAsBool("train_pass", false));
+		}
+
 	else if(type == "sU_Sync")
 		{
 		SetChangeSoup(sp);
@@ -1417,12 +1436,13 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						{
 						int old_m_st = sig1.MainState;
 
-						if(old_m_st != 0 and old_m_st != 1 and old_m_st != 2 and old_m_st != 3 and old_m_st != 20)
+						if(((cast<zxSignal>MO).Type & zxSignal.ST_ROUTER) and old_m_st != 0 and old_m_st != 1 and old_m_st != 2 and old_m_st != 3 and old_m_st != 20)
 							{
 							sig1.Cur_prev=cast<zxSignal>MO;
 							stringParam[1] = marker+"";
 							return "";
 							}
+
 						blue_signal=true;							// то ж-ж-ж не используем
 						}
 
@@ -1573,60 +1593,131 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		MapObject MO = GSTS.SearchNext();
 		bool temp_dir;
 
-		float limit = sig1.GetSpeedLim(Str.ToInt(stringParam[0]));
+		int prior = Str.ToInt(stringParam[0]);
+
+		float limit2 = sig1.GetSpeedLim(prior);
+		float limit = sig1.GetCurrSpeedLim(limit2, prior);
 
 		int i = 0;
+	
+		float speedboard_own_lim = 0;
 
 
 		while(MO and !( MO.isclass(Vehicle) and stringParam[1] != "-") and !(i>1 and MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  (!((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)) and (!((cast<zxSignal>MO).MainState == 19))  ) )
 			{
-			if(MO.isclass(zxSpeedBoard))
-				{
-				(cast<zxSpeedBoard>MO).SetNewSpeed(limit, false);
 
-				if(MP_started)
-					SendNewRepeaterSpeed(MO.GetName(), limit);
-				}
-					
+			if(GSTS.GetFacingRelativeToSearchDirection() == true)
+				{		
 
-			if(MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and (cast<zxSignal>MO).speed_soup)
-				{
-				if( (cast<zxSignal>MO).train_is_l)
-					return "";
-
-
-				if(  ((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or ((cast<zxSignal>MO).MainState == 19))
+				if(MO.isclass(zxSignal) and (cast<zxSignal>MO).speed_soup)
 					{
-
-					if((cast<zxSignal>MO).SetSpeedLim(0))
-						{
-						if(MP_started)
-							SendNewSignalSpeed(MO.GetName(), (cast<zxSignal>MO).speed_limit);
-						}
-					}
-				else
-					{
-					if( ((cast<zxSignal>MO).MainState == 0) or ((cast<zxSignal>MO).MainState == 1) or ((cast<zxSignal>MO).MainState == 2))
+					if( (cast<zxSignal>MO).train_is_l)
 						return "";
 
 
-					limit = (cast<zxSignal>MO).GetSpeedLim(Str.ToInt(stringParam[0]));
-
-
-					if( (cast<zxSignal>MO).SetSpeedLim(limit) )
+					if(  ((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or ((cast<zxSignal>MO).MainState == 19))
 						{
+
+						if((cast<zxSignal>MO).SetSpeedLim(0))
+							{
+							if(MP_started)
+								SendNewSignalSpeed(MO.GetName(), (cast<zxSignal>MO).speed_limit);
+							}
+						}
+					else
+						{
+						if( ((cast<zxSignal>MO).MainState == 0) or ((cast<zxSignal>MO).MainState == 1) or ((cast<zxSignal>MO).MainState == 2))
+							return "";
+
+
+						limit2 = (cast<zxSignal>MO).GetSpeedLim(prior);
+						limit = (cast<zxSignal>MO).GetCurrSpeedLim(limit2, prior);
+
+						if( (cast<zxSignal>MO).SetSpeedLim(limit) )
+							{
+							if(MP_started)
+								SendNewSignalSpeed(MO.GetName(), limit);
+							}
+
+						if((cast<zxSignal>MO).zxSP)
+							{
+							zxSpeedBoard zxSB_t = (cast<zxSignal>MO).zxSP;
+							GSTrackSearch GSTS2 = zxSB_t.BeginTrackSearch(true);
+							MapObject MO2 = GSTS2.SearchNext();
+
+							float temp_lim = limit2;
+							float temp_lim2 = limit2;
+
+							if((speedboard_own_lim > 0) and (speedboard_own_lim < limit2))
+								{
+								temp_lim = speedboard_own_lim;
+								zxSB_t.SetNewSpeed(speedboard_own_lim, true);
+								}
+							else if(limit2 < zxSB_t.MainSpeed)
+								{
+								temp_lim = zxSB_t.MainSpeed;
+								temp_lim2 = zxSB_t.MainSpeed;
+								}
+
+							while(MO and MO2!=MO)
+								{
+
+								if(MO2.isclass(zxSpeedLimit) and GSTS2.GetFacingRelativeToSearchDirection() == true)
+									{
+									if(! (cast<zxSpeedLimit>MO2).is_limit_start)
+										temp_lim = temp_lim2;
+
+									(cast<zxSpeedLimit>MO2).SetLimitFor(temp_lim, prior == 1);
+
+									if(MP_started)
+										SendLimitSpeed(MO2.GetName(), temp_lim, prior == 1);
+									}
+
+								MO2 = GSTS2.SearchNext();
+								}
+							}
+					
+						if( i == 0 )
+							stringParam[1] = "";
+
+						i++;
+						}
+					}
+
+				else if(MO.isclass(zxSpeedBoard))
+					{
+					if(limit != limit2)
+						speedboard_own_lim = limit;
+					else
+						speedboard_own_lim = 0;
+
+					if(limit != (cast<zxSpeedBoard>MO).MainSpeed)
+						{
+						(cast<zxSpeedBoard>MO).SetNewSpeed(limit, false);
+
 						if(MP_started)
-							SendNewSignalSpeed(MO.GetName(), limit);
+							SendNewRepeaterSpeed(MO.GetName(), limit);
 						}
 
-					
-					if( i == 0 )
-						stringParam[1] = "";
+					if((cast<zxSpeedBoard>MO).ExtraSpeed > limit)
+						limit = (cast<zxSpeedBoard>MO).ExtraSpeed;
 
-					i++;
+					if((cast<zxSpeedBoard>MO).ExtraSpeed > limit2)
+						limit2 = (cast<zxSpeedBoard>MO).ExtraSpeed;
 					}
-				}
+	
+				else if(MO.isclass(zxSpeedLimit))
+					{
+					if(! (cast<zxSpeedLimit>MO).is_limit_start)
+						limit = limit2;
 
+					(cast<zxSpeedLimit>MO).SetLimitFor(limit, prior == 1);
+
+					if(MP_started)
+						SendLimitSpeed(MO.GetName(), limit, prior == 1);
+					}
+
+				}
 
 
 			if(MO.isclass(Trackside) and !MO.isclass(Junction) and GSTS.GetDistance()>3000 )

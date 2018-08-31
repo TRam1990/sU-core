@@ -20,8 +20,9 @@ thumbnails
 
 script-include-table
 {
-  0                                     <kuid2:151055:60049:1>
-  1                                     <kuid:30501:1020>
+  0                                     <kuid2:151055:60038:3>
+  1                                     <kuid2:151055:60049:1>
+  2                                     <kuid:30501:1020>
 }
 
 string-table
@@ -64,6 +65,7 @@ string-table
   als75                                 "АЛС-75"
   alsen                                 "АЛС-ЕН"
   yellow_code                           "код жёлтого для ЖЗ и Жм"
+  pause_bef_red                         "Задержка включения красного "
   untyped_flag                          "типовой светофор"
   in_flag                               "входной"
   out_flag                              "выходной/маршрутный"
@@ -94,10 +96,11 @@ string-table
 extensions
 {
 }
-kuid                                    <kuid2:400260:100120:24>
+kuid                                    <kuid2:400260:100120:25>
 
 kuid-table
 {
   mp_library                            <kuid:30501:1020>
-  0                                     <kuid2:151055:60049:1>
+  0                                     <kuid2:151055:60038:3>
+  1                                     <kuid2:151055:60049:1>
 }

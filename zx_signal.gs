@@ -50,6 +50,8 @@ bool station_edited = false;
 
 bool pre_protected = false;
 
+float pause_bef_red = 3.5;
+
 
 bool dis_koz;
 bool[] koz_mesh;
@@ -188,7 +190,10 @@ public void SetSignal(bool set_auto_state)
 	{
 	if(SetOwnSignalState(set_auto_state))
 		{
-		NewSignal(set_lens,0,0.7);
+		if(MainState == 1)
+			NewSignal(set_lens,0,pause_bef_red);
+		else
+			NewSignal(set_lens,0,0.7);
 
 		if(IsServer)
 			mainLib.LibraryCall("mult_settings",null,GSO);
@@ -222,7 +227,8 @@ public void CheckPrevSignals(bool no_train)
 		{
 		Cur_prev.MainState = Other_MainState;
 		Cur_prev.CheckPrevSignals(false);
-		Cur_prev.SetSpeedLim( Cur_prev.GetSpeedLim( Cur_prev.FindTrainPrior(false) ) );
+		int prior1 = Cur_prev.FindTrainPrior(false);
+		Cur_prev.SetSpeedLim( Cur_prev.GetCurrSpeedLim(  Cur_prev.GetSpeedLim( prior1 ), prior1 ) );
 		Cur_prev.SetSignal(true);
 		}
 
@@ -421,7 +427,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				if(priority < 0)
 					priority = FindTrainPrior(false);
 
-				new_speed_limit = GetSpeedLim(priority);
+				new_speed_limit = GetCurrSpeedLim( GetSpeedLim(priority), priority );
 				}
 
 			SetSpeedLim(new_speed_limit);
@@ -483,7 +489,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			if(priority < 0)
 				priority = FindTrainPrior(false);
 
-			new_limit = GetSpeedLim( priority );
+			new_limit = GetCurrSpeedLim( GetSpeedLim( priority ), priority );
 			}
 
 		SetSpeedLim( new_limit );
@@ -500,14 +506,14 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		if(priority < 0)
 			priority = FindTrainPrior(false);
 
+		type_ToFind[0]=priority;
+		type_ToFind[1]="-";
+		mainLib.LibraryCall("new_speed",type_ToFind,GSO);
+
 		if(!(Type & ST_PERMOPENED))
 			train_open = false;
 
 		CheckMySignal(true);
-
-		type_ToFind[0]=priority;
-		type_ToFind[1]="-";
-		mainLib.LibraryCall("new_speed",type_ToFind,GSO);
 
 		SetSignal(true);
 
@@ -823,6 +829,10 @@ public void ShowName(bool reset)
 				else if(sv_name[i]==' ')
 					{
 					tabl[j] = 21;
+					}
+				else if(sv_name[i]=='-')
+					{
+					tabl[j] = 51;
 					}
 				else
 					j--;
@@ -1428,6 +1438,20 @@ public string GetExtraSetTable()
 	s=s+hw.EndTable();
 	s=s+"<br>";
 
+
+	s=s+hw.StartTable("border='1' width='90%'");
+
+	s=s+hw.StartRow();
+	s=s+hw.MakeCell(hw.MakeLink("live://property/pause_bef_red",  STT.GetString("pause_bef_red")),"bgcolor='#666666'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/pause_bef_red",   pause_bef_red ),"bgcolor='#AAAAAA'  align='center' ");
+	s=s+hw.EndRow();
+
+	s=s+hw.EndTable();
+	s=s+"<br>";
+
+
+
+
 	return s;
 }
 
@@ -1926,6 +1950,10 @@ public string GetPropertyType(string id)
 		{
 		s="int,0,500,1";
 		}
+	else if(id=="pause_bef_red")
+		{
+		s="float,0,10,0.1";
+		}
 	else
 		{
 		string[] str_a = Str.Tokens(id+"","/");
@@ -1953,6 +1981,10 @@ public void SetPropertyValue(string id, float val)
 		{
 		along_displ=val;
 		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+		}
+	else if(id == "pause_bef_red")
+		{
+		pause_bef_red = val;
 		}
 }
 
@@ -3398,13 +3430,14 @@ public void SetProperties(Soup soup)
 	if(def_displ == 0)
 		{
 		def_displ = GetAsset().GetConfigSoup().GetNamedTagAsFloat("trackside",0);
-
 		displacement = def_displ;
 		}
 
 
 	vert_displ = soup.GetNamedTagAsFloat("vert_displ",0);
 	along_displ = soup.GetNamedTagAsFloat("along_displ",0);
+
+	pause_bef_red = soup.GetNamedTagAsFloat("pause_bef_red",1.5);
 
 	SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
 
@@ -3552,6 +3585,8 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("kor_BU_2",kor_BU_2);
 	retSoup.SetNamedTag("yellow_code",yellow_code);
 
+
+	retSoup.SetNamedTag("pause_bef_red",pause_bef_red);
 
 	retSoup.SetNamedTag("AttachedJunction",AttachedJunction);
 

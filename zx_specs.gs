@@ -21,8 +21,10 @@ class TrainContainer isclass GSObject
 class zxSpeedBoard isclass Trackside
 {
 	public float MainSpeed;		// скорость предыдущего светофора
-
 	public float ExtraSpeed;	// скорость последующего светофора
+
+
+
 
 	public void SetNewSpeed(float speed, bool extra)
 		{
@@ -38,6 +40,42 @@ class zxSpeedBoard isclass Trackside
 			SetSpeedLimit( ExtraSpeed );
 		else
 			SetSpeedLimit( MainSpeed );
+		}
+};
+
+
+class zxSpeedLimit isclass Trackside
+{
+	public float max_speed_pass;	// установленное ограничение пассажирским
+	public float max_speed_cargo;	// установленное ограничение грузовым
+
+	public bool is_limit_start = false;	// является началом/окончанием ограничения
+
+	public void SetLimitFor(float speed, bool pass)
+		{
+		if(speed == 0.0f)
+			return;
+
+		if(!is_limit_start)
+			{
+			SetSpeedLimit( speed );
+			return;
+			}	
+			
+		if(pass)
+			{
+			if(speed > max_speed_pass)
+				SetSpeedLimit( max_speed_pass );
+			else
+				SetSpeedLimit( speed );
+			}
+		else
+			{
+			if(speed > max_speed_cargo)
+				SetSpeedLimit( max_speed_cargo );
+			else
+				SetSpeedLimit( speed );
+			}
 		}
 };
 
@@ -72,6 +110,8 @@ class zxSignal isclass Signal, ALSN_Provider
 
 	public float speed_limit;	// ограничение светофора
 
+	public float max_speed_pass = 0;	// установленное ограничение пассажирским ( 0 - нет ограничений)
+	public float max_speed_cargo = 0;	// установленное ограничение грузовым ( 0 - нет ограничений)
 
 	public bool MP_NotServer = false;	// не является сервером в мультиплеерной игре (отключение логики)
 	public bool IsServer = false;
@@ -176,11 +216,31 @@ class zxSignal isclass Signal, ALSN_Provider
 		return false;
 		}
 
+	public float GetCurrSpeedLim(float SpeedLim, int prior)
+		{
+		if(SpeedLim <= 0)
+			return SpeedLim;
+			
+		if(prior==1)
+			{
+			if(max_speed_pass > 0 and max_speed_pass < SpeedLim )
+				return max_speed_pass;
+			}
+		else
+			{
+			if(max_speed_cargo > 0 and max_speed_cargo < SpeedLim)
+				return max_speed_cargo;
+			}
+
+		return SpeedLim;
+		}
+
 
 	public float GetSpeedLim(int prior)
 		{
 		if(MainState == 19)
 			return -1.0;
+
 
 		string s=MainState;
 
@@ -200,15 +260,13 @@ class zxSignal isclass Signal, ALSN_Provider
 
 	public bool SetSpeedLim(float speed_limit_new)
 		{
+		if(zxSP and speed_limit_new != zxSP.ExtraSpeed)
+			zxSP.SetNewSpeed(speed_limit_new, true);
+
 		if(speed_limit != speed_limit_new)
 			speed_limit = speed_limit_new;
 		else
-			return false;
-
-
-		if(zxSP)
-			zxSP.SetNewSpeed(speed_limit, true);
-
+			return false;	
 
 		if(speed_limit > 0)
 			{
@@ -335,7 +393,7 @@ public int trmrk_mod;
 	public define int MRFT		= 0;
 	public define int MRT		= 1;
 	public define int MRT18		= 2;
-	public define int MRNOPR		= 4;
+	public define int MRNOPR	= 4;
 	public define int MRWW		= 8;
 	public define int MRPAB		= 16;
 	public define int MRALS		= 32;

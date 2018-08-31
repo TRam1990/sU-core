@@ -903,6 +903,10 @@ public void ShowName(bool reset)
 					{
 					tabl[j] = 21;
 					}
+				else if(sv_name[i]=='-')
+					{
+					tabl[j] = 51;
+					}
 				else	
 					j--;			
 				}
