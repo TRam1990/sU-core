@@ -1582,7 +1582,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 		if( sig1.MainState == 19 )
 			{
-			Interface.Exception("error with call NewSpeed");
+			//Interface.Exception("error with call NewSpeed");
 
 			return "";
 			}
