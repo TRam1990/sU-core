@@ -1383,9 +1383,10 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		if(MO and MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (cast<zxSignal>MO).IsObligatory())
 			sig1.Cur_next=cast<zxSignal>MO;
 		else
+			{
 			sig1.Cur_next=null;
-
-
+			(stringParam[0])[0]='+';
+			}
 
 		}
 	else if(function=="find_prev_signal")
@@ -1505,6 +1506,31 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		stringParam[1] = marker+"";
 		}
 
+	else if(function=="find_any_next_signal")
+		{
+
+		zxSignal sig1=cast<zxSignal>objectParam[0];
+
+		if(!sig1)
+			{
+			Interface.Exception("signal with error!");
+			return "";
+			}
+
+		GSTrackSearch GSTS = sig1.BeginTrackSearch(true);
+
+		MapObject MO = GSTS.SearchNext();
+		
+		while(MO and !MO.isclass(zxSignal))
+			{
+			MO = GSTS.SearchNext();
+			}
+
+		if(MO)
+			return "true";
+
+		return "false";
+		}
 
 
 
@@ -1659,7 +1685,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 								temp_lim2 = zxSB_t.MainSpeed;
 								}
 
-							while(MO and MO2!=MO)
+							while(MO2 and MO2!=MO)
 								{
 
 								if(MO2.isclass(zxSpeedLimit) and GSTS2.GetFacingRelativeToSearchDirection() == true)

@@ -368,6 +368,11 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			}
 		}
 
+	if((Type & ST_SHUNT) and train_open)
+		{
+		train_open = false;
+		return;
+		}
 
 
 	if(Type & ST_UNLINKED)
@@ -394,12 +399,19 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 					}
 				else
 					{
-					SetSignalState(2, "");
-
 					if(shunt_open)
-						MainState=20;
+						{
+						if(mainLib.LibraryCall("find_any_next_signal",null,GSO)=="true")
+							{
+							SetSignalState(2, "");	
+							MainState=20;
+							}
+						else
+							shunt_open = false;
+						}
 					else
-						{						
+						{
+						SetSignalState(2, "");						
 
 						string[] track_params = new string[2];
 						mainLib.LibraryCall("find_next_signal",track_params,GSO);
@@ -466,6 +478,16 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			}
 		else
 			{
+			if(shunt_open)
+				{
+				if(mainLib.LibraryCall("find_any_next_signal",null,GSO)!="true")
+					{
+					shunt_open = false;
+					return;
+					}
+				}
+
+
 			CheckMySignal(false);
 
 			if(MainState == 19)
@@ -544,10 +566,8 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 
 
-	if( (reason==2 or reason==4) and (Type & (ST_IN+ST_OUT+ST_ROUTER)) )
+	if( reason==2 or reason==4 )
 		{
-		GSTrackSearch GSTS1;
-
 		if( AttachedJunction != "")
 			{
 			Junction jun1 = cast<Junction>( Router.GetGameObject(AttachedJunction) );
@@ -857,7 +877,7 @@ public void ShowName(bool reset)
 
 		if(q < n_tabl)
 			{
-			while(tabl[q]>=22 and q<n_tabl )
+			while(q<n_tabl and tabl[q]>=22 )
 				q++;
 
 			if(q>(n_tabl-1) or q>3)
@@ -1048,6 +1068,11 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 
 
 	zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
+
+	if(!zxsm)
+		Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
+
+
 	zxsm.Deswitch_span();
 
 	wrong_dir=false;
@@ -1085,6 +1110,10 @@ public void Switch_span2()		// повернуть светофор в сторону этого светофора
 
 
 	zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
+
+	if(!zxsm)
+		Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
+
 	zxsm.Deswitch_span();
 
 	wrong_dir=false;
@@ -2442,6 +2471,10 @@ public void LinkPropertyValue(string id)
 	else if(id=="spanTrackFromOther")
 		{
 		zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
+
+		if(!zxsm)
+			Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
+
 		zxsm.Switch_span2();
 		}
 	else if(id=="speed_init")
@@ -3154,6 +3187,10 @@ void OldSpanHandler(Message msg)
 		{
 		zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
 
+		if(!zxsm)
+			Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
+
+
 		if(zxsm.Switch_span())
 			{
 			PostMessage(null,"CTRL3", "SpanDirectionChanged^any^"+msg.minor,0);
@@ -3556,7 +3593,12 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("MainState",MainState);
 
 	if(!wrong_dir)
-		retSoup.SetNamedTag("privateStateEx", LC.sgn_st[MainState].l.MainState   );	// для совместимости с z7
+		{
+		if(Type & (ST_UNLINKED|ST_PROTECT))
+			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[19].l.MainState   );	// для совместимости с z7
+		else
+			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[MainState].l.MainState   );	// для совместимости с z7
+		}
 	else
 		retSoup.SetNamedTag("privateStateEx", 1000   );
 
