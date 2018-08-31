@@ -485,7 +485,7 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 
 	MapObject MO = GSTS.SearchNext();
 
-	while(MO and !MO.isclass(Vehicle) and GSTS.GetDistance()<40)
+	while(MO and GSTS.GetDistance()<23 and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
 		{
 		MO = GSTS.SearchNext();
 		}
@@ -511,10 +511,6 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 		if(vel_ty < 0)
 			vel_dir = true;
 
-		if(vel_dir and GSTS.GetDistance() < (veh1.GetLength()/2))
-			before = true;
-
-
 		}
 
 
@@ -522,7 +518,7 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 	GSTS = sig1.BeginTrackSearch(false);
 	MO = GSTS.SearchNext();
 
-	while(MO and !MO.isclass(Vehicle) and GSTS.GetDistance()<40)
+	while(MO and GSTS.GetDistance()<23 and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
 		{
 		MO = GSTS.SearchNext();
 		}
@@ -546,8 +542,6 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 		if(vel_ty < 0)
 			vel_dir = true;
 
-		if(!vel_dir and GSTS.GetDistance() < (veh1.GetLength()/2))
-			behind = true;
 
 		}
 
