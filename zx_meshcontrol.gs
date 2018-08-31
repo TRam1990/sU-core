@@ -7,6 +7,9 @@ class zxMeshController isclass GSObject
 public MeshObject[] LightMeshes;
 public MeshObject[] KozMeshes;
 
+public float dt_on = 0.2;
+public float dt_off = 0.5;
+
 
 public define string lens = "RGGYYYWWBL";	// красный зелёный жёлтый белый синий зелёная_полоса
 
@@ -97,9 +100,9 @@ public void OffMeshes(bool[] set_lens)
 	for(i=0;i<10;i++)
 		if(LightMeshes[i] and !set_lens[i])
 			{
-			LightMeshes[i].SetMeshVisible("default",false,0.5);
+			LightMeshes[i].SetMeshVisible("default",false,dt_off);
 			if(kozirki[i])
-				KozMeshes[i].SetMeshVisible("default",false,0.5);
+				KozMeshes[i].SetMeshVisible("default",false,dt_off);
 			}
 	}
 
@@ -109,9 +112,9 @@ public void SetMeshes( bool[] set_lens)
 	for(i=0;i<10;i++)
 		if(LightMeshes[i] and set_lens[i])
 			{
-			LightMeshes[i].SetMeshVisible("default",set_lens[i],0.2);
+			LightMeshes[i].SetMeshVisible("default",set_lens[i],dt_on);
 			if(kozirki[i])
-				KozMeshes[i].SetMeshVisible("default",set_lens[i],0.2);
+				KozMeshes[i].SetMeshVisible("default",set_lens[i],dt_on);
 			}
 	}
 
@@ -137,9 +140,9 @@ public void RemoveMeshes(MeshObject parent,  int[] positions)
 
 public void SetMesh( int num, bool state)
 	{
-	float dt=0.5;
+	float dt=dt_off;
 	if(state)
-		dt=0.2;
+		dt=dt_on;
 
 	if(LightMeshes[num])
 		{

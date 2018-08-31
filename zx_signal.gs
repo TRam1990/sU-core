@@ -809,17 +809,14 @@ public void ShowName(bool reset)
 	n_tabl = j;
 
 
-	if(!isMacht and n_tabl>=3)
+	if(!isMacht and n_tabl>3)
 		{
 		while(tabl[q]<22 and q<n_tabl )
 			q++;
 
 		if(q < n_tabl)
 			{
-			while(tabl[q]>=22 and tabl[q]!=37 and q<n_tabl )
-				q++;
-
-			if(tabl[q]==37)
+			while(tabl[q]>=22 and q<n_tabl )
 				q++;
 
 			if(q>(n_tabl-1) or q>3)
@@ -3293,6 +3290,13 @@ public void Init(Asset asset)
   STT = asset.FindAsset("main_lib").GetStringTable();
 
 	MC = new zxMeshController();
+
+	if(ST.GetString("is_led") == "1")
+		{
+		MC.dt_on = 0;
+		MC.dt_off = 0;
+		}
+
 	LC = zxLightContainer;
 	if(!LC.sgn_st)
 		LC.Init();
