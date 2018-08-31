@@ -176,6 +176,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 //	Interface.Log(err);
 
 
+
 		}
 	else				// такой поезд наехал на иной светофор
 		{
@@ -198,6 +199,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1]=0;
 
 			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetId());
+
 
 
 //	err="train intNum " + train_nmb + " to extra sign "+(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1]+" size = "+(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal.size();
@@ -337,7 +339,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 			
 			int train_position = SearchForTrain(entered_sign, curr_train.GetId() );
 
-			if(train_position != 2 and train_position != 5)
+			if(train_position == 0 and (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1] == 0)
 				{
 				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[num1,num1+1]=null;
 				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1,num1+1]=null;
@@ -485,7 +487,7 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 
 	MapObject MO = GSTS.SearchNext();
 
-	while(MO and GSTS.GetDistance()<40 and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
+	while(MO and GSTS.GetDistance()<30 and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
 		{
 		MO = GSTS.SearchNext();
 		}
@@ -518,7 +520,7 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 	GSTS = sig1.BeginTrackSearch(false);
 	MO = GSTS.SearchNext();
 
-	while(MO and GSTS.GetDistance()<40 and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
+	while(MO and GSTS.GetDistance()<30 and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
 		{
 		MO = GSTS.SearchNext();
 		}
