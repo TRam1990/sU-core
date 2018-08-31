@@ -196,6 +196,20 @@ public void SetSignal()
 		NewSignal(set_lens,0,0.7);
 	}
 
+void MakeSignalSearch()
+	{
+
+	string[] type_ToFind = new string[2];
+	type_ToFind[0]=ST_UNTYPED+"";
+
+	if(MainState == 19 )
+		return;
+
+	mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
+
+
+	}
+
 
 public void CheckPrevSignals(bool no_train)
 	{
@@ -205,8 +219,9 @@ public void CheckPrevSignals(bool no_train)
 	if(MainState == 19 )
 		return;
 	int sch1 = ST_UNLINKED+ST_OUT;
+	int sch2 = ST_UNLINKED+ST_IN;
 
-	if((Type & sch1)==sch1  and !train_open)
+	if( ( (Type & sch1)==sch1 or (Type & sch2)==sch2 ) and !train_open)
 		return;
 
 
@@ -327,7 +342,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 	if(Type & ST_UNLINKED)
 		{
-		if(Type & ST_OUT)
+		if(Type & ST_OUT or Type & ST_IN)
 			{
 			if(reason==1 and train_open)
 				{
@@ -469,6 +484,8 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			train_open = false;
 
 		CheckMySignal(0,1.5,true);
+
+		MakeSignalSearch();
 
 		}
 
@@ -1118,8 +1135,8 @@ public void GenerateSpan(bool recurs)
 string TranslNames(string name)
 	{
 	string ret="";
-	string main1= ST.GetString("lens_str1");
-	string add1= ST.GetString("lens_str2");
+	string main1= STT.GetString("lens_str1");
+	string add1= STT.GetString("lens_str2");
 
 	int i;
 
@@ -1165,14 +1182,14 @@ public string GetCntSpeedTable(void)
 		        s=s+hw.StartTable("border='1' width=100%");
 		        		s=s+hw.StartRow();
 					s=s+hw.StartCell("bgcolor='#999999'");
-					s=s+"РїРѕРєР°Р·Р°РЅРёРµ СЃРІРµС‚РѕС„РѕСЂР°";
+					s=s+STT.GetString("sign_indication");
 					s=s+hw.EndCell();
 
 					s=s+hw.StartCell("bgcolor='#999999'");
-					s=s+"РїР°СЃСЃР°Р¶РёСЂСЃРєРёР№, РєРј/С‡";
+					s=s+STT.GetString("pass_train");
 					s=s+hw.EndCell();
 					s=s+hw.StartCell("bgcolor='#999999'");
-					s=s+"РіСЂСѓР·РѕРІРѕР№, РєРј/С‡";
+					s=s+STT.GetString("cargo_train");;
 					s=s+hw.EndCell();
 
 					s=s+hw.EndRow();

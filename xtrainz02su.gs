@@ -8,19 +8,29 @@ class BinarySortedArraySu
 	public int N=0;			// число инициализированных элементов
 
 
+
 	public void UdgradeArraySize(int NewN )			// мастер предварительного выделения места массиву
 		{
 		int i;
+		int old_size = DBSE.size();
+
 		BinarySortedElementS[] DBSE2= new BinarySortedElementS[NewN];
 
-		for(i=0;i<N;i++)			// пересохраняем старый массив
+		for(i=0;i<old_size;i++)			// пересохраняем старый массив
 			DBSE2[i]=DBSE[i];
 
-		for(i=N;i<NewN;i++)
+
+
+		for(i=old_size;i<NewN;i++)
 			DBSE2[i]=new BinarySortedElementS();
 				
-		DBSE=DBSE2;
+		DBSE=DBSE2; 
 		}
+
+
+
+
+
 
 
 	bool Comp_str_FL(string a,string b)
@@ -127,6 +137,11 @@ class BinarySortedArraySu
 		int t = Find(a,false);
 		if(t>=0)
 			{
+			DBSE[t].a=null;
+			DBSE[t].Object=null;
+
+
+
 			int i;
 			for(i=t;i<N-1;i++)
 				{
@@ -134,13 +149,21 @@ class BinarySortedArraySu
 				DBSE[i].Object=DBSE[i+1].Object;
 				}
 			N--;
+
+			DBSE[N].a=null;
+			DBSE[N].Object=null;
 			}	
 		}
 
 	public void DeleteElementByNmb(int a)
 		{
+		
 		if(a>=0)
 			{
+			DBSE[a].a=null;
+			DBSE[a].Object=null;
+
+
 			int i;
 			for(i=a;i<N-1;i++)
 				{
@@ -148,6 +171,9 @@ class BinarySortedArraySu
 				DBSE[i].Object=DBSE[i+1].Object;
 				}
 			N--;
+
+			DBSE[N].a=null;
+			DBSE[N].Object=null;
 			}	
 		}
 

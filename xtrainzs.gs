@@ -15,9 +15,16 @@ class BinarySortedStrings
 		string[] SE2= new string[NewN];
 
 		for(i=0;i<N;i++)			// пересохраняем старый массив
+			{
 			SE2[i]=SE[i];
+			SE[i]=null;
+			}
+
+		SE[0,N]=null;
 
 		SE=SE2;
+
+		SE2=null;
 		}
 
 

@@ -34,6 +34,9 @@ string-table
   ab4                                   "4-значная"
   kor_bu_1                              "Дальше короткий блок-участок"
   kor_bu_2                              "Короткий блок-участок"
+  sign_indication                       "показание светофора"
+  pass_train                            "пассажирский, км/ч"
+  cargo_train                           "грузовой, км/ч"
   mu                                    "Маршрутный указатель"
   color_rsign_rs_white                  "белый"
   color_rsign_rs_green                  "зеленый"
@@ -79,7 +82,7 @@ string-table
 extensions
 {
 }
-kuid                                    <kuid2:400260:100120:10>
+kuid                                    <kuid2:400260:100120:11>
 
 kuid-table
 {

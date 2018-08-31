@@ -959,8 +959,9 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 					if( (int)(marker / 10) == 2)
 						marker=marker - 10;
 
-					else if(marker % 10 == 0)
+					else if(marker % 10 == 0 or marker % 10 == 2)
 						marker = 1;
+
 
 					else if( (int)(marker / 10) == 0 )
 						marker=marker + 10;
