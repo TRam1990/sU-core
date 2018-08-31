@@ -1,0 +1,36 @@
+﻿
+kuid                                    <kuid:400260:100120>
+username                                "sU core"
+trainz-build                            3.3
+kind                                    "library"
+category-era                            "1960s;1970s;1980s;1990s;2000s"
+category-region                         "BY;RU;SU;UA"
+script                                  "zx_core.gs"
+class                                   "zxLibruary_core"
+category-class                          "ZX"
+
+string-table
+{
+}
+
+thumbnails
+{
+  0
+  {
+    image                               "thumbnail.jpg"
+    width                               240
+    height                              180
+  }
+}
+
+extensions
+{
+}
+
+kuid-table
+{
+  0                                     <kuid:236443:103204>
+  1                                     <kuid:236443:103206>
+  2                                     <kuid:236443:103210>
+  3                                     <kuid:236443:103209>
+}
