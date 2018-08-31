@@ -33,6 +33,7 @@ string-table
   des_stationcreate                     "Создать новую станцию/перегон"
   ability_to_open                       "поездное открытие"
   ability_to_shnt                       "маневровое открытие"
+  ability_to_close                      "заградительное закрытие"
   lens_kit                              "Линзовый набор"
   abtype                                "Автоблокировка"
   ab3                                   "3-значная"
@@ -78,6 +79,9 @@ string-table
   head_rot                              "Поворот головок"
   head_krep                             "Поворот креплений головок"
   make_span                             "Собрать перегон"
+  protect_name                          "Группа заградительных"
+  des_protectcreate                     "Добавить группу заградительных"
+  protect_influence                     "перекрывает соседние светофоры"
   lens_kit_ex                           "КЗЗЖЖЖББСП - нумерация линз с 0 от верха мачты"
   priority                              "Приоритет маршрутов к светофору"
   lens_str1                             "КЗЗЖЖЖББСП"
@@ -87,7 +91,7 @@ string-table
 extensions
 {
 }
-kuid                                    <kuid2:400260:100120:15>
+kuid                                    <kuid2:400260:100120:16>
 
 kuid-table
 {

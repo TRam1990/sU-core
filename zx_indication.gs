@@ -788,9 +788,25 @@ public void FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 	}
 
 
-public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_mod, bool is_opend, bool is_shunt, int NextState)
+public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_mod, bool is_opend, bool is_shunt, bool sup_closed, int NextState)
 // определение типа сигнала по 
 	{
+
+	if(sup_closed)
+		{
+		if(is_opend and OldState == 2)
+			return 2;
+
+		if( possible_sig[1] )
+			return 1;
+
+		if(possible_sig[19])
+			return 19;
+
+		return 0;
+
+		}
+
 
 	if(is_shunt)		// манёвры
 		{

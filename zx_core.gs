@@ -10,11 +10,11 @@ class zxLibruary_core isclass Library
 {
 public BinarySortedStrings Stations;		//массив станций
 public BinarySortedArraySl Signals;		//массив сигналов
-public BinarySortedArraySl OpenedSignals;	//массив открытых сигналов,
-						//перед которыми контроллируется поезд
 
 public BinarySortedArraySu train_arr;
 
+
+public float str_distance = 40.0;
 
 
 string err;
@@ -30,11 +30,12 @@ Soup temp_speed_sp;
 
 string[] tabl_str;
 
-
 zxExtraLink[] zxExtra;
 
+public BinarySortedStrings ProtectGroups;
 
-int SearchForTrain(zxSignal sig1, int train_id);
+
+int SearchForTrain(zxSignal sig1, int train_id, int multiplicator);
 
 
 
@@ -59,20 +60,73 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 	if(!curr_sign)
 		return;
 
-
-	if(msg.minor=="MayOpen^true" and !curr_sign.shunt_open and !(curr_sign.Type & zxSignal.ST_SHUNT))
+	if(curr_sign.Type & zxSignal.ST_PROTECT)
 		{
-		curr_sign.train_open = true;
-		UpdateSignState(curr_sign,0,-1);
+		if(msg.minor=="MayOpen^true")
+			{
+			if(curr_sign.ProtectGroup == "")
+				{
+				curr_sign.barrier_closed = false;
+				UpdateSignState(curr_sign,0,-1);
+				}
+			else
+				{
+				int N = curr_sign.protect_soup.GetNamedTagAsInt("number",0);
+				int i;
+				for(i=0;i<N;i++)
+					{
+					zxSignal TMP = cast<zxSignal>(Router.GetGameObject(curr_sign.protect_soup.GetNamedTag(i+"")));
+
+					if(TMP)
+						{
+						TMP.barrier_closed = false;
+						UpdateSignState(TMP,0,-1);
+						}
+					}
+				}
+			}
+		else if(msg.minor=="MayOpen^false")
+			{
+			if(curr_sign.ProtectGroup == "")
+				{
+				curr_sign.barrier_closed = true;
+				UpdateSignState(curr_sign,0,-1);
+				}
+			else
+				{
+				int N = curr_sign.protect_soup.GetNamedTagAsInt("number",0);
+				int i;
+				for(i=0;i<N;i++)
+					{
+					zxSignal TMP = cast<zxSignal>(Router.GetGameObject(curr_sign.protect_soup.GetNamedTag(i+"")));
+
+					if(TMP)
+						{
+						TMP.barrier_closed = true;
+						UpdateSignState(TMP,0,-1);
+						}
+					}
+
+				}
+			}
 		}
-	else if(msg.minor=="ShuntMode.true" and !curr_sign.train_open)
+	else
+		{
+		if(msg.minor=="MayOpen^true" and !curr_sign.shunt_open and !(curr_sign.Type & zxSignal.ST_SHUNT))
+			{
+			curr_sign.train_open = true;	
+			UpdateSignState(curr_sign,0,-1);
+			}
+		else if(msg.minor=="MayOpen^false" and !(curr_sign.Type & zxSignal.ST_PERMOPENED))
+			{
+			curr_sign.train_open = false;
+			UpdateSignState(curr_sign,0,-1);
+			}
+		}
+
+	if(msg.minor=="ShuntMode.true" and !curr_sign.train_open)
 		{
 		curr_sign.shunt_open = true;
-		UpdateSignState(curr_sign,0,-1);
-		}
-	else if(msg.minor=="MayOpen^false" and !(curr_sign.Type & zxSignal.ST_PERMOPENED))
-		{
-		curr_sign.train_open = false;
 		UpdateSignState(curr_sign,0,-1);
 		}
 	else if(msg.minor=="ShuntMode.false" or msg.minor=="Close")
@@ -125,12 +179,16 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 		return;
 		}
 
-	int state1 = SearchForTrain(entered_sign, curr_train.GetId() );
+	int state1 = SearchForTrain(entered_sign, curr_train.GetId(), 1 );
 
 	if(state1 == 0)
 		{
-		Interface.Exception("Excessive trigger distance of "+ entered_sign.privateName + "@" + entered_sign.stationName);
-		return;	
+		state1 = SearchForTrain(entered_sign, curr_train.GetId(), 2 );
+		if(state1 == 0)
+			{
+			Interface.Print("Unable to find a train at "+ entered_sign.privateName + "@" + entered_sign.stationName);
+			return;	
+			}
 		}
 
 	string name =curr_train.GetId()+"";
@@ -176,7 +234,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 		Sniff(curr_train, "Train", "Cleanup", true);
 
 		}
-	else				// такой поезд наехал на иной светофор
+	else				// такой поезд уже наехал на светофор
 		{
 		int i=0;
 		bool exist=false;
@@ -191,14 +249,13 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 		if(!exist)		// но не на этот
 			{
-			//(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1,size1+1]=new int[1];
-			//(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1,size1+1]=new int[1];
+			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1,size1+1]=new int[1];
+			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1,size1+1]=new int[1];
 
 			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1]=number;
 			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1]=state1;
 
 			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetId());
-
 			}
 
 
@@ -240,8 +297,8 @@ void RemoveTrain(Message msg)
 
 
 
-		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal = null;
-		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state = null;
+		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[0, ] = null;
+		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[0, ] = null;
 
 		train_arr.DeleteElementByNmb(train_nmb);
 
@@ -266,7 +323,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 
 	if(!curr_train)  // поезд потерян
 		{
-		Interface.Exception("A train contains a bad vehicle!");
+		Interface.Print("A train was deletted or contains a bad vehicle!");
 
 
 		int n = entered_sign.TC_id.size();
@@ -282,7 +339,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 				int train_nmb=train_arr.Find( train_id1+"" ,false);
 
 
-				entered_sign.RemoveTrainId(curr_train.GetId());
+				entered_sign.RemoveTrainId(train_id1);
 				UpdateSignState(entered_sign,5,-1);
 
 				train_arr.DeleteElementByNmb(train_nmb);
@@ -316,9 +373,9 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 
 					// проверка того, что поезд только с одной стороны от светофора
 
-			int train_position = SearchForTrain(entered_sign, curr_train.GetId() );
+			int train_position = SearchForTrain(entered_sign, curr_train.GetId(), 1 );
 
-			if(  (TrainzScript.GetTrainzVersion() < 3.7) or (train_position == 0 and (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1] == 0)  )
+			if(  train_position == 0 and (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1] == 0  )
 				{
 
 				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[num1,num1+1]=null;
@@ -328,6 +385,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 
 
 				UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,-1);
+
 
 				if((cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal.size()==0)
 					{
@@ -443,7 +501,7 @@ void TrainStopping(Message msg)
 */
 
 
-int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад от светофоров!
+int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут поиски вперёд-назад от светофоров!
 	{						// for_front - поиск головы/хвоста поезда
 	Vehicle veh1;
 	float vel_ty;
@@ -453,7 +511,7 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 
 	MapObject MO = GSTS.SearchNext();
 
-	while(MO and GSTS.GetDistance()<30 and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
+	while(MO and GSTS.GetDistance()<(str_distance*multiplicator) and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
 		{
 		MO = GSTS.SearchNext();
 		}
@@ -466,7 +524,7 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 
 
 
-	if(MO and (MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  )  ) 		// часть поезда за светофором
+	if(MO and GSTS.GetDistance()<(str_distance*multiplicator) and (MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  )  ) 		// часть поезда за светофором
 		{
 		behind = true;
 
@@ -486,7 +544,7 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 	GSTS = sig1.BeginTrackSearch(false);
 	MO = GSTS.SearchNext();
 
-	while(MO and GSTS.GetDistance()<30 and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
+	while(MO and GSTS.GetDistance()<(str_distance*multiplicator) and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
 		{
 		MO = GSTS.SearchNext();
 		}
@@ -495,7 +553,7 @@ int SearchForTrain(zxSignal sig1, int train_id) 	// тут идут поиски вперёд-назад
 
 
 
-	if(MO and (MO.isclass(Vehicle)  and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ) )		// часть поезда перед светофором
+	if(MO and GSTS.GetDistance()<(str_distance*multiplicator) and (MO.isclass(Vehicle)  and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ) )		// часть поезда перед светофором
 		{
 		before = true;
 
@@ -583,7 +641,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 
 */
-					int new_state = SearchForTrain(sig1,Str.ToInt(train_arr.DBSE[i].a));
+					int new_state = SearchForTrain(sig1,Str.ToInt(train_arr.DBSE[i].a), 1);
 
 					//Interface.Log("usual check "+sig1.privateName + "@" + sig1.stationName+ " state "+state+" new state "+new_state);
 
@@ -638,7 +696,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 						UpdateSignState(sig1,4,priority);
 						}
 
-					if(new_state == 0 and state == 0 and (TrainzScript.GetTrainzVersion() >= 3.7))
+					if(new_state == 0 and state == 0)
 						{
 						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject( Str.ToInt(train_arr.DBSE[i].a) ) ) )  );
 						}
@@ -668,16 +726,19 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		// инициализация
 
-		Signals=new BinarySortedArraySl();
+		Signals = new BinarySortedArraySl();
 		Signals.UdgradeArraySize(20);
 
-		train_arr=new BinarySortedArraySu();
+		train_arr = new BinarySortedArraySu();
 		train_arr.UdgradeArraySize(20);
 
-		Stations=new BinarySortedStrings();
+		Stations = new BinarySortedStrings();
 		Stations.UdgradeArraySize(20);
 
 		zxExtra = new zxExtraLink[0];
+
+		ProtectGroups = new BinarySortedStrings();
+		ProtectGroups.UdgradeArraySize(10); 
 
 		SignalInitiation();
 		AddHandler(me, "Object", "Enter", "TrainCatcher");
@@ -761,14 +822,11 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 	else if(function=="station_list")		// запрос на список станций
 		{
 		int i;
-		int size1=Stations.N;
 
-
-
-		for(i=0;i<size1;i++)
+		for(i=0;i<Stations.N;i++)
 			stringParam[i]=Stations.SE[i];
 
-		return size1+"";
+		return "";
 		}
 
 
@@ -835,11 +893,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign = cast<zxSignal>objectParam[0];
 		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.OwnId = -1;
 
-//	err="added sign " + Signals.DBSE[number].a + " intNum "+number;
-//	Interface.Log(err);
-
-
-
 
 		if((Signals.N+20) > Signals.DBSE.size())			// расширяем массив
 			Signals.UdgradeArraySize(2*Signals.DBSE.size());
@@ -877,37 +930,47 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		if(stringParam.size()>1 and stringParam[1]=="reverse")
 			dirToFind=false;
 
+		stringParam[0] = "--";
 
 		int marker=0;
 		zxMarker zxMrk;
 
 
-		while(MO and !( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (((cast<zxSignal>MO).Type & TypeToFind) == TypeToFind) and  !((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED and !((cast<zxSignal>MO).Type & zxSignal.ST_OUT  and !(cast<zxSignal>MO).train_open)   ) and ((cast<zxSignal>MO).MainState != 19)  )  )   // синий и не входящий в цепи пропускаем
+		while(MO and !( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (((cast<zxSignal>MO).Type & TypeToFind) == TypeToFind) and  !(((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED or (cast<zxSignal>MO).barrier_closed) and  !((cast<zxSignal>MO).Type & zxSignal.ST_OUT  and !(cast<zxSignal>MO).train_open)   ) and ((cast<zxSignal>MO).MainState != 19)  )  )   // синий и не входящий в цепи пропускаем
 			{
 
 			if(MO.isclass(zxSignal))
 				{
-				if(!(cast<zxSignal>MO).Inited)
-					return "";
-
-
-				if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and ((cast<zxSignal>MO).MainState == 19)  )		// если есть маршрутный с синим
+				if(!(cast<zxSignal>MO).barrier_closed)
 					{
-					if(marker % 10 == 7)
-						{
-						marker = marker - 7;												// то ж-ж-ж не используем
+					if(!(cast<zxSignal>MO).Inited)
+						return "";
 
-						if(marker >=10)
-							marker = marker/10;
+
+					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and ((cast<zxSignal>MO).MainState == 19)  )		// если есть маршрутный с синим
+						{
+						if(marker % 10 == 7)
+							{
+							marker = marker - 7;												// то ж-ж-ж не используем
+
+							if(marker >=10)
+								marker = marker/10;
+							}
 						}
 					}
+				else
+					{
+					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (cast<zxSignal>MO).protect_influence)
+						(stringParam[0])[1]='+';		
+					}
+
 
 				}
 
 
 
-			if(MO.isclass(Vehicle) or ((MO.isclass(zxSignal) and (((cast<zxSignal>MO).Type & zxSignal.ST_ZAGRAD) == zxSignal.ST_ZAGRAD) and  (cast<zxSignal>MO).MainState == 1) )  )
-				stringParam[0]="+";
+			if(MO.isclass(Vehicle))
+				(stringParam[0])[0]='+';
 
 
 
@@ -1013,32 +1076,49 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		int marker=0;
 		zxMarker zxMrk;
 
+		stringParam[0] = "--";
+
+
+		if(sig1.barrier_closed and sig1.protect_influence)
+			(stringParam[0])[1]='+';
 
 		bool blue_signal = false;
 
 
-		while(MO and !( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() != dirToFind  and (((cast<zxSignal>MO).Type & TypeToFind) == TypeToFind) and  !((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED and !((cast<zxSignal>MO).Type & zxSignal.ST_OUT  and !(cast<zxSignal>MO).train_open)   )   and !((cast<zxSignal>MO).MainState == 19) ))
+		while(MO and !( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() != dirToFind  and (((cast<zxSignal>MO).Type & TypeToFind) == TypeToFind) and  !( ((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED or (cast<zxSignal>MO).barrier_closed) and !((cast<zxSignal>MO).Type & zxSignal.ST_OUT  and !(cast<zxSignal>MO).train_open)   )   and !((cast<zxSignal>MO).MainState == 19) ))
 			{
 			if(MO.isclass(zxSignal))
 				{
-				if(!(cast<zxSignal>MO).Inited)
-					return "";
+				if(!(cast<zxSignal>MO).barrier_closed)
+					{
+					if(!(cast<zxSignal>MO).Inited)
+						return "";
 
-				if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT) ) and ((cast<zxSignal>MO).MainState == 19))
-					blue_signal=true;							// то ж-ж-ж не используем
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT) ) and ((cast<zxSignal>MO).MainState == 19))
+						blue_signal=true;							// то ж-ж-ж не используем
+
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (cast<zxSignal>MO).shunt_open and ((cast<zxSignal>MO).MainState == 1 or (cast<zxSignal>MO).MainState == 19) and ((stringParam[0])[1]!='+'))
+						(cast<zxSignal>MO).UpdateState(0, -1);
 
 
-				if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and ((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) )
-					(cast<zxSignal>MO).UnlinkedUpdate(old_main_state);
-
-
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and ((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) )
+						(cast<zxSignal>MO).UnlinkedUpdate(old_main_state);
+	
+					}
+				else
+					{
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (cast<zxSignal>MO).protect_influence)
+						(stringParam[0])[1]='+';		
+					}
 				}
 
+			
 
 
-
-			if(MO.isclass(Vehicle) or ((MO.isclass(zxSignal) and (((cast<zxSignal>MO).Type & zxSignal.ST_ZAGRAD) == zxSignal.ST_ZAGRAD) and  (cast<zxSignal>MO).MainState == 1)  )  )
-				stringParam[0]="+";
+			if(MO.isclass(Vehicle))
+				{
+				(stringParam[0])[0]='+';
+				}
 
 
 
@@ -1245,9 +1325,250 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		}
 	else if(function=="add_extra_obj")
 		{
-		zxExtra[zxExtra.size()]= cast<zxExtraLink>objectParam[0];
+		int old_size = zxExtra.size();
+		zxExtra[old_size,old_size+1] = new zxExtraLink[1];
+		zxExtra[old_size]= cast<zxExtraLink>objectParam[0];
 		}
 
+
+
+
+	else if(function=="add_protect")		// запрос на добавление группы заградительных
+		{
+
+		if(!ProtectGroups.AddElement(stringParam[0]))
+			return "false";
+			
+		if((ProtectGroups.N+20) > ProtectGroups.SE.size())			// расширяем массив
+			ProtectGroups.UdgradeArraySize(2*ProtectGroups.SE.size());
+
+		return "true";
+		}
+
+	else if(function=="delete_protect")		// запрос на удаление групп
+		{
+		zxSignal sig1=cast<zxSignal>objectParam[0];
+
+		if(sig1)
+			{
+			int prot_size = sig1.protect_soup.GetNamedTagAsInt("number",0);
+			int i;
+
+			for(i=0;i<prot_size;i++)
+				{
+				string sign_name = sig1.protect_soup.GetNamedTag(i+"");
+
+				if(sign_name != sig1.GetName())
+					{
+					zxSignal TMP = cast<zxSignal>(Router.GetGameObject(sign_name));
+					if(TMP)
+						{
+						TMP.protect_soup.Clear();
+						TMP.ProtectGroup = "";
+						}
+					}
+				}
+
+			ProtectGroups.DeleteElement(sig1.ProtectGroup);
+			sig1.protect_soup.Clear();
+			sig1.ProtectGroup = "";
+			}
+
+
+
+		}
+
+
+	else if(function=="protect_list")		// запрос на список групп
+		{
+		int i;
+		int size1=ProtectGroups.N;
+
+		for(i=0;i<size1;i++)
+			stringParam[i]=ProtectGroups.SE[i]+"";
+
+		return "";
+		}
+
+	else if(function=="protect_count")		// запрос на количество групп
+		{
+		return ProtectGroups.N+"";
+		}
+
+	else if(function=="add_protect_signal")
+		{
+		zxSignal sig1=cast<zxSignal>objectParam[0];
+		
+		if(!sig1)
+			return "false";
+
+		if(sig1.ProtectGroup != "")
+			LibraryCall("delete_protect_signal", null, objectParam);
+
+
+		int i = 0;
+
+		int id = -1;
+
+		while(i < Signals.N and id < 0)
+			{
+			if((cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.ProtectGroup == stringParam[0])
+				id = i;
+			i++;
+			}
+
+		if(id >= 0)
+			{
+			Soup tempsoup = Constructors.NewSoup();
+			tempsoup.Copy( (cast<zxSignalLink>(Signals.DBSE[id].Object)).sign.protect_soup );
+
+			sig1.ProtectGroup = stringParam[0]+"";
+
+			i=0;
+			int N = tempsoup.GetNamedTagAsInt("number",0);
+
+			int delta = 0;
+
+
+			for(i=0;i<N;i++)
+				{
+				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+				if(!temp)
+					delta++;
+				else
+					tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTag(i+""));
+				}
+
+			N = N - delta;
+
+
+			tempsoup.SetNamedTag( N+"" , sig1.GetName() );
+			N++;
+
+			tempsoup.SetNamedTag( "number", N);
+
+			for(i=0;i<N;i++)
+				{
+				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+
+				temp.protect_soup.Clear();
+				temp.protect_soup.Copy(tempsoup);
+				}
+			
+
+			tempsoup.Clear();
+			tempsoup = null;
+			}
+		else
+			{
+			int number= ProtectGroups.Find( stringParam[0],false);
+			if(number<0)
+				{
+				LibraryCall("add_protect", stringParam, null);
+				}
+
+			sig1.ProtectGroup = stringParam[0]+"";
+			sig1.protect_soup.Clear();
+
+			
+			sig1.protect_soup.SetNamedTag( "0" , sig1.GetName() );
+			sig1.protect_soup.SetNamedTag( "number" , 1 );
+			}
+
+		}
+	else if(function=="delete_protect_signal")
+		{
+		zxSignal sig1=cast<zxSignal>objectParam[0];
+		if(!sig1 or sig1.ProtectGroup == "")
+			return "false";
+
+		Soup tempsoup = Constructors.NewSoup();
+		
+		tempsoup.Copy(sig1.protect_soup);
+		
+
+		int i;
+		int N = tempsoup.GetNamedTagAsInt("number",0);
+		int delta = 0;
+
+
+		for(i=0;i<N;i++)
+			{
+			zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+
+			if(!temp or (tempsoup.GetNamedTag(i+"") == sig1.GetName()))
+				delta++;
+			else
+				tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTag(i+""));
+			}
+
+		N = N - delta;
+
+		tempsoup.SetNamedTag("number",N);
+
+		if(N == 0)
+			ProtectGroups.DeleteElement(sig1.ProtectGroup);
+		else
+			{
+			for(i=0;i<N;i++)
+				{
+				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+
+				temp.protect_soup.Clear();
+				temp.protect_soup.Copy(tempsoup);
+				}
+			}
+
+		sig1.ProtectGroup = "";
+		sig1.protect_soup.Clear();
+
+		tempsoup.Clear();
+		tempsoup = null;
+
+		}
+	else if(function=="update_protect")
+		{
+		zxSignal sig1=cast<zxSignal>objectParam[0];
+		if(!sig1 or sig1.ProtectGroup == "")
+			return "false";
+
+		Soup tempsoup = Constructors.NewSoup();
+		
+		tempsoup.Copy(sig1.protect_soup);
+		
+
+		int i;
+		int N = tempsoup.GetNamedTagAsInt("number",0);
+		int delta = 0;
+
+
+		for(i=0;i<N;i++)
+			{
+			zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+
+			if(!temp)
+				delta++;
+			else
+				tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTag(i+""));
+			}
+
+		N = N - delta;
+
+		tempsoup.SetNamedTag("number",N);
+
+		if(N == 0)
+			ProtectGroups.DeleteElement(sig1.ProtectGroup);
+		else
+			{
+			for(i=0;i<N;i++)
+				{
+				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+
+				temp.protect_soup.Clear();
+				temp.protect_soup.Copy(tempsoup);
+				}
+			}
+		}
 
 
 	return "";

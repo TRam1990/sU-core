@@ -48,7 +48,7 @@ class zxSignal isclass Signal, ALSN_Provider
 	public define int ST_UNLINKED	= 16;		// не состо€щий в рельсовых цеп€х
 	public define int ST_PERMOPENED	= 32;		// посто€нно открытый в поездном, напр. проходной
 	public define int ST_SHUNT	= 64;		// неспособный работать в поездном пор€дке
-	public define int ST_ZAGRAD	= 144;		// 16 + 128, заградительный
+	public define int ST_PROTECT	= 128;		// заградительный
 
 
 
@@ -58,6 +58,7 @@ class zxSignal isclass Signal, ALSN_Provider
 	public bool train_open;		// светофор открыт в поездном режиме
 	public bool shunt_open;		// светофор открыт в маневровом режиме
 
+	public bool barrier_closed;	// заградительный закрыт
 
 	public string stationName;
 	public string privateName;
@@ -70,9 +71,7 @@ class zxSignal isclass Signal, ALSN_Provider
 	public int ab4;			// 4-значна€ јЅ. -1 - не определено, 0 - нет, 1 - есть
 
 	public zxSignal Cur_next;
-	public zxSignal Cur_next_extra;
 	public zxSignal Cur_prev;
-	public zxSignal Cur_prev_extra;
 
 	public int[] TC_id = new int[0];
 
@@ -99,6 +98,12 @@ class zxSignal isclass Signal, ALSN_Provider
 
 	public int code_freq;		// частота кодировани€ јЋ— (0 - не кодируетс€)
 	public int code_dev;		// съезды к пути не кодируютс€, путь кодируетс€ (1 - кодируютс€ к светофору, 2 - кодируютс€ от светофора, 3 - полное кодирование)
+
+
+	public string ProtectGroup;
+	public Soup protect_soup;
+
+	public bool protect_influence;
 
 
 	public void AddTrainId(int id)			// добавление и удаление наехавших поездов

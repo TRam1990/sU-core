@@ -132,28 +132,6 @@ class BinarySortedArraySu
 		return false;		
 		}
 
-	public void DeleteElement(string a)
-		{
-		int t = Find(a,false);
-		if(t>=0)
-			{
-			DBSE[t].a=null;
-			DBSE[t].Object=null;
-
-
-
-			int i;
-			for(i=t;i<N-1;i++)
-				{
-				DBSE[i].a=DBSE[i+1].a;
-				DBSE[i].Object=DBSE[i+1].Object;
-				}
-			N--;
-
-			DBSE[N].a=null;
-			DBSE[N].Object=null;
-			}	
-		}
 
 	public void DeleteElementByNmb(int a)
 		{
@@ -175,6 +153,12 @@ class BinarySortedArraySu
 			DBSE[N].a=null;
 			DBSE[N].Object=null;
 			}	
+		}
+
+	public void DeleteElement(string a)
+		{
+		int t = Find(a,false);
+		DeleteElementByNmb(t);	
 		}
 
 
