@@ -1,5 +1,5 @@
 ﻿
-kuid                                    <kuid2:400260:100120:1>
+kuid                                    <kuid2:400260:100120:2>
 username                                "sU core"
 trainz-build                            3.3
 kind                                    "library"
@@ -7,11 +7,7 @@ category-era                            "1960s;1970s;1980s;1990s;2000s"
 category-region                         "BY;RU;SU;UA"
 script                                  "zx_core.gs"
 class                                   "zxLibruary_core"
-category-class                          "ZX"
-
-string-table
-{
-}
+category-class                          "YL"
 
 thumbnails
 {
@@ -21,6 +17,64 @@ thumbnails
     width                               240
     height                              180
   }
+}
+
+string-table
+{
+  private_name                          "Название"
+  station_name                          "Станция (перегон)"
+  add_station_name                      "Добавить станцию (перегон)"
+  des_stationname                       "Выбрать станцию/перегон из существующих"
+  des_privatename                       "Указать название светофора"
+  des_stationcreate                     "Создать новую станцию/перегон"
+  ability_to_open                       "поездное открытие"
+  ability_to_shnt                       "маневровое открытие"
+  lens_kit                              "Линзовый набор"
+  abtype                                "Автоблокировка"
+  ab3                                   "3-значная"
+  ab4                                   "4-значная"
+  kor_bu_1                              "Дальше короткий блок-участок"
+  kor_bu_2                              "Короткий блок-участок"
+  mu                                    "Маршрутный указатель"
+  color_rsign_rs_white                  "белый"
+  color_rsign_rs_green                  "зеленый"
+  color_rsign_desc                      "цвет линз"
+  typematrix_9                          "9"
+  typematrix_19                         "19"
+  typematrix_99                         "99"
+  typematrix_x                          "*"
+  type_matrix                           "тип матрицы"
+  twait                                 "задержка гашения"
+  als                                   "АЛС"
+  code_dev                              "кодирование съездов"
+  code_dev_f                            "от светофора"
+  code_dev_t                            "к светофору"
+  uncoded                               "нет кодов"
+  als25                                 "АЛС-25"
+  als50                                 "АЛС-50"
+  als75                                 "АЛС-75"
+  alsen                                 "АЛС-ЕН"
+  untyped_flag                          "типовой светофор"
+  in_flag                               "входной"
+  out_flag                              "выходной/маршрутный"
+  router_flag                           "маршрутно-разделительный"
+  unlinked_flag                         "не участвует в рельсовых цепях"
+  permopened_flag                       "автомат без маневрового режима"
+  shunt_flag                            "маневровый без поездного режима"
+  zagrad_flag                           "заградительный"
+  dir_track_to                          "Путь открыть от "
+  str_speed_init                        "по умолчанию"
+  str_speed_copy                        "копировать"
+  str_speed_paste                       "вставить"
+  displace                              "Смещение от оси пути"
+  vert_displ                            "Смещение по вертикали"
+  head_rot                              "Поворот головок"
+  head_krep                             "Поворот креплений головок"
+  make_span                             "Собрать перегон"
+  lens_kit_ex                           "КЗЗЖЖЖББСП - нумерация линз с 0 от верха мачты"
+  priority                              "Приоритет маршрутов к светофору"
+  lens_str1                             "КЗЗЖЖЖББСП"
+  lens_str2                             "м"
 }
 
 extensions

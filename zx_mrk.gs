@@ -170,9 +170,8 @@ public Soup  GetProperties (void)
 
 public void Init(Asset asset)
 {
+	inherited(asset);
 	ST=asset.GetStringTable();
-
-
 }
 	
 

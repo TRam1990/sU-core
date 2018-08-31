@@ -24,7 +24,7 @@ public int lens_kit_n;
 public int OldMainState = -1;
 
 
-StringTable ST;
+StringTable ST, STT;
 Asset tabl_m,tex,gol_tex;
 
 MeshObject[] lens;
@@ -64,6 +64,7 @@ public zxRouter MU;
 
 
 string name_decoded;
+Soup NullSoup;
 
 
 string[] GetLensKit();
@@ -142,7 +143,7 @@ bool SetOwnSignalState()
 	{
 	if(MainState!=OldMainState)
 		{
-		if(kor_BU)	
+		if(kor_BU)
 			SetBUArrow( !(MainState == 0 or MainState == 1 or MainState == 2 or MainState == 19) );
 
 
@@ -205,7 +206,7 @@ public void CheckPrevSignals(bool no_train)
 
 	if((Type & sch1)==sch1  and !train_open)
 		return;
-		
+
 
 	mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
 
@@ -235,7 +236,7 @@ void CheckMySignal(float dt1,float dt2, bool train_entered)
 
 	string[] type_ToFind = new string[2];
 
-	type_ToFind[0]=ST_UNTYPED+"";		// 
+	type_ToFind[0]=ST_UNTYPED+"";		//
 
 	mainLib.LibraryCall("find_next_signal",type_ToFind,GSO);
 	int next_state = 0;
@@ -247,9 +248,9 @@ void CheckMySignal(float dt1,float dt2, bool train_entered)
 		next_state = 1;
 		type_ToFind[0]="+";
 		}
-	
+
 	MainState = LC.FindSignalState((type_ToFind[0]=="+") or train_entered, MainState, ex_sgn, ab4, Str.ToInt(type_ToFind[1]), train_open, shunt_open, next_state);
-		
+
 	if(SetOwnSignalState())
 		NewSignal(set_lens,dt1,dt2);
 
@@ -265,7 +266,7 @@ void MakeBUArrow()
 
 		if(MU)
 			SetFXAttachment("att1",null);
-			
+
 		else
 			SetFXAttachment("att0",null);
 
@@ -307,14 +308,14 @@ void SetBUArrow(bool state)
 	kor_BU[1].SetMeshVisible("default",state,0.5);
 
 	if(kor_BU.size()==3)
-		kor_BU[2].SetMeshVisible("default",state,0.5);		
+		kor_BU[2].SetMeshVisible("default",state,0.5);
 
 	}
 
 
 
 public void UpdateState(int reason, int priority)  	// обновление состояния светофора, основной кусок сигнального движка
-	{				// reason : 0 - команда изменения состояния 1 - наезд поезда в направлении 2 - съезд поезда в направлении 3 - наезд поезда против 4 - съезд поезда против 5 - покидание зоны светофора поездом  
+	{				// reason : 0 - команда изменения состояния 1 - наезд поезда в направлении 2 - съезд поезда в направлении 3 - наезд поезда против 4 - съезд поезда против 5 - покидание зоны светофора поездом
  	inherited(reason,priority);
 
 	if(!(Type & ST_UNTYPED))
@@ -351,7 +352,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				type_ToFind[0]=ST_UNTYPED+"";
 
 				mainLib.LibraryCall("find_next_signal",type_ToFind,GSO);
-					
+
 				if(Cur_next)
 					MainState = Cur_next.MainState;
 
@@ -359,9 +360,9 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				SetSignalState(2, "");
 
 				LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-				NewSignal(set_lens,0,0.7);	
+				NewSignal(set_lens,0,0.7);
 				}
-			
+
 			}
 
 		}
@@ -390,7 +391,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			{
 
 			string[] type_ToFind = new string[2];
-			type_ToFind[0]=ST_UNTYPED+"";		// 
+			type_ToFind[0]=ST_UNTYPED+"";		//
 
 
 			mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
@@ -409,18 +410,18 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 
 
-				type_ToFind[0]=ST_UNTYPED+"";			// находим следующий светофор 
-	
+				type_ToFind[0]=ST_UNTYPED+"";			// находим следующий светофор
+
 				mainLib.LibraryCall("find_next_signal",type_ToFind,GSO);
-				
+
 				if(Cur_next)
 					Cur_next.CheckPrevSignals(false);
 
 				}
 
 			}
-		else	
-			{	
+		else
+			{
 			CheckMySignal(0,0.7,false);
 
 			if(MainState == 19)
@@ -429,7 +430,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				type_ToFind[0]=ST_UNTYPED+"";
 
 				mainLib.LibraryCall("find_next_signal",type_ToFind,GSO);
-				
+
 				if(Cur_next)
 					Cur_next.CheckPrevSignals(false);
 				}
@@ -441,11 +442,11 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 		if(priority < 0)
 			priority = FindTrainPrior(false);
-		
+
 		string[] type_ToFind = new string[1];
 		type_ToFind[0] = priority;
 		mainLib.LibraryCall("new_speed",type_ToFind,GSO);
-			
+
 
 		}
 
@@ -456,7 +457,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 		if(priority < 0)
 			priority = FindTrainPrior(false);
-		
+
 		type_ToFind[0]=priority;
 		type_ToFind[1]="-";
 		mainLib.LibraryCall("new_speed",type_ToFind,GSO);
@@ -465,8 +466,8 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		if(!(Type & ST_PERMOPENED))
 			train_open = false;
 
-		CheckMySignal(0,1.5,true);		
-		
+		CheckMySignal(0,1.5,true);
+
 		}
 
 	else if(reason==2)
@@ -496,7 +497,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			GSTS1 = me.BeginTrackSearch(false);
 
 		MapObject MO = GSTS1.SearchNext();
-		
+
 		while(MO and !MO.isclass(Junction) and !( MO.isclass(zxSignal)  and ((cast<zxSignal>MO).Type & (ST_IN+ST_OUT+ST_ROUTER))  ) )
 			MO = GSTS1.SearchNext();
 
@@ -519,9 +520,9 @@ public void UnlinkedUpdate(int mainstate)
 		if(mainstate == 0)
 			mainstate = 1;
 
-		if(ex_sgn[1] or ex_sgn[6])		
+		if(ex_sgn[1] or ex_sgn[6])
 			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, false, mainstate);
-		else if(ex_sgn[14])	
+		else if(ex_sgn[14])
 			{		// является проходным, т.к. имеет только зелёную линзу
 			if(mainstate == 0 or mainstate == 1  or mainstate == 2  or mainstate == 3 or mainstate == 20  or mainstate == 21)
 				MainState = 0;
@@ -612,7 +613,7 @@ int GetCirillic(string s)
 
 	if(s>="Р°" and s<="С‰")
 		{
-		if(s[0]=='Р')	
+		if(s[0]=='Р')
 			return (22 + s[1] - '°');
 		else
 			{
@@ -685,9 +686,9 @@ void GetRome(int i, string s, int[] result)
 		{
 		if( (i+1) < s_size and s[i+1]=='I')
 			{
-			
+
 			if((i+2) < s_size and s[i+2]=='I')
-				{	
+				{
 				if((i+3) < s_size and s[i+3]=='I')
 					{
 					result[0] = 17;
@@ -752,7 +753,7 @@ public void ShowName(bool reset)
 		{
 
 		tabl[j]=GetArabic(i, sv_name);
-	
+
 		if(tabl[j]<0)
 			{
 			if(i<sv_name.size()-1)
@@ -774,13 +775,13 @@ public void ShowName(bool reset)
 					{
 					tabl[j] = 21;
 					}
-				else	
-					j--;			
+				else
+					j--;
 				}
 			else
 				i++;
 			}
-		
+
 		j++;
 		i++;
 		}
@@ -799,7 +800,7 @@ public void ShowName(bool reset)
 			{
 			while(tabl[q]>=22 and tabl[q]!=37 and q<n_tabl )
 				q++;
-			
+
 			if(tabl[q]==37)
 				q++;
 
@@ -820,7 +821,7 @@ public void ShowName(bool reset)
 		if(isMacht)
 			{
 			for(i=0;i<7;i++)
-				SetFXAttachment(name_str[i], null);	
+				SetFXAttachment(name_str[i], null);
 			}
 		else
 			{
@@ -847,7 +848,7 @@ public void ShowName(bool reset)
 		}
 	else
 		{
-			
+
 
 /*
 ряды табичек
@@ -885,7 +886,7 @@ public void ShowName(bool reset)
 
 		if(q1 > 0)
 			{
-	
+
 			if(q1 == 1)
 				{
 				MeshObject MO = SetFXAttachment(name_str[7], tabl_m);
@@ -947,7 +948,7 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 
 	bool temp_dir;
 
-	
+
 	while(MO and !( MO.isclass(zxSignal) and (GSTS.GetFacingRelativeToSearchDirection() == true) and (cast<zxSignal>MO).Type & ST_IN ) )
 		{
 
@@ -971,7 +972,7 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 
 
 
-	
+
 	int n = span_soup.GetNamedTagAsInt("Extra_sign",0);
 	int i;
 	zxSignal zxs;
@@ -1187,10 +1188,10 @@ public string GetCntSpeedTable(void)
 
 		        		s=s+hw.StartRow();
 					s=s+hw.StartCell("bgcolor='#888888'");
-					
+
 
 					s=s+TranslNames( LC.sgn_st[i].l.name);
-					
+
 					s=s+hw.EndCell();
 
 					s=s+hw.StartCell("bgcolor='#888888'");
@@ -1205,19 +1206,19 @@ public string GetCntSpeedTable(void)
 				}
 
 			s=s+hw.StartRow();
-				s=s+hw.MakeCell(   hw.MakeLink("live://property/speed_init",ST.GetString("str_speed_init")),"bgcolor='#888888'");
-				s=s+hw.MakeCell(   hw.MakeLink("live://property/speed_copy",ST.GetString("str_speed_copy")),"bgcolor='#888888'");
-				s=s+hw.MakeCell(   hw.MakeLink("live://property/speed_paste",ST.GetString("str_speed_paste")),"bgcolor='#888888'");
+				s=s+hw.MakeCell(   hw.MakeLink("live://property/speed_init",STT.GetString("str_speed_init")),"bgcolor='#888888'");
+				s=s+hw.MakeCell(   hw.MakeLink("live://property/speed_copy",STT.GetString("str_speed_copy")),"bgcolor='#888888'");
+				s=s+hw.MakeCell(   hw.MakeLink("live://property/speed_paste",STT.GetString("str_speed_paste")),"bgcolor='#888888'");
 			s=s+hw.EndRow();
-			s=s+hw.EndTable(); 	
+			s=s+hw.EndTable();
 
 		s=s+hw.EndCell();
 		s=s+hw.EndRow();
-		s=s+hw.EndTable(); 	
+		s=s+hw.EndTable();
 
 	s=s+hw.EndCell();
 	s=s+hw.EndRow();
-	s=s+hw.EndTable(); 
+	s=s+hw.EndTable();
 
  	return s;
  }
@@ -1238,7 +1239,7 @@ public string GetExtraSetTable()
 
 
 	s=s+hw.StartRow();
-	s=s+hw.MakeCell(hw.MakeLink("live://property/displace",  ST.GetString("displace")),"bgcolor='#666666' colspan='6'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/displace",  STT.GetString("displace")),"bgcolor='#666666' colspan='6'");
 	s=s+hw.MakeCell(hw.MakeLink("live://property/displace",   displacement ),"bgcolor='#AAAAAA'  align='center' ");
 	s=s+hw.EndRow();
 
@@ -1265,19 +1266,19 @@ public string GetExtraSetTable()
 	s=s+hw.StartTable("border='1' width=90%");
 
 	s=s+hw.StartRow();
-	s=s+hw.MakeCell(hw.MakeLink("live://property/vert_displ",  ST.GetString("vert_displ")),"bgcolor='#666666'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/vert_displ",  STT.GetString("vert_displ")),"bgcolor='#666666'");
 	s=s+hw.MakeCell(hw.MakeLink("live://property/vert_displ",   vert_displ ),"bgcolor='#AAAAAA'  align='center' ");
 	s=s+hw.EndRow();
 
 	if(isMacht)
 		{
 		s=s+hw.StartRow();
-		s=s+hw.MakeCell(hw.MakeLink("live://property/head_rot",  ST.GetString("head_rot")),"bgcolor='#666666'");
+		s=s+hw.MakeCell(hw.MakeLink("live://property/head_rot",  STT.GetString("head_rot")),"bgcolor='#666666'");
 		s=s+hw.MakeCell(hw.MakeLink("live://property/head_rot",   (int)(head_rot/DegToRad) ),"bgcolor='#AAAAAA'  align='center' ");
 		s=s+hw.EndRow();
 
 		s=s+hw.StartRow();
-		s=s+hw.MakeCell(hw.MakeLink("live://property/head_krepl_rot",  ST.GetString("head_krep")),"bgcolor='#666666'");
+		s=s+hw.MakeCell(hw.MakeLink("live://property/head_krepl_rot",  STT.GetString("head_krep")),"bgcolor='#666666'");
 		s=s+hw.MakeCell(hw.MakeLink("live://property/head_krepl_rot",   (int)(head_krepl_rot/DegToRad) ),"bgcolor='#AAAAAA'  align='center' ");
 		s=s+hw.EndRow();
 		}
@@ -1299,8 +1300,8 @@ string ConvLensKit(string s);
 string MakeCheckBoxRow(string link1,string deskr, bool value)
 {
 	HTMLWindow hw=HTMLWindow;
- 
-	string s=hw.StartRow();	
+
+	string s=hw.StartRow();
  	s=s+hw.StartCell("bgcolor='#888888'");
  	s=s+hw.CheckBox(link1,value);
  	s=s+" "+hw.MakeLink(link1, deskr);
@@ -1315,7 +1316,7 @@ string MakeCheckBoxRow(string link1,string deskr, bool value)
 string MakeCheckBoxCell(string link1,string deskr, bool value)
 {
 	HTMLWindow hw=HTMLWindow;
- 
+
 	string s=hw.StartCell("bgcolor='#888888'");
  	s=s+hw.CheckBox(link1,value);
  	s=s+" "+hw.MakeLink(link1, deskr);
@@ -1329,7 +1330,7 @@ string MakeCheckBoxCell(string link1,string deskr, bool value)
 string MakeRadioButtonCell(string link1,string deskr, bool value)
 {
 	HTMLWindow hw=HTMLWindow;
- 	
+
  	string s=hw.StartCell("bgcolor='#888888'");
  	s=s+hw.RadioButton(link1,value);
  	s=s+" "+hw.MakeLink(link1, deskr);
@@ -1354,7 +1355,7 @@ public string GetDescriptionHTML(void)
         s=s+hw.StartTable("border='1' width=90%");
         s=s+hw.StartRow();
 	s=s+hw.StartCell("bgcolor='#666666'");
-	s=s+hw.MakeLink("live://property/private-name",  ST.GetString("private_name"));
+	s=s+hw.MakeLink("live://property/private-name",  STT.GetString("private_name"));
       	s=s+hw.EndCell();
        	s=s+hw.StartCell("bgcolor='#AAAAAA', align='right'");
        	s=s+hw.MakeLink("live://property/private-name",privateName);
@@ -1365,13 +1366,13 @@ public string GetDescriptionHTML(void)
 	if( !(Type & ST_PERMOPENED) )
 		{
 	        s=s+hw.StartRow();
-		s=s+hw.MakeCell( hw.MakeLink("live://property/station_name",  ST.GetString("station_name")),"bgcolor='#886666'");
+		s=s+hw.MakeCell( hw.MakeLink("live://property/station_name",  STT.GetString("station_name")),"bgcolor='#886666'");
 		s=s+hw.MakeCell( hw.MakeLink("live://property/station_name",stationName),"bgcolor='#BBAAAA'");
 		s=s+hw.MakeCell( hw.MakeLink("live://property/station_delete", "X"));
 		s=s+hw.EndRow();
 
 		s=s+hw.StartRow();
-		s=s+hw.MakeCell( hw.MakeLink("live://property/station_create",  ST.GetString("add_station_name")),"bgcolor='#886666'");
+		s=s+hw.MakeCell( hw.MakeLink("live://property/station_create",  STT.GetString("add_station_name")),"bgcolor='#886666'");
 		s=s+hw.MakeCell( mainLib.LibraryCall("station_count",null,null),"bgcolor='#BBAAAA' align='right'");
 		s=s+hw.EndRow();
 		}
@@ -1393,14 +1394,14 @@ public string GetDescriptionHTML(void)
 
 
 	s=s+hw.StartRow();
-	s=s+hw.MakeCell(hw.MakeLink("live://property/lens_kit_ex",  ST.GetString("lens_kit")),"bgcolor='#666666'");
+	s=s+hw.MakeCell(hw.MakeLink("live://property/lens_kit_ex",  STT.GetString("lens_kit")),"bgcolor='#666666'");
 	s=s+hw.MakeCell(hw.MakeLink("live://property/lens_kit",  ConvLensKit( lens_kit )  ),"bgcolor='#BBAAAA'");
 	s=s+hw.EndRow();
 
 
 	s=s+hw.StartRow();
-	s=s+hw.MakeCell( hw.MakeLink("live://property/abtype", ST.GetString("abtype") ) ,"bgcolor='#666666'");
-	s=s+hw.MakeCell( hw.MakeLink("live://property/abtype", ST.GetString(ab_str) ) ,"bgcolor='#AAAAAA'");
+	s=s+hw.MakeCell( hw.MakeLink("live://property/abtype", STT.GetString("abtype") ) ,"bgcolor='#666666'");
+	s=s+hw.MakeCell( hw.MakeLink("live://property/abtype", STT.GetString(ab_str) ) ,"bgcolor='#AAAAAA'");
 	s=s+hw.EndRow();
 
 
@@ -1417,29 +1418,29 @@ public string GetDescriptionHTML(void)
 		s=s+hw.StartTable("border='1' width=90%");
 
 		s=s+hw.StartRow();
-		s=s+hw.MakeCell(hw.MakeLink("live://property/priority", ST.GetString("priority")   ),"bgcolor='#666666' colspan='6'");
+		s=s+hw.MakeCell(hw.MakeLink("live://property/priority", STT.GetString("priority")   ),"bgcolor='#666666' colspan='6'");
 		s=s+hw.MakeCell(hw.MakeLink("live://property/priority",   def_path_priority ),"bgcolor='#AAAAAA'  align='center' ");
 		s=s+hw.EndRow();
 
 		s=s+hw.EndTable();
-		s=s+"<br>";		
+		s=s+"<br>";
 
 
 		}
 
 	if( isMacht )
 		{
-		
+
 		s=s+hw.StartTable("border='1' width=90%");
 
 		s=s+hw.StartRow();
-		s=s+MakeRadioButtonCell("live://property/kor_BU_1",ST.GetString("kor_BU_1"), kor_BU_1);
+		s=s+MakeRadioButtonCell("live://property/kor_BU_1",STT.GetString("kor_BU_1"), kor_BU_1);
 		s=s+hw.EndRow();
 		s=s+hw.StartRow();
-		s=s+MakeRadioButtonCell("live://property/kor_BU_2",ST.GetString("kor_BU_2"), kor_BU_2);
+		s=s+MakeRadioButtonCell("live://property/kor_BU_2",STT.GetString("kor_BU_2"), kor_BU_2);
 		s=s+hw.EndRow();
 
-	        s=s+MakeCheckBoxRow("live://property/MU",ST.GetString("MU"), MU != null);
+	        s=s+MakeCheckBoxRow("live://property/MU",STT.GetString("MU"), MU != null);
 
 
 		if(MU)
@@ -1458,12 +1459,12 @@ public string GetDescriptionHTML(void)
 
 			s=s+hw.StartRow();
 			s=s+hw.StartCell("bgcolor='#888888'");
-			s=s+hw.MakeLink("live://property/color_rsign",ST.GetString("color_rsign_desc"));
+			s=s+hw.MakeLink("live://property/color_rsign",STT.GetString("color_rsign_desc"));
 			s=s+hw.EndCell();
 			s=s+hw.StartCell("bgcolor='#AAAAAA'");
 
 
-			string texAssetName=ST.GetString("color_rsign_"+MU.textureName);
+			string texAssetName=STT.GetString("color_rsign_"+MU.textureName);
 			s=s+hw.MakeLink("live://property/color_rsign",texAssetName );
 			s=s+hw.EndCell();
 			s=s+hw.EndRow();
@@ -1471,10 +1472,10 @@ public string GetDescriptionHTML(void)
 
 			s=s+hw.StartRow();
 			s=s+hw.StartCell("bgcolor='#888888'");
-			s=s+hw.MakeLink("live://property/type_matrix",ST.GetString("type_matrix"));
+			s=s+hw.MakeLink("live://property/type_matrix",STT.GetString("type_matrix"));
 			s=s+hw.EndCell();
 			s=s+hw.StartCell("bgcolor='#AAAAAA'");
-			string ctrlMatrix=ST.GetString("typematrix_"+MU.typeMatrix);
+			string ctrlMatrix=STT.GetString("typematrix_"+MU.typeMatrix);
 			s=s+hw.MakeLink("live://property/type_matrix",ctrlMatrix );
 			s=s+hw.EndCell();
 			s=s+hw.EndRow();
@@ -1482,7 +1483,7 @@ public string GetDescriptionHTML(void)
 
 			s=s+hw.StartRow();
 			s=s+hw.StartCell("bgcolor='#888888'");
-			s=s+hw.MakeLink("live://property/twait",ST.GetString("twait"));
+			s=s+hw.MakeLink("live://property/twait",STT.GetString("twait"));
 			s=s+hw.EndCell();
 			s=s+hw.StartCell("bgcolor='#AAAAAA'");
 			s=s+hw.MakeLink("live://property/twait",MU.timeToWait );
@@ -1505,33 +1506,65 @@ public string GetDescriptionHTML(void)
        s=s+hw.StartTable("border='1' width=90%");
 
 	s=s+hw.StartRow();
-	s=s+hw.MakeCell(ST.GetString("ALS"),"bgcolor='#AAAAAA' colspan='2' ");
+	s=s+hw.MakeCell(STT.GetString("ALS"),"bgcolor='#AAAAAA' colspan='2' ");
 
 
-	 s=s+hw.StartCell("bgcolor='#886666' colspan='3' align='center' ");
+  if(Type & (ST_OUT | ST_ROUTER) and !(Type & ST_IN)){
+	  s=s+hw.StartCell("bgcolor='#886666' colspan='3' align='center'");
+ 		s=s+hw.CheckBox("live://property/code_dev/1", code_dev & 1);
+	 	s=s+" "+hw.MakeLink("live://property/code_dev/1", STT.GetString("code_dev"));
+  }else if(Type & ST_IN) s=s+hw.StartCell("bgcolor='#886666' colspan='4' align='center' ") + "  ";
+  else s=s+hw.StartCell("bgcolor='#886666' colspan='3' align='center' ") + "  ";
 
 
-	if(Type & (ST_IN+ST_OUT+ST_ROUTER))	// станционный светофор
-		{
- 		s=s+hw.CheckBox("live://property/code_dev",code_dev);
-	 	s=s+" "+hw.MakeLink("live://property/code_dev", ST.GetString("code_dev"));
- 
-		}
-	else
-		s=s+" ";
+
+
+//	if(Type & (ST_IN+ST_OUT+ST_ROUTER))	// станционный светофор
+//		{
+// 		s=s+hw.CheckBox("live://property/code_dev",code_dev);
+//	 	s=s+" "+hw.MakeLink("live://property/code_dev", ST.GetString("code_dev"));
+//
+//		}
+//	else
+//		s=s+" ";
 
 	s=s+hw.EndCell();
 	s=s+hw.EndRow();
 
 
 	s=s+hw.StartRow();
-	s=s+MakeRadioButtonCell("live://property/code_freq/0",ST.GetString("uncoded"), code_freq==0);
-	s=s+MakeRadioButtonCell("live://property/code_freq/1",ST.GetString("ALS25"), code_freq & 1);
-	s=s+MakeRadioButtonCell("live://property/code_freq/2",ST.GetString("ALS50"), code_freq & 2);
-	s=s+MakeRadioButtonCell("live://property/code_freq/4",ST.GetString("ALS75"), code_freq & 4);
+	s=s+MakeRadioButtonCell("live://property/code_freq/0",STT.GetString("uncoded"), code_freq==0);
+	s=s+MakeRadioButtonCell("live://property/code_freq/1",STT.GetString("ALS25"), code_freq & 1);
+  s=s+MakeRadioButtonCell("live://property/code_freq/2",STT.GetString("ALS50"), code_freq & 2);
 
-	s=s+MakeCheckBoxCell("live://property/code_freq/8",ST.GetString("ALSEN"), code_freq & 8);
+  if(Type & ST_IN){
+    s=s+hw.StartCell("bgcolor='#888888' colspan='2'");
+    s=s+hw.RadioButton("live://property/code_freq/4", code_freq & 4);
+    s=s+" "+hw.MakeLink("live://property/code_freq/4", STT.GetString("ALS75"));
+    s=s+hw.EndCell();
+  }else s=s+MakeRadioButtonCell("live://property/code_freq/4",STT.GetString("ALS75"), code_freq & 4);
+
+
+	s=s+MakeCheckBoxCell("live://property/code_freq/8",STT.GetString("ALSEN"), code_freq & 8);
 	s=s+hw.EndRow();
+
+  if(Type & ST_IN){
+    s=s+hw.StartRow();
+    s=s+hw.MakeCell(STT.GetString("code_dev"),"bgcolor='#AAAAAA' colspan='2' ");
+
+    s=s+hw.StartCell("bgcolor='#888888' colspan='2'");
+    s=s+hw.CheckBox("live://property/code_dev/1", code_dev & 1);
+    s=s+" "+hw.MakeLink("live://property/code_dev/1", STT.GetString("code_dev_t"));
+    s=s+hw.EndCell();
+
+    s=s+hw.StartCell("bgcolor='#888888' colspan='2'");
+    s=s+hw.CheckBox("live://property/code_dev/2", code_dev & 2);
+    s=s+" "+hw.MakeLink("live://property/code_dev/2", STT.GetString("code_dev_f"));
+    s=s+hw.EndCell();
+  	s=s+hw.EndRow();
+  }
+
+
 
 	s=s+hw.EndTable();
 
@@ -1541,29 +1574,29 @@ public string GetDescriptionHTML(void)
  	s=s+hw.StartTable("border='1' width=90%");
 
 
- 	s=s+MakeCheckBoxRow("live://property/type/UNTYPED",ST.GetString("UNTYPED_flag"), Type & ST_UNTYPED);
- 	
- 	s=s+MakeCheckBoxRow("live://property/type/IN",ST.GetString("IN_flag"), Type & ST_IN);
- 	
- 	s=s+MakeCheckBoxRow("live://property/type/OUT",ST.GetString("OUT_flag"), Type & ST_OUT);
- 	
- 	s=s+MakeCheckBoxRow("live://property/type/ROUTER",ST.GetString("ROUTER_flag"), Type & ST_ROUTER);
- 	
- 	s=s+MakeCheckBoxRow("live://property/type/UNLINKED",ST.GetString("UNLINKED_flag"), Type & ST_UNLINKED);
- 	
- 	s=s+MakeCheckBoxRow("live://property/type/PERMOPENED",ST.GetString("PERMOPENED_flag"), Type & ST_PERMOPENED);
- 	
- 	s=s+MakeCheckBoxRow("live://property/type/SHUNT",ST.GetString("SHUNT_flag"), Type & ST_SHUNT);
- 	
- 	s=s+MakeCheckBoxRow("live://property/type/ZAGRAD",ST.GetString("ZAGRAD_flag"), (Type & ST_ZAGRAD) == ST_ZAGRAD);
- 	
+ 	s=s+MakeCheckBoxRow("live://property/type/UNTYPED",STT.GetString("UNTYPED_flag"), Type & ST_UNTYPED);
+
+ 	s=s+MakeCheckBoxRow("live://property/type/IN",STT.GetString("IN_flag"), Type & ST_IN);
+
+ 	s=s+MakeCheckBoxRow("live://property/type/OUT",STT.GetString("OUT_flag"), Type & ST_OUT);
+
+ 	s=s+MakeCheckBoxRow("live://property/type/ROUTER",STT.GetString("ROUTER_flag"), Type & ST_ROUTER);
+
+ 	s=s+MakeCheckBoxRow("live://property/type/UNLINKED",STT.GetString("UNLINKED_flag"), Type & ST_UNLINKED);
+
+ 	s=s+MakeCheckBoxRow("live://property/type/PERMOPENED",STT.GetString("PERMOPENED_flag"), Type & ST_PERMOPENED);
+
+ 	s=s+MakeCheckBoxRow("live://property/type/SHUNT",STT.GetString("SHUNT_flag"), Type & ST_SHUNT);
+
+ 	s=s+MakeCheckBoxRow("live://property/type/ZAGRAD",STT.GetString("ZAGRAD_flag"), (Type & ST_ZAGRAD) == ST_ZAGRAD);
+
 	s=s+hw.EndTable();
 
 
 	if(Type & ST_IN)	// входной. Панель перегона.
 		{
 
-		
+
 		s=s+"<br>";
 	 	string s2="";
 
@@ -1592,7 +1625,7 @@ public string GetDescriptionHTML(void)
 
 
 			s2 = hw.MakeRow(
-        		        		hw.MakeCell(ST.GetString("dir_track_to")
+        		        		hw.MakeCell(STT.GetString("dir_track_to")
         		        		,"bgcolor='#555555'")+
 	                			hw.MakeCell(hw.MakeLink("live://property/spanTrackFromOther",bb_s[0]+privateName+"@"+stationName+"  &gt;&gt;&gt; "+bb_s[1])
 	                			,"bgcolor='#555555'")+
@@ -1610,7 +1643,7 @@ public string GetDescriptionHTML(void)
 			hw.MakeCell(
 				hw.MakeTable(
 					hw.MakeRow(
-						hw.MakeCell(hw.MakeLink("live://property/make_span", ST.GetString("make_span"))
+						hw.MakeCell(hw.MakeLink("live://property/make_span", STT.GetString("make_span"))
 						,"bgcolor=#888888 colspan='3'")
 					)+
 
@@ -1697,13 +1730,13 @@ public string GetPropertyType(string id)
 		if(str_a[0]=="speed")
 			s="int,-1,500";
 		}
-		
+
 	return s;
 }
 
 
 public void SetPropertyValue(string id, float val)
-{     
+{
 	if(id == "displace")
 		{
 		displacement=val;
@@ -1714,7 +1747,7 @@ public void SetPropertyValue(string id, float val)
 		vert_displ=val;
 		SetMeshTranslation("default", displacement-def_displ, 0, vert_displ);
 		}
-	
+
 }
 
 
@@ -1724,7 +1757,7 @@ void SetHeadRotation(bool start)
 
 	int h_n = head_conf.size();
 	int i;
-	
+
 	Asset provod_as;
 
 	if( (head_rot-head_krepl_rot) <= 0)
@@ -1788,7 +1821,7 @@ void SetNewGolPosition(bool enable)
 		}
 	else
 		{
-		int h_n = head_conf.size();	
+		int h_n = head_conf.size();
 
 
 		for(i=0;i<h_n;i++)
@@ -1846,10 +1879,10 @@ void SetNewGolTex(bool[] ex_lins, int[] pos_lins, bool reset)
 {
 			int num = head_conf.size();
 
-			
-			
+
+
 			koz_mesh = new bool[10];
-	
+
 			int[] gol_conf = new int[num];
 			int[] koz_conf = new int[num];
 			gol_tex_id = new int[num];
@@ -1865,11 +1898,11 @@ void SetNewGolTex(bool[] ex_lins, int[] pos_lins, bool reset)
 				}
 
 			int[] gol_meshes = new int[num];
-	
 
 
 
-			
+
+
 			for(i=0;i<10;i++)
 				{
 				koz_mesh[i] = true;
@@ -1880,7 +1913,7 @@ void SetNewGolTex(bool[] ex_lins, int[] pos_lins, bool reset)
 					int j=0;
 					int temp1 = 1;
 					int k;
-					
+
 					while( (pos1 - gol_conf[j]) >= 0 )
 						{
 						pos1 = pos1 - gol_conf[j];
@@ -1915,7 +1948,7 @@ void SetNewGolTex(bool[] ex_lins, int[] pos_lins, bool reset)
 						int j =0;
 						while(!ex_lins[j] or (pos_lins[j] !=  temp_koz_num))
 							j++;
-					
+
 						koz_mesh[j] = false;
 
 
@@ -1961,7 +1994,7 @@ void SetNewGolTex(bool[] ex_lins, int[] pos_lins, bool reset)
 						gol_tex_id[i] = 5;
 						dis_koz = true;
 						}
-	
+
 					}
 
 				temp_koz_num=temp_koz_num + gol_conf[i];
@@ -1973,7 +2006,7 @@ void SetNewGolTex(bool[] ex_lins, int[] pos_lins, bool reset)
 			for(i=0;i< num;i++)
 				{
 				if(gol_tex_id[i] >= 0)
-					SetFXTextureReplacement("gol"+i,gol_tex,gol_tex_id[i]);	
+					SetFXTextureReplacement("gol"+i,gol_tex,gol_tex_id[i]);
 				else
 					SetFXTextureReplacement("gol"+i,null,0);
 				}
@@ -1983,7 +2016,7 @@ void SetNewGolTex(bool[] ex_lins, int[] pos_lins, bool reset)
 			for(i=0;i< num;i++)
 				{
 				if(gol_tex_id[i] >= 0)
-					SetFXTextureReplacement("gol"+i,gol_tex,gol_tex_id[i]);	
+					SetFXTextureReplacement("gol"+i,gol_tex,gol_tex_id[i]);
 				}
 			}
 
@@ -2001,7 +2034,7 @@ public void SetPropertyValue(string id, string val)
         inherited(id,val);
  	if(id == "private-name")
 		{
- 		privateName = val; 
+ 		privateName = val;
 		ShowName(true);
 		}
 
@@ -2064,7 +2097,7 @@ public void LinkPropertyValue(string id)
 		lens_kit_n++;
 
 		train_open = false;
-		shunt_open = false;	
+		shunt_open = false;
 
 		string[] l_k_arr = GetLensKit();	// если набор линз по-умолчанию
 
@@ -2089,7 +2122,7 @@ public void LinkPropertyValue(string id)
 
 		if( head_conf!="" )
 			SetNewGolTex(ex_lins, pos_lins, true);
-			
+
 
 
 		MC.MakeMeshes(cast<MeshObject>me, ex_lins, pos_lins , koz_mesh);
@@ -2148,10 +2181,10 @@ public void LinkPropertyValue(string id)
 		{
 		mainLib.LibraryCall("speed_paste",null,GSO);
 		}
-	else if(id=="code_dev")
-		{
-		code_dev=!code_dev;
-		}
+//	else if(id=="code_dev")
+//		{
+//		code_dev=!code_dev;
+//		}
 	else if(id=="kor_BU_1")
 		{
 		kor_BU_1 = !kor_BU_1;
@@ -2208,7 +2241,7 @@ public void LinkPropertyValue(string id)
 			MU.textureName="rs_white";
 		else
 			MU.textureName="rs_green";
-				
+
 		MU.UpdateMU();
 		}
 
@@ -2243,7 +2276,7 @@ public void LinkPropertyValue(string id)
 				else
 					Type = Type + ST_UNTYPED;
 				}
-			
+
 			if(str_a[1]=="IN")
 				{
 				if(Type & ST_IN)
@@ -2314,7 +2347,7 @@ public void LinkPropertyValue(string id)
 					{
 					if(!(Type & ST_UNLINKED))
 						Type = Type + ST_UNLINKED;
-	
+
 					if(!(Type & 128))
 						Type = Type + 128;
 					}
@@ -2339,9 +2372,15 @@ public void LinkPropertyValue(string id)
 					code_freq = code_freq + 8;
 				}
 			else
-				code_freq = tmp_fr; 
+				code_freq = tmp_fr;
 			}
-		}
+	  else if(str_a[0]=="code_dev"){
+			int tmp_fr = Str.ToInt(str_a[1]);
+      if(code_dev & tmp_fr) code_dev = code_dev - tmp_fr;
+      else code_dev = code_dev + tmp_fr;
+    }
+
+	}
 }
 
 
@@ -2349,11 +2388,11 @@ public void LinkPropertyValue(string id)
 
 
 public string[] GetPropertyElementList(string id)
-{	
+{
 	string[] ret;
  	if(id == "station_name")
 		{
-		
+
 
 		string[] obj_p=new string[1];
 		obj_p[0]=stationName+"";
@@ -2380,7 +2419,7 @@ public void SetPropertyValue(string id, string val,int idx)
  	if(id=="station_name")
 		{
  		stationName=val;
-		
+
 
 		string[] obj_p=new string[1];
 		obj_p[0]=stationName;
@@ -2421,27 +2460,27 @@ string GetPropertyName(string id)
 
 	if(id=="station_name")
 		{
- 		ret=ST.GetString("des_stationname");
- 		}	
+ 		ret=STT.GetString("des_stationname");
+ 		}
 
 	if(id=="private-name")
 		{
- 		ret=ST.GetString("des_privatename");
+ 		ret=STT.GetString("des_privatename");
  		}
 	if(id=="station_create")
 		{
- 		ret=ST.GetString("des_stationcreate");
+ 		ret=STT.GetString("des_stationcreate");
  		}
 
 	if(id=="lens_kit_ex")
 		{
- 		ret=ST.GetString("lens_kit_ex");
+ 		ret=STT.GetString("lens_kit_ex");
  		}
 
 
 	if(id=="priority")
 		{
- 		ret=ST.GetString("priority");
+ 		ret=STT.GetString("priority");
  		}
 
 
@@ -2458,7 +2497,7 @@ public string GetImgMayOpen(bool state)
  	if(state)
 	 	s=hw.MakeImage("<kuid:236443:103204>",true,32,32);
 	else
-		s=hw.MakeImage("<kuid:236443:103206>",true,32,32);		
+		s=hw.MakeImage("<kuid:236443:103206>",true,32,32);
 
  	return s;
  }
@@ -2496,13 +2535,13 @@ public string GetContentViewDetails(void)
 
 	if( !(Type & ST_SHUNT) )
 		s2 = 	hw.MakeRow(
- 	 			hw.MakeCell(ST.GetString("ability_to_open"),"width=80% bgcolor=#777777")+
+ 	 			hw.MakeCell(STT.GetString("ability_to_open"),"width=80% bgcolor=#777777")+
  	 			hw.MakeCell(hw.MakeLink("live://MayOpen^"+!train_open,GetImgMayOpen(train_open)),"bgcolor=#777777")
  	 		);
 
 	if( !(Type & ST_PERMOPENED) )
 		s3 =	hw.MakeRow(
- 	 			hw.MakeCell(ST.GetString("ability_to_shnt"),"bgcolor=#777777")+
+ 	 			hw.MakeCell(STT.GetString("ability_to_shnt"),"bgcolor=#777777")+
  	 			hw.MakeCell(hw.MakeLink("live://ShuntMode^"+!shunt_open,GetImgShuntMode(shunt_open)),"bgcolor=#777777")
  	 		);
 
@@ -2524,7 +2563,7 @@ public string GetContentViewDetails(void)
 		        bb_s[3]="</b>";
 		        }
 		else
-			{			
+			{
 			bb_s[0]="<b>";
 			bb_s[1]="</b>";
 			bb_s[2]="";
@@ -2533,7 +2572,7 @@ public string GetContentViewDetails(void)
 
 
 		s3 = s3 + hw.MakeRow(
-        		  		hw.MakeCell(ST.GetString("dir_track_to")+"<br>"+
+        		  		hw.MakeCell(STT.GetString("dir_track_to")+"<br>"+
 
 	                		hw.MakeLink("live://spanTrackFromOther",bb_s[0]+privateName+"@"+stationName+"  &gt;&gt;&gt; "+bb_s[1])+" . "+
 	                		hw.MakeLink("live://spanTrackFromMe",bb_s[2]+"&lt;&lt;&lt; "+span_soup.GetNamedTag("end_sign_n")+"@"+span_soup.GetNamedTag("end_sign_s")+bb_s[3]) ,"bgcolor='#555555' align='center'")+
@@ -2545,20 +2584,20 @@ public string GetContentViewDetails(void)
 
 
 		}
-	
+
 	s1=s1+hw.MakeTable(
-			s2 + s3	
+			s2 + s3
  	 	,"width=100% border=1");
- 
+
 
  	s1=hw.MakeTable(
  		hw.MakeRow(
- 			hw.MakeCell(s1	
+ 			hw.MakeCell(s1
  			,"bgcolor='#AAAAAA' border=1")
  		)
  	,"width=100%");
 
-        
+
  	return s1;
 }
 
@@ -2590,7 +2629,7 @@ public void ChangeText(Message msg)
  				PostMessage(me,"CTRL","MayOpen^true",0);
  			else if(tok2[1]=="false")
  				PostMessage(me,"CTRL","MayOpen^false",0);
- 			
+
  			}
  		if(tok2[0]=="ShuntMode")
 			{
@@ -2598,7 +2637,7 @@ public void ChangeText(Message msg)
  				PostMessage(me,"CTRL","ShuntMode.true",0);
  			else if(tok2[1]=="false")
  				PostMessage(me,"CTRL","ShuntMode.false",0);
- 			
+
  			}
  		PostMessage(me,"RefreshBrowser","",0.5);
  		}
@@ -2613,12 +2652,12 @@ thread void ShowBrowser(void)
         	{
         	wait()
 			{
-			on "Browser-URL","",msg: 
+			on "Browser-URL","",msg:
 				{
 			        ChangeText(msg);
                         	continue;
                         	}
-                	on "Browser-Closed","",msg: 
+                	on "Browser-Closed","",msg:
 				if(msg.src==mn)
 					mn=null;
                 	}
@@ -2632,7 +2671,7 @@ public void ViewDetails(Message msg)
 {
 	if(!mn)
 		mn=Constructors.NewBrowser();
-        
+
         mn.LoadHTMLString(GetAsset(),GetContentViewDetails());
         int x=Math.Rand(0,20);
         int y=Math.Rand(0,20);
@@ -2652,7 +2691,7 @@ string[] GetLensKit()
 	int i;
 	int n= Str.ToInt(ST.GetString("lensn"));
 
-	string[] temp = new string[n];	
+	string[] temp = new string[n];
 
 	for(i=0;i<n;i++)
 		{
@@ -2665,10 +2704,10 @@ string[] GetLensKit()
 string ConvLensKit(string s)
 {
 	string res = "";
-	string lens_str1= ST.GetString("lens_str1");
+	string lens_str1= STT.GetString("lens_str1");
 
 	int i;
-	
+
 	for(i=0;i<s.size();i++)
 		{
 		if(s[i] != '-' and s[i] != 'n')
@@ -2684,7 +2723,7 @@ string ConvLensKit(string s)
 
 			res[2*n1,2*n1+2]=lens_str1[2*i,2*i+2];
 			}
-		
+
 		}
 
 	return res;
@@ -2904,11 +2943,11 @@ public void SetProperties(Soup soup)
 		}
 
 
-	privateName = soup.GetNamedTag("privateName"); 
+	privateName = soup.GetNamedTag("privateName");
 
 	//name_decoded = soup.GetNamedTag("name_decoded");
 
-	ShowName(false); 
+	ShowName(false);
 	MainState = soup.GetNamedTagAsInt("MainState",0);
 	Type = soup.GetNamedTagAsInt("GetSignalType()",-1);
 
@@ -2918,15 +2957,15 @@ public void SetProperties(Soup soup)
 	lens_kit_n = soup.GetNamedTagAsInt("lens_kit_n",0);
 	if(lens_kit_n < 0)						// собственный набор линз
 		lens_kit = soup.GetNamedTag("lens_kit");
-	else	
+	else
 		{
 		string[] l_k_arr=	GetLensKit();				// если набор линз по-умолчанию берём его
 		if(lens_kit_n < l_k_arr.size())
 			lens_kit = l_k_arr[lens_kit_n];			// если он вообще есть?
-		
+
 		if(ST.GetString("lensT"+lens_kit_n)!="")
-			Type = Str.ToInt( ST.GetString("lensT"+lens_kit_n) );	
-		
+			Type = Str.ToInt( ST.GetString("lensT"+lens_kit_n) );
+
 		if(ab4<0)
 			{
 			if(ST.GetString("lensab"+lens_kit_n)=="4")
@@ -2951,7 +2990,7 @@ public void SetProperties(Soup soup)
 
 
 	MC.MakeMeshes(cast<MeshObject>me, ex_lins, pos_lins, koz_mesh );
-	
+
 	OldMainState = -1;
 
 	string ex_sign_1 = soup.GetNamedTag("ExSignals_str");
@@ -2976,7 +3015,7 @@ public void SetProperties(Soup soup)
 		train_open = false;
 	else
 		train_open = soup.GetNamedTagAsBool("train_open",false);
-	
+
 	shunt_open = soup.GetNamedTagAsBool("shunt_open",false);
 
 
@@ -3025,7 +3064,7 @@ public void SetProperties(Soup soup)
 		kor_BU_1 = soup.GetNamedTagAsBool("kor_BU_1",false);
 		kor_BU_2 = soup.GetNamedTagAsBool("kor_BU_2",false);
 
-		MakeBUArrow();	
+		MakeBUArrow();
 
 		head_rot = soup.GetNamedTagAsFloat("head_rot",0);
 		head_krepl_rot = soup.GetNamedTagAsFloat("head_krepl_rot",0);
@@ -3045,7 +3084,7 @@ public void SetProperties(Soup soup)
 			}
 		else
 			SetSignalState(2, "");
-			
+
 		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
 		NewSignal(set_lens,0,0.7);
 		}
@@ -3079,7 +3118,7 @@ public void SetProperties(Soup soup)
 		code_freq = soup.GetNamedTagAsInt("code_freq",2);
 
 
-	code_dev = soup.GetNamedTagAsBool("code_dev",false);
+	code_dev = soup.GetNamedTagAsInt("code_dev");
 	def_path_priority = soup.GetNamedTagAsInt("def_path_priority",0);
 
 
@@ -3144,7 +3183,7 @@ public Soup GetProperties(void)
 
 			}
 		else
-			retSoup.SetNamedTag("MU_set",false);			
+			retSoup.SetNamedTag("MU_set",false);
 
 		}
 
@@ -3185,7 +3224,7 @@ public Soup GetProperties(void)
 		{
 		linkedMU= cast<Trackside>Router.GetGameObject(MU_name);
 		if(linkedMU)
-			retSoup.SetNamedTag("MU_name", MU_name);			
+			retSoup.SetNamedTag("MU_name", MU_name);
 		}
 
 	return retSoup;
@@ -3200,7 +3239,7 @@ void OffMU(Message msg)
 		}
 	}
 
-public void Init(Asset asset) 
+public void Init(Asset asset)
 	{
 	inherited(asset);
 
@@ -3218,12 +3257,13 @@ public void Init(Asset asset)
 
 
 	ST = asset.GetStringTable();
+  STT = asset.FindAsset("main_lib").GetStringTable();
 
 	MC = new zxMeshController();
 	LC = zxLightContainer;
 	if(!LC.sgn_st)
 		LC.Init();
-		
+
 
 	set_lens = new bool[10];
 	set_blink = new bool[10];
@@ -3241,8 +3281,10 @@ public void Init(Asset asset)
 
 	AddHandler(me,"MapObject","View-Details","ViewDetails");
   	AddHandler(me,"RefreshBrowser","","RefreshBrowser");
-	
+
 	AddHandler(me,"UpdateMU","Off","OffMU");
+
+	NullSoup = Constructors.NewSoup();
 	}
 
 
@@ -3252,14 +3294,14 @@ public void Init(void)
 
 public Soup DetermineUpdatedState(void)
 	{
-	return Constructors.NewSoup();
+	return NullSoup;
 	}
 
 public void ApplySpeedLimitForStateEx(int state)
 	{
 	}
 
-void ApplyUpdatedState(Soup signalStateSoup) 
+void ApplyUpdatedState(Soup signalStateSoup)
 	{
 	}
 

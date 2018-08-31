@@ -19,7 +19,7 @@ class zxSpeedBoard isclass Trackside
 	public float MainSpeed;		// скорость предыдущего светофора
 
 	public float ExtraSpeed;	// скорость последующего светофора
-	
+
 	public void SetNewSpeed(float speed, bool extra)
 		{
 		if(extra)
@@ -46,8 +46,8 @@ class zxSignal isclass Signal
 	public define int ST_UNLINKED	= 16;		// не состоящий в рельсовых цепях
 	public define int ST_PERMOPENED	= 32;		// постоянно открытый в поездном, напр. проходной
 	public define int ST_SHUNT	= 64;		// неспособный работать в поездном порядке
-	public define int ST_ZAGRAD	= 144;		// 16 + 128, заградительный 
-	
+	public define int ST_ZAGRAD	= 144;		// 16 + 128, заградительный
+
 
 
 	public int OwnId;		// идентификатор, каждый раз новый
@@ -94,7 +94,7 @@ class zxSignal isclass Signal
 	public bool train_is_l;
 
 	public int code_freq;		// частота кодирования АЛС (0 - не кодируется)
-	public bool code_dev;		// съезды к пути не кодируются, путь кодируется
+	public int code_dev;		// съезды к пути не кодируются, путь кодируется (1 - кодируются к светофору, 2 - кодируются от светофора, 3 - полное кодирование)
 
 
 	public void AddTrainId(int id)			// добавление и удаление наехавших поездов
@@ -109,12 +109,12 @@ class zxSignal isclass Signal
 		if(exist)
 			return;
 
-		
+
 		TC_id[TC_id.size(),TC_id.size()+1]=new int[1];
 		TC_id[TC_id.size()-1]=id;
 		}
 
-	
+
 	public void RemoveTrainId(int id)
 		{
 		int i=0;
@@ -128,14 +128,14 @@ class zxSignal isclass Signal
 		if(n<0)
 			return;
 
-		
+
 		TC_id[n,n+1]=null;
 		}
 
 
 
 	public void UpdateState(int reason, int priority)  	// обновление состояния светофора, основной кусок сигнального движка
-		{				// reason : 0 - команда изменения состояния 1 - наезд поезда в направлении 2 - съезд поезда в направлении 3 - наезд поезда против 4 - съезд поезда против 5 - покидание зоны светофора поездом 
+		{				// reason : 0 - команда изменения состояния 1 - наезд поезда в направлении 2 - съезд поезда в направлении 3 - наезд поезда против 4 - съезд поезда против 5 - покидание зоны светофора поездом
  		//Interface.Print("!!! signal "+privateName+"@"+stationName+" changed for "+reason+ " priority "+priority);
 
 
@@ -148,7 +148,7 @@ class zxSignal isclass Signal
 
 
 	public void CheckPrevSignals(bool no_train)
-		{	
+		{
 		}
 
 
@@ -203,9 +203,9 @@ class zxSignal isclass Signal
 	public int FindTrainPrior(bool dir)
 		{
 		GSTrackSearch GSTS = BeginTrackSearch(dir);
-	
+
 		MapObject MO = GSTS.SearchNext();
-	
+
 		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) ) )
 			MO = GSTS.SearchNext();
 
@@ -223,7 +223,7 @@ class zxSignal isclass Signal
 			}
 		if(tr1.GetTrainPriorityNumber() == 1)
 			return 1;
-			
+
 		return 2;
 		}
 
@@ -245,7 +245,7 @@ class zxMarker isclass Trackside
 
 /*
 
-trmrk_mod 
+trmrk_mod
 
 
 0 прямой путь
