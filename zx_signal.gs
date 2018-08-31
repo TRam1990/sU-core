@@ -61,10 +61,9 @@ public bool kor_BU_1;
 public bool kor_BU_2;
 MeshObject[] kor_BU;
 
+public bool yellow_code;
 
 public zxRouter MU;
-
-
 
 
 string name_decoded;
@@ -126,16 +125,6 @@ public thread void NewSignal(bool[] set_lens, float dt1, float dt2)
 
 
 
-public float SetSpeedLim(int prior)
-	{
-	if(zxSP and zxSP_name != "")
-		zxSP= cast<zxSpeedBoard>Router.GetGameObject(zxSP_name);
-
-	float speed_limit = inherited(prior);
-	return speed_limit;
-	}
-
-
 thread void MUChecker()
 	{
 	Sleep(0.7);
@@ -143,7 +132,7 @@ thread void MUChecker()
 	}
 
 
-bool SetOwnSignalState()
+bool SetOwnSignalState(bool set_auto_state)
 	{
 	if(MainState!=OldMainState)
 		{
@@ -176,13 +165,15 @@ bool SetOwnSignalState()
 
 		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
 
-
-		if(MainState == 1)
-			SetSignalState(0, "");
-		else if((MainState > 1 and MainState < 9) or MainState == 13 or MainState == 16 or MainState == 18 or MainState == 22 or MainState == 23)
-			SetSignalState(1, "");
-		else
-			SetSignalState(2, "");
+		if(set_auto_state)
+			{
+			if(MainState == 1)
+				SetSignalState(0, "");
+			else if((MainState > 1 and MainState < 9) or MainState == 13 or MainState == 16 or MainState == 18 or MainState == 22 or MainState == 23)
+				SetSignalState(1, "");
+			else
+				SetSignalState(2, "");
+			}
 
 		OldMainState = MainState;
 		return true;
@@ -192,10 +183,15 @@ bool SetOwnSignalState()
 	}
 
 
-public void SetSignal()
+public void SetSignal(bool set_auto_state)
 	{
-	if(SetOwnSignalState())
+	if(SetOwnSignalState(set_auto_state))
+		{
 		NewSignal(set_lens,0,0.7);
+
+		if(IsServer)
+			mainLib.LibraryCall("mult_state",null,GSO);
+		}
 	}
 
 void MakeSignalSearch()
@@ -215,6 +211,7 @@ void MakeSignalSearch()
 
 public void CheckPrevSignals(bool no_train)
 	{
+
 	string[] type_ToFind = new string[2];
 	type_ToFind[0]=ST_UNTYPED+"";
 
@@ -240,16 +237,22 @@ public void CheckPrevSignals(bool no_train)
 	if(Cur_prev and ((type_ToFind[0])[0]!='+' or no_train) and Other_OldState != Other_MainState)
 		{
 		Cur_prev.MainState = Other_MainState;
-		Cur_prev.SetSignal();
+		Cur_prev.SetSignal(true);
 		Cur_prev.CheckPrevSignals(false);
 		Cur_prev.SetSpeedLim(Cur_prev.FindTrainPrior(false));
+
+		if(IsServer)
+			{
+			GSO[0] = Cur_prev;
+			mainLib.LibraryCall("mult_speed",null,GSO);
+			GSO[0] = me;
+			}
 		}
 
 	}
 
 void CheckMySignal(float dt1,float dt2, bool train_entered)
 	{
-
 
 	string[] type_ToFind = new string[2];
 
@@ -268,7 +271,7 @@ void CheckMySignal(float dt1,float dt2, bool train_entered)
 
 	MainState = LC.FindSignalState(((type_ToFind[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(type_ToFind[1]), train_open, shunt_open, (type_ToFind[0])[1]=='+', next_state);
 
-	if(SetOwnSignalState())
+	if(SetOwnSignalState(true))
 		NewSignal(set_lens,dt1,dt2);
 
 
@@ -335,9 +338,11 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 	{				// reason : 0 - команда изменения состояния 1 - наезд поезда в направлении 2 - съезд поезда в направлении 3 - наезд поезда против 4 - съезд поезда против 5 - покидание зоны светофора поездом
  	inherited(reason,priority);
 
-	if(!(Type & ST_UNTYPED))
+	if(MP_NotServer)
 		return;
 
+	if(!(Type & ST_UNTYPED))
+		return;
 
 	if(Type & ST_PROTECT and reason==0)
 		{
@@ -348,17 +353,14 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				MainState=1;
 
 				SetSignalState(0, "");
-				LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-				NewSignal(set_lens,0,0.7);
-
+				SetSignal(false);
 				}
 			else
 				{
 				MainState=6;
 
 				SetSignalState(2, "");
-				LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-				NewSignal(set_lens,0,0.7);
+				SetSignal(false);
 				}
 
 
@@ -380,9 +382,16 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			if(Cur_prev and Other_OldState != Other_MainState)
 				{
 				Cur_prev.MainState = Other_MainState;
-				Cur_prev.SetSignal();
+				Cur_prev.SetSignal(true);
 				Cur_prev.CheckPrevSignals(false);
 				Cur_prev.SetSpeedLim(Cur_prev.FindTrainPrior(false));
+
+				if(IsServer)
+					{
+					GSO[0] = Cur_prev;
+					mainLib.LibraryCall("mult_speed",null,GSO);
+					GSO[0] = me;
+					}
 				}
 
 			return;
@@ -395,15 +404,13 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				{
 				MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, false, 0);
 
-				LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-				NewSignal(set_lens,0,0.7);
+				SetSignal(false);
 
 				}
 			else
 				{
 				MainState = 0;
-				LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-				NewSignal(set_lens,0,0.7);
+				SetSignal(false);
 				}
 
 
@@ -438,9 +445,17 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				if(Cur_prev and Other_OldState != Other_MainState)
 					{
 					Cur_prev.MainState = Other_MainState;
-					Cur_prev.SetSignal();
+					Cur_prev.SetSignal(true);
 					Cur_prev.CheckPrevSignals(false);
 					Cur_prev.SetSpeedLim(Cur_prev.FindTrainPrior(false));
+
+					if(IsServer)
+						{
+						GSO[0] = Cur_prev;
+						mainLib.LibraryCall("mult_speed",null,GSO);
+						GSO[0] = me;
+						}
+
 					}
 
 
@@ -459,8 +474,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				{
 				MainState=1;
 				SetSignalState(0, "");
-				LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-				NewSignal(set_lens,0,0.7);
+				SetSignal(false);
 				CheckPrevSignals(false);
 				}
 			if(reason==0)
@@ -472,8 +486,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 					SetSignalState(0, "");
 					CheckPrevSignals(false);
 					train_open=false;
-					LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-					NewSignal(set_lens,0,0.7);
+					SetSignal(false);
 					}
 
 				string[] type_ToFind = new string[2];
@@ -487,8 +500,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				CheckPrevSignals(false);
 				SetSignalState(2, "");
 
-				LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-				NewSignal(set_lens,0,0.7);
+					SetSignal(false);
 				}
 
 			}
@@ -500,11 +512,19 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			{
 			shunt_open=false;
 			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, false, 0);
-			SetSignal();
+			SetSignal(true);
 
-			if(GetSpeedLimit() > 0)
-				SetSpeedLimit( -1 );
+			if(MainState != 19)
+				{
+				if(priority < 0)
+					priority = FindTrainPrior(false);
 
+				string[] type_ToFind = new string[1];
+				type_ToFind[0] = priority;
+				mainLib.LibraryCall("new_speed",type_ToFind,GSO);
+				}
+			else
+				mainLib.LibraryCall("new_speed",null,GSO);
 			}
 
 		}
@@ -533,7 +553,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				{
 				MainState = 19;
 
-				if(SetOwnSignalState())
+				if(SetOwnSignalState(true))
 					NewSignal(set_lens,0,0.7);			// иначе включаем синюю линзу
 
 
@@ -566,15 +586,17 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				CheckPrevSignals(false);		// поиск следующего светофора
 			}
 
+		if(MainState != 19)
+			{
+			if(priority < 0)
+				priority = FindTrainPrior(false);
 
-
-		if(priority < 0)
-			priority = FindTrainPrior(false);
-
-		string[] type_ToFind = new string[1];
-		type_ToFind[0] = priority;
-		mainLib.LibraryCall("new_speed",type_ToFind,GSO);
-
+			string[] type_ToFind = new string[1];
+			type_ToFind[0] = priority;
+			mainLib.LibraryCall("new_speed",type_ToFind,GSO);
+			}
+		else
+			mainLib.LibraryCall("new_speed",null,GSO);			
 
 		}
 
@@ -640,6 +662,9 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 public void UnlinkedUpdate(int mainstate)
 	{
 
+	if(MP_NotServer)
+		return;
+
 	if(Type & ST_PERMOPENED)
 		{
 		if(mainstate == 0)
@@ -659,8 +684,7 @@ public void UnlinkedUpdate(int mainstate)
 		else
 			MainState = 0;
 
-		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-		NewSignal(set_lens,0,0.7);
+		SetSignal(false);
 		}
 	else if(Type & (ST_IN+ST_OUT))
 		{
@@ -668,15 +692,13 @@ public void UnlinkedUpdate(int mainstate)
 			{
 			MainState = mainstate;
 			SetSignalState(2, "");
-			LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-			NewSignal(set_lens,0,0.7);
+			SetSignal(false);
 			}
 		}
 	else
 		{
 		MainState = mainstate;
-		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-		NewSignal(set_lens,0,0.7);
+		SetSignal(false);
 		}
 
 	}
@@ -1048,7 +1070,7 @@ public void Deswitch_span()
 		{
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
 		zxs.MainState = 2;
-		zxs.SetSignal();
+		zxs.SetSignal(true);
 		}
 
 	if(n>0)
@@ -1060,13 +1082,15 @@ public void Deswitch_span()
 
 	wrong_dir = true;
 
-	SetSignal();
+	SetSignal(true);
 
 }
 
 
 public bool Switch_span()		// повернуть светофор в сторону этого светофора
 {
+	if(MP_NotServer)
+		return true;
 
 	GSTrackSearch GSTS = me.BeginTrackSearch(false);
 	MapObject MO = GSTS.SearchNext();
@@ -1116,12 +1140,6 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 
 	UpdateState(0, -1);
 
-	if(zxs)
-		zxs.SetSpeedLim(  zxs.FindTrainPrior(false) );
-	else
-		SetSpeedLim( FindTrainPrior(false) );
-
-
 	return true;
 }
 
@@ -1134,6 +1152,9 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 
 public void Switch_span2()		// повернуть светофор в сторону этого светофора
 {
+
+	if(MP_NotServer)
+		return;
 
 	int n = span_soup.GetNamedTagAsInt("Extra_sign",0);
 	int i;
@@ -1240,14 +1261,6 @@ public void GenerateSpan(bool recurs)
 
 
 
-
-
-
-
-
-
-
-
 public int GetALSNCode(void)
 	{
 	if(barrier_closed and protect_influence)
@@ -1257,6 +1270,8 @@ public int GetALSNCode(void)
 		return CODE_REDYELLOW;
 	else if( (MainState >= 4 and MainState <= 7) or MainState == 13 or MainState == 16 or MainState == 18 or MainState == 22 or MainState == 23)
 		return CODE_YELLOW;
+	else if(yellow_code and (MainState == 9 or MainState == 11) )
+		return CODE_YELLOW;		
 	else if(MainState >= 9 and MainState != 19)
 		return CODE_GREEN;	
 
@@ -1316,20 +1331,6 @@ public string GetALSNStationName()
 		return "";
 	return stationName;
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1817,8 +1818,12 @@ public string GetDescriptionHTML(void)
 		s=s+MakeCheckBoxCell("live://property/code_freq/8",STT.GetString("ALSEN"), code_freq & 8);
 		s=s+hw.EndRow();
 
+		int column_number = 5;
+
+
 		if(Type & ST_IN)
 			{
+			column_number++;
 			s=s+hw.StartRow();
 			s=s+hw.MakeCell(STT.GetString("code_dev"),"bgcolor='#AAAAAA' colspan='2' ");
 
@@ -1833,6 +1838,16 @@ public string GetDescriptionHTML(void)
 			s=s+hw.EndCell();
 			s=s+hw.EndRow();
 			}
+
+	
+		s=s+hw.StartRow();	
+		s=s+hw.StartCell("bgcolor='#888888' colspan='"+column_number+"' align='left'");
+
+		s=s+hw.CheckBox("live://property/yellow_code", yellow_code);
+	 	s=s+" "+hw.MakeLink("live://property/yellow_code", STT.GetString("yellow_code"));
+
+		s=s+hw.EndCell();
+		s=s+hw.EndRow();
 
 
 
@@ -2497,6 +2512,9 @@ public void LinkPropertyValue(string id)
 		MakeBUArrow();
 		}
 
+	else if(id=="yellow_code")
+		yellow_code = !yellow_code;
+
 	else if(id=="MU")
 		{
 		kor_BU_1 = false;
@@ -2858,6 +2876,7 @@ public string GetImgShuntMode(bool state)
 
 public string GetContentViewDetails(void)
 {
+
  	string s1="",s2="",s3="";
  	HTMLWindow hw=HTMLWindow;
 
@@ -2870,6 +2889,10 @@ public string GetContentViewDetails(void)
  		)
 
  	,"width=100% bgcolor=#777777");
+
+
+	if(MP_NotServer)
+		return s1;
 
 
 	if(Type & ST_PROTECT)
@@ -3481,7 +3504,7 @@ public void SetProperties(Soup soup)
 		SetHeadRotation(true);
 		}
 
-
+	yellow_code = soup.GetNamedTagAsBool("yellow_code",false);
 
 	UpdateState(0,-1);
 
@@ -3588,6 +3611,8 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("predvhod",predvhod);
 	retSoup.SetNamedTag("kor_BU_1",kor_BU_1);
 	retSoup.SetNamedTag("kor_BU_2",kor_BU_2);
+	retSoup.SetNamedTag("yellow_code",yellow_code);
+
 
 	retSoup.SetNamedTag("AttachedJunction",AttachedJunction);
 

@@ -62,6 +62,7 @@ string-table
   als50                                 "АЛС-50"
   als75                                 "АЛС-75"
   alsen                                 "АЛС-ЕН"
+  yellow_code                           "код жёлтого для ЖЗ и Жм"
   untyped_flag                          "типовой светофор"
   in_flag                               "входной"
   out_flag                              "выходной/маршрутный"
@@ -91,7 +92,7 @@ string-table
 extensions
 {
 }
-kuid                                    <kuid2:400260:100120:16>
+kuid                                    <kuid2:400260:100120:17>
 
 kuid-table
 {

@@ -51,13 +51,10 @@ class zxSignal isclass Signal, ALSN_Provider
 	public define int ST_PROTECT	= 128;		// заградительный
 
 
-
 	public int OwnId;		// идентификатор, каждый раз новый
-
 
 	public bool train_open;		// светофор открыт в поездном режиме
 	public bool shunt_open;		// светофор открыт в маневровом режиме
-
 	public bool barrier_closed;	// заградительный закрыт
 
 	public string stationName;
@@ -66,6 +63,13 @@ class zxSignal isclass Signal, ALSN_Provider
 
 	public int MainState;		// состояние светофора
 	public int Type;		// тип светофора
+
+	public float speed_limit;	// ограничение светофора
+
+
+	public bool MP_NotServer = false;	// не является сервером в мультиплеерной игре (отключение логики)
+	public bool IsServer = false;
+
 
 	public bool[] ex_sgn;		// допустимые показания
 	public int ab4;			// 4-значная АБ. -1 - не определено, 0 - нет, 1 - есть
@@ -78,8 +82,6 @@ class zxSignal isclass Signal, ALSN_Provider
 	public Browser mn = null;
 
 	public bool wrong_dir;
-
-	public float speed_limit;
 
 	public int def_path_priority;	// приоритет маршрутов к светофору по умолчанию
 
@@ -161,7 +163,7 @@ class zxSignal isclass Signal, ALSN_Provider
 		}
 
 
-	public void SetSignal()
+	public void SetSignal(bool set_auto_state)
 		{
 		}
 
@@ -215,7 +217,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 		MapObject MO = GSTS.SearchNext();
 
-		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) ) )
+		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !(((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)   or ((cast<zxSignal>MO).MainState == 19) ) ) )
 			MO = GSTS.SearchNext();
 
 		if(!MO or !MO.isclass(Vehicle))
@@ -245,6 +247,13 @@ class zxSignal isclass Signal, ALSN_Provider
 		}
 
 
+};
+
+
+class zxSignal_Cache isclass GSObject
+{
+	public int MainState;		// состояние светофора
+	public float speed_limit;	// ограничение светофора
 };
 
 
