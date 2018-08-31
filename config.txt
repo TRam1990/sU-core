@@ -1,6 +1,6 @@
 ﻿
 username                                "sU core"
-trainz-build                            3.3
+trainz-build                            3.7
 kind                                    "library"
 category-era                            "1960s;1970s;1980s;1990s;2000s"
 category-region                         "BY;RU;SU;UA"
@@ -87,7 +87,7 @@ string-table
 extensions
 {
 }
-kuid                                    <kuid2:400260:100120:14>
+kuid                                    <kuid2:400260:100120:15>
 
 kuid-table
 {

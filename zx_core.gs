@@ -119,10 +119,18 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 	Train curr_train=msg.src;
 
-	if(!curr_train)  // поезд потерян
+	if(!curr_train )  // поезд потерян
 		{
 		Interface.Exception("A train contains a bad vehicle!");
 		return;
+		}
+
+	int state1 = SearchForTrain(entered_sign, curr_train.GetId() );
+
+	if(state1 == 0)
+		{
+		Interface.Exception("Excessive trigger distance of "+ entered_sign.privateName + "@" + entered_sign.stationName);
+		return;	
 		}
 
 	string name =curr_train.GetId()+"";
@@ -154,7 +162,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal=new int[1];
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[0]=number;
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state=new int[1];
-		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[0]=0;
+		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[0]=state1;
 
 
 		if((train_arr.N+20) > train_arr.DBSE.size())
@@ -163,19 +171,9 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetId());
 
-
-//LogTrainIdS(number);
-
-
 		Sniff(curr_train, "Train", "StartedMoving", true);
 		Sniff(curr_train, "Train", "StoppedMoving", true);
 		Sniff(curr_train, "Train", "Cleanup", true);
-
-
-//	err="added train " + name + " intNum " + train_nmb + " to sign "+number;
-//	Interface.Log(err);
-
-
 
 		}
 	else				// такой поезд наехал на иной светофор
@@ -183,6 +181,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 		int i=0;
 		bool exist=false;
 		int size1 = (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal.size();
+
 		while(i<size1 and !exist)
 			{
 			if((cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[i] == number)
@@ -192,33 +191,19 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 		if(!exist)		// но не на этот
 			{
-			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1,size1+1]=new int[1];
-			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1,size1+1]=new int[1];
+			//(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1,size1+1]=new int[1];
+			//(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1,size1+1]=new int[1];
 
 			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1]=number;
-			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1]=0;
+			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1]=state1;
 
 			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetId());
-
-
-
-//	err="train intNum " + train_nmb + " to extra sign "+(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1]+" size = "+(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal.size();
-//	Interface.Log(err);
 
 			}
 
 
 		else
 			{
-
-
-
-
-
-//	err="train exist! ";
-//	Interface.Log(err);
-
-
 
 			}
 
@@ -265,10 +250,6 @@ void RemoveTrain(Message msg)
 		Sniff(curr_train, "Train", "StoppedMoving", false);
 		Sniff(curr_train, "Train", "Cleanup", false);
 
-//	err="removed train ! "+train_nmb;
-//	Interface.Log(err);
-
-
 		}
 	}
 
@@ -285,9 +266,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 
 	if(!curr_train)  // поезд потерян
 		{
-		//Interface.Exception("A train contains a bad vehicle!");
-
-
+		Interface.Exception("A train contains a bad vehicle!");
 
 
 		int n = entered_sign.TC_id.size();
@@ -341,35 +320,22 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 
 			if(  (TrainzScript.GetTrainzVersion() < 3.7) or (train_position == 0 and (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1] == 0)  )
 				{
-				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[num1,num1+1]=null;
-				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1,num1+1]=null;
 
+				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[num1,num1+1]=null;
+				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1,num1+1]=null;;
 
 				(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(curr_train.GetId());
 
+
 				UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,-1);
-
-
-
-
-//	err="removed train intNum " + train_nmb + " from sign "+number;
-//	Interface.Log(err);
-
 
 				if((cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal.size()==0)
 					{
-
 					train_arr.DeleteElementByNmb(train_nmb);
-
 
 					Sniff(curr_train, "Train", "StartedMoving", false);
 					Sniff(curr_train, "Train", "StoppedMoving", false);
 					Sniff(curr_train, "Train", "Cleanup", false);
-
-//	err="removed train ! "+train_nmb;
-//	Interface.Log(err);
-
-
 					}
 				}
 			}
@@ -598,9 +564,9 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 			if(!TC.IsStopped)
 				{
 
-				int j;
+				int j = 0;
 
-				for(j=0;j<TC.signal.size();j++)
+				while(j<TC.signal.size())
 					{
 					zxSignal sig1 = (cast<zxSignalLink>(Signals.DBSE[ (TC.signal[j]) ].Object)).sign;
 
@@ -618,6 +584,9 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 */
 					int new_state = SearchForTrain(sig1,Str.ToInt(train_arr.DBSE[i].a));
+
+					//Interface.Log("usual check "+sig1.privateName + "@" + sig1.stationName+ " state "+state+" new state "+new_state);
+
 
 
 					int priority;
@@ -670,11 +639,14 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 						}
 
 					if(new_state == 0 and state == 0 and (TrainzScript.GetTrainzVersion() >= 3.7))
+						{
 						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject( Str.ToInt(train_arr.DBSE[i].a) ) ) )  );
-
-
-
-					TC.state[j]=new_state;
+						}
+					else
+						{
+						TC.state[j]=new_state;
+						j++;
+						}
 
 					}
 				}
@@ -741,11 +713,8 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		if(!Stations.AddElement(stringParam[0]))
 			{
-			//Interface.Exception("station "+stringParam[0]+" already exist!");
-
 			return "false";
 			}
-		//Interface.Log("'"+stringParam[0]+"'");
 
 
 		if((Stations.N+20) > Stations.SE.size())			// расширяем массив
@@ -1276,9 +1245,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		}
 	else if(function=="add_extra_obj")
 		{
-		//zxExtra[zxExtra.size(),zxExtra.size()+1]=new zxExtraLink[0];
-		//zxExtra[(zxExtra.size()-1)]= cast<zxExtraLink> objectParam[0];
-    zxExtra[zxExtra.size()]= cast<zxExtraLink>objectParam[0];
+		zxExtra[zxExtra.size()]= cast<zxExtraLink>objectParam[0];
 		}
 
 

@@ -10,6 +10,7 @@ class TrainContainer isclass GSObject
 
 	public int[] signal;		// внутренний идентификатор светофора
 	public int[] state;  		// 0 - подошедший к светофору, 1 - проехавший головой светофор, 2 - заехавший за светофор
+
 };
 
 
