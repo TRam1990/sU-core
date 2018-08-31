@@ -70,7 +70,7 @@ public void InitIndif(bool[] used_lens, bool[] blink_lens)
 
 class bb_RWb isclass zxIndication
 {
-
+public int white_lens; // 0 - отсутствует, 1 - "немигающая", 2 - мигающая
 
 public void Init()
 	{
@@ -78,15 +78,28 @@ public void Init()
 	ind_num=3;
 	MainState=1;
 	name="RWb";
+	white_lens = 2;
 	}
 
 public void InitIndif(bool[] used_lens, bool[] blink_lens)
 	{
 	inherited(used_lens,blink_lens);
 	used_lens[0]=true;
-	used_lens[7]=true;		// линза, оборудованная мигалкой
 
-	blink_lens[7]=true;
+	switch(white_lens)
+		{
+		case 0:
+			break;
+		case 1:
+			used_lens[6]=true;		// линза, оборудованная мигалкой
+			blink_lens[6]=true;
+			break;
+
+		case 2:
+		default:
+			used_lens[7]=true;		// линза, оборудованная мигалкой
+			blink_lens[7]=true;
+		}
 	}
 
 };
@@ -764,11 +777,13 @@ public void Init()
 	}
 
 
-public void FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
+public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// К-Бм - белая линза - 0 - отсутствует, 1 - "немигающая", 2 - мигающая
 	{
 	int i;
 	bool[] Temp_st= new bool[10];
 	bool[] Temp_2= new bool[10];
+
+	int result_kbm = 0;
 
 	for(i=0;i<26;i++)
 		{
@@ -783,6 +798,19 @@ public void FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 		possible_sgn[i] = possible;
 		}
 
+	if(ex_lens[0])
+		{
+		if(ex_lens[7])
+			result_kbm = 2;
+		else if(ex_lens[6])
+			result_kbm = 1;
+		else
+			result_kbm = 0;
+
+		possible_sgn[3] = true;
+		}
+
+	return result_kbm;
 	}
 
 

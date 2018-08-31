@@ -26,10 +26,10 @@ class zxSpeedBoard isclass Trackside
 
 
 
-	public void SetNewSpeed(float speed, bool extra)
+	public bool SetNewSpeed(float speed, bool extra)
 		{
 		if(speed == 0.0f)
-			return;
+			return false;
 			
 		if(extra)
 			ExtraSpeed=speed;
@@ -37,9 +37,18 @@ class zxSpeedBoard isclass Trackside
 			MainSpeed=speed;
 
 		if(ExtraSpeed > MainSpeed)
+			{
 			SetSpeedLimit( ExtraSpeed );
+			if(extra)
+				return true;
+			}
 		else
+			{
 			SetSpeedLimit( MainSpeed );
+			if(!extra)
+				return true;
+			}
+		return false;
 		}
 };
 
@@ -287,9 +296,6 @@ class zxSignal isclass Signal, ALSN_Provider
 
 		if(MainState == 19)
 			return false;
-
-		if(protect_influence and barrier_closed)
-			return true;
 
 
 		if(Type & ST_UNLINKED)

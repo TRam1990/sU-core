@@ -5,6 +5,7 @@ include "zx_specs.gs"
 include "xtrainz02su.gs"
 include "xtrainz02sl.gs"
 include "xtrainzs.gs"
+include "xtrainz02intu.gs"
 include "multiplayersessionmanager.gs"
 
 
@@ -17,8 +18,8 @@ include "zx_speedboard.gs"
 class zxLibruary_core isclass Library
 {
 
-public BinarySortedArraySl Signals;											//массив сигналов
-public BinarySortedArraySu train_arr;											//массив поездов
+public BinarySortedArraySl Signals;										//массив сигналов
+public BinarySortedArrayIntu train_arr;										//массив поездов
 
 
 public BinarySortedStrings Stations;										//массив станций
@@ -117,7 +118,6 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 						UpdateSignState(TMP,0,-1);
 						}
 					}
-
 				}
 			}
 		}
@@ -204,20 +204,18 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 			}
 		}
 
-	string name =curr_train.GetId()+"";
-	int train_nmb=train_arr.Find(name,false);
+	int train_id = curr_train.GetId();
+	int train_nmb=train_arr.Find(train_id,false);
 
 	if(train_nmb<0)
 		{
 		TrainContainer[] ts4=new TrainContainer[1];
 		ts4[0]= new TrainContainer();
 
-		train_arr.AddElement(name,cast<GSObject>ts4[0]);
-
-		train_nmb= train_arr.Find(name,false);
+		train_nmb= train_arr.AddElement(train_id,cast<GSObject>ts4[0]);
 		if(train_nmb<0)
 			{
-			Interface.Exception("Can't add train "+name);
+			Interface.Exception("Can't add train "+train_id);
 			return;
 			}
 
@@ -238,7 +236,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 
 		if((train_arr.N+20) > train_arr.DBSE.size())
-			train_arr.UdgradeArraySize(2*train_arr.DBSE.size());
+			train_arr.UdgradeArraySize(2*(train_arr.N+20));
 
 
 		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetId());
@@ -273,15 +271,11 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetId());
 			}
-
-
 		else
 			{
 
 			}
-
 		}
-
 	}
 
 
@@ -296,8 +290,8 @@ void RemoveTrain(Message msg)
 		Interface.Exception("A train contains a bad vehicle!");
 		return;
 		}
-	string name =curr_train.GetId()+"";
-	int train_nmb=train_arr.Find(name,false);
+	int train_id = curr_train.GetId();
+	int train_nmb=train_arr.Find(train_id,false);
 
 	if(train_nmb>=0)	// поезд, стоящий на светофоре, ещё не удалён
 		{
@@ -306,12 +300,9 @@ void RemoveTrain(Message msg)
 		for(i=0;i<(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal.size();i++)
 			{
 			int number = (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[i];
-
+			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(train_id);
 			UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,-1);
-			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(curr_train.GetId());
 			}
-
-
 
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[0, ] = null;
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[0, ] = null;
@@ -352,7 +343,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 			if(!tr1)
 				{
 				int train_id1 = entered_sign.TC_id[i];
-				int train_nmb=train_arr.Find( train_id1+"" ,false);
+				int train_nmb=train_arr.Find( train_id1 ,false);
 
 
 				entered_sign.RemoveTrainId(train_id1);
@@ -368,8 +359,8 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 		return;
 		}
 
-	string name =curr_train.GetId()+"";
-	int train_nmb=train_arr.Find(name,false);
+	int train_id =curr_train.GetId();
+	int train_nmb=train_arr.Find(train_id,false);
 
 	if(train_nmb>=0)
 		{
@@ -480,8 +471,8 @@ void TrainStarting(Message msg)
 		Interface.Exception("A train contains a bad vehicle!");
 		return;
 		}
-	string name =curr_train.GetId()+"";
-	int train_nmb=train_arr.Find(name,false);
+	int train_id =curr_train.GetId();
+	int train_nmb=train_arr.Find(train_id,false);
 
 	if(train_nmb>=0)
 		{
@@ -503,8 +494,8 @@ void TrainStopping(Message msg)
 		Interface.Exception("A train contains a bad vehicle!");
 		return;
 		}
-	string name =curr_train.GetId()+"";
-	int train_nmb=train_arr.Find(name,false);
+	int train_id = curr_train.GetId();
+	int train_nmb=train_arr.Find(train_id, false);
 
 	if(train_nmb>=0)
 		{
@@ -661,12 +652,12 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 */
 
 
-					int new_state = SearchForTrain(sig1,Str.ToInt(train_arr.DBSE[i].a), 1);
+					int new_state = SearchForTrain(sig1,train_arr.DBSE[i].a, 1);
 
 
 					if(new_state == 0 and TC.HighSpeed)
 						{
-						new_state = SearchForTrain(sig1,Str.ToInt(train_arr.DBSE[i].a), 2);
+						new_state = SearchForTrain(sig1,train_arr.DBSE[i].a, 2);
 						any_not_found = true;
 						}
 
@@ -679,7 +670,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 					if( new_state != state)
 						{
-						priority = (cast<Train> (Router.GetGameObject( Str.ToInt(train_arr.DBSE[i].a) ) ) ).GetTrainPriorityNumber();
+						priority = (cast<Train> (Router.GetGameObject(train_arr.DBSE[i].a) ) ).GetTrainPriorityNumber();
 
 						if(priority > 1)
 							priority = 2;
@@ -725,7 +716,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 					if(new_state == 0 and state == 0)
 						{
-						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject( Str.ToInt(train_arr.DBSE[i].a) ) ) )  );
+						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject(train_arr.DBSE[i].a) ) )  );
 						}
 					else
 						{
@@ -762,14 +753,9 @@ void SetClient()
 
 	for(i = train_arr.N - 1; i >= 0; i--)
 		{
-		int train_ID = Str.ToInt(train_arr.DBSE[i].a);
-		
-		(cast<TrainContainer>(train_arr.DBSE[i].Object)).signal[0, ] = null;
-		(cast<TrainContainer>(train_arr.DBSE[i].Object)).state[0, ] = null;
-		train_arr.DeleteElementByNmb(i);
 
 
-		Train curr_train = cast<Train>(Router.GetGameObject(train_ID));
+		Train curr_train = cast<Train>(Router.GetGameObject(train_arr.DBSE[i].a));
 
 		if(curr_train)
 			{
@@ -777,6 +763,10 @@ void SetClient()
 			Sniff(curr_train, "Train", "StoppedMoving", false);
 			Sniff(curr_train, "Train", "Cleanup", false);
 			}
+		
+		(cast<TrainContainer>(train_arr.DBSE[i].Object)).signal[0, ] = null;
+		(cast<TrainContainer>(train_arr.DBSE[i].Object)).state[0, ] = null;
+		train_arr.DeleteElementByNmb(i);
 		}
 
 	train_arr.N = 0;
@@ -1105,7 +1095,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		Signals = new BinarySortedArraySl();
 		Signals.UdgradeArraySize(20);
 
-		train_arr = new BinarySortedArraySu();
+		train_arr = new BinarySortedArrayIntu();
 		train_arr.UdgradeArraySize(20);
 
 		Stations = new BinarySortedStrings();
@@ -1155,7 +1145,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 	else if(function=="add_station")		// запрос на добавление станции
 		{
 
-		if(!Stations.AddElement(stringParam[0]))
+		if(Stations.AddElement(stringParam[0]) < 0)
 			{
 			return "false";
 			}
@@ -1257,14 +1247,12 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 		else
 			{
-
 			zxSignalLink[] sign_link= new zxSignalLink[1];
 			sign_link[0]= new zxSignalLink();
 
-			Signals.AddElement(name,cast<GSObject>sign_link[0]);
+			number= Signals.AddElement(name,cast<GSObject>sign_link[0]);
 			}
 
-		number= Signals.Find(name,false);
 		if(number<0)
 			{
 			Interface.Exception("Can't add signal "+name);
@@ -1314,22 +1302,25 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		stringParam[0] = "--";
 
+		zxSignal temp_signal;
+
 		int marker=0;
 		zxMarker zxMrk;
 
 
 		while(MO and !( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (cast<zxSignal>MO).IsObligatory()  )  )
 			{
+			temp_signal = cast<zxSignal>MO;
 
-			if(MO.isclass(zxSignal))
+			if(temp_signal)
 				{
-				if(!(cast<zxSignal>MO).Inited)
+				if(!temp_signal.Inited)
 					return "";
 
-				if(!(cast<zxSignal>MO).barrier_closed)
+				if(!temp_signal.barrier_closed)
 					{
 
-					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and ((cast<zxSignal>MO).MainState == 19)  )		// если есть маршрутный с синим
+					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (temp_signal.Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and (temp_signal.MainState == 19)  )		// если есть маршрутный с синим
 						{
 						if(marker & zxMarker.MRHALFBL)
 							marker = marker ^ zxMarker.MRHALFBL;
@@ -1337,7 +1328,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 					}
 				else
 					{
-					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (cast<zxSignal>MO).protect_influence)
+					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and temp_signal.protect_influence)
 						(stringParam[0])[1]='+';		
 					}
 
@@ -1410,6 +1401,8 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		if(stringParam[1]=="rev")
 			dirToFind=false;
 
+		zxSignal temp_signal;
+
 		int marker=0;
 		zxMarker zxMrk;
 
@@ -1424,20 +1417,22 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		while(MO and !( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() != dirToFind  and (cast<zxSignal>MO).IsObligatory() ) )
 			{
-			if(MO.isclass(zxSignal))
+			temp_signal = cast<zxSignal>MO;
+
+			if(temp_signal)
 				{
-				if(!(cast<zxSignal>MO).Inited)
+				if(!temp_signal.Inited)
 					return "";
 
-				if(!(cast<zxSignal>MO).barrier_closed)
+				if(!temp_signal.barrier_closed)
 					{
 
 
-					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT) ) and ((cast<zxSignal>MO).MainState == 19))
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (temp_signal.Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT) ) and (temp_signal.MainState == 19))
 						{
 						int old_m_st = sig1.MainState;
 
-						if(((cast<zxSignal>MO).Type & zxSignal.ST_ROUTER) and old_m_st != 0 and old_m_st != 1 and old_m_st != 2 and old_m_st != 3 and old_m_st != 20)
+						if((temp_signal.Type & zxSignal.ST_ROUTER) and old_m_st != 0 and old_m_st != 1 and old_m_st != 2 and old_m_st != 3 and old_m_st != 20)
 							{
 							sig1.Cur_prev=cast<zxSignal>MO;
 							stringParam[1] = marker+"";
@@ -1447,17 +1442,17 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						blue_signal=true;							// то ж-ж-ж не используем
 						}
 
-					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (cast<zxSignal>MO).shunt_open and ((cast<zxSignal>MO).MainState == 1 or (cast<zxSignal>MO).MainState == 19) and ((stringParam[0])[1]!='+'))
-						(cast<zxSignal>MO).UpdateState(0, -1);
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and temp_signal.shunt_open and (temp_signal.MainState == 1 or temp_signal.MainState == 19) and ((stringParam[0])[1]!='+'))
+						temp_signal.UpdateState(0, -1);
 
 
-					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and ((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) )
-						(cast<zxSignal>MO).UnlinkedUpdate(old_main_state);
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (temp_signal.Type & zxSignal.ST_UNLINKED) )
+						temp_signal.UnlinkedUpdate(old_main_state);
 	
 					}
 				else
 					{
-					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (cast<zxSignal>MO).protect_influence)
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and temp_signal.protect_influence)
 						(stringParam[0])[1]='+';		
 					}
 				}
@@ -1637,37 +1632,44 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 				if(MO.isclass(zxSignal) and (cast<zxSignal>MO).speed_soup)
 					{
-					if( (cast<zxSignal>MO).train_is_l)
+					zxSignal temp_sign = cast<zxSignal>MO;
+
+
+					if( temp_sign.train_is_l)
 						return "";
 
 
-					if(  ((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or ((cast<zxSignal>MO).MainState == 19))
+					if(  (temp_sign.Type & zxSignal.ST_UNLINKED) or (temp_sign.MainState == 19))
 						{
 
-						if((cast<zxSignal>MO).SetSpeedLim(0))
+						if(temp_sign.SetSpeedLim(0))
 							{
 							if(MP_started)
-								SendNewSignalSpeed(MO.GetName(), (cast<zxSignal>MO).speed_limit);
+								SendNewSignalSpeed(MO.GetName(), temp_sign.speed_limit);
 							}
 						}
 					else
 						{
-						if( ((cast<zxSignal>MO).MainState == 0) or ((cast<zxSignal>MO).MainState == 1) or ((cast<zxSignal>MO).MainState == 2))
+						if( (temp_sign.MainState == 0) or (temp_sign.MainState == 1) or (temp_sign.MainState == 2))
 							return "";
 
 
-						limit2 = (cast<zxSignal>MO).GetSpeedLim(prior);
-						limit = (cast<zxSignal>MO).GetCurrSpeedLim(limit2, prior);
+						limit2 = temp_sign.GetSpeedLim(prior);
+						limit = temp_sign.GetCurrSpeedLim(limit2, prior);
 
-						if( (cast<zxSignal>MO).SetSpeedLim(limit) )
+						if( temp_sign.SetSpeedLim(limit) )
 							{
 							if(MP_started)
 								SendNewSignalSpeed(MO.GetName(), limit);
 							}
 
-						if((cast<zxSignal>MO).zxSP)
+						if(temp_sign.zxSP)
 							{
-							zxSpeedBoard zxSB_t = (cast<zxSignal>MO).zxSP;
+							zxSpeedBoard zxSB_t = temp_sign.zxSP;
+							if(zxSB_t.SetNewSpeed(limit, true) and MP_started)
+								SendNewRepeaterSpeed(MO.GetName(), limit);
+
+/*
 							GSTrackSearch GSTS2 = zxSB_t.BeginTrackSearch(true);
 							MapObject MO2 = GSTS2.SearchNext();
 
@@ -1701,6 +1703,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 								MO2 = GSTS2.SearchNext();
 								}
+*/
 							}
 					
 						if( i == 0 )
@@ -1712,32 +1715,34 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 				else if(MO.isclass(zxSpeedBoard))
 					{
+					zxSpeedBoard temp_speed_board = (cast<zxSpeedBoard>MO);
+
 					if(limit != limit2)
 						speedboard_own_lim = limit;
 					else
 						speedboard_own_lim = 0;
 
-					if(limit != (cast<zxSpeedBoard>MO).MainSpeed)
+					if(limit != temp_speed_board.MainSpeed)
 						{
-						(cast<zxSpeedBoard>MO).SetNewSpeed(limit, false);
-
-						if(MP_started)
+						if(temp_speed_board.SetNewSpeed(limit, false) and MP_started)
 							SendNewRepeaterSpeed(MO.GetName(), limit);
 						}
 
-					if((cast<zxSpeedBoard>MO).ExtraSpeed > limit)
-						limit = (cast<zxSpeedBoard>MO).ExtraSpeed;
+					if(temp_speed_board.ExtraSpeed > limit)
+						limit = temp_speed_board.ExtraSpeed;
 
-					if((cast<zxSpeedBoard>MO).ExtraSpeed > limit2)
-						limit2 = (cast<zxSpeedBoard>MO).ExtraSpeed;
+					if(temp_speed_board.ExtraSpeed > limit2)
+						limit2 = temp_speed_board.ExtraSpeed;
 					}
 	
 				else if(MO.isclass(zxSpeedLimit))
 					{
-					if(! (cast<zxSpeedLimit>MO).is_limit_start)
+					zxSpeedLimit temp_speed_limit = cast<zxSpeedLimit>MO;
+
+					if(! temp_speed_limit.is_limit_start)
 						limit = limit2;
 
-					(cast<zxSpeedLimit>MO).SetLimitFor(limit, prior == 1);
+					temp_speed_limit.SetLimitFor(limit, prior == 1);
 
 					if(MP_started)
 						SendLimitSpeed(MO.GetName(), limit, prior == 1);
@@ -1774,7 +1779,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 	else if(function=="add_protect")		// запрос на добавление группы заградительных
 		{
 
-		if(!ProtectGroups.AddElement(stringParam[0]))
+		if(ProtectGroups.AddElement(stringParam[0]) < 0)
 			return "false";
 			
 		if((ProtectGroups.N+20) > ProtectGroups.SE.size())			// расширяем массив

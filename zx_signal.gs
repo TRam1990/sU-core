@@ -23,6 +23,8 @@ public int lens_kit_n;
 
 public int OldMainState = -1;
 
+public int kbm_mode = 2;
+
 
 StringTable ST, STT;
 Asset tabl_m,tex,gol_tex;
@@ -165,6 +167,8 @@ bool SetOwnSignalState(bool set_auto_state)
 				MUChecker();
 			}
 
+		if(MainState == 3)
+			(cast<bb_RWb>LC.sgn_st[3].l).white_lens = kbm_mode;
 
 		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
 
@@ -207,11 +211,11 @@ public void CheckPrevSignals(bool no_train)
 
 	string[] track_params = new string[2];
 
-	if(!Inited or !IsObligatory() )
+	if((!Inited or !IsObligatory()) and (!protect_influence or !barrier_closed))
 		{
 		return;
 		}
-
+	
 
 	mainLib.LibraryCall("find_prev_signal",track_params,GSO);
 
@@ -1058,18 +1062,22 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 
 	int n = span_soup.GetNamedTagAsInt("Extra_sign",0);
 	int i;
+	bool faulty_span = false;
 	zxSignal zxs;
 
 	for(i=0;i<n;i++)
 		{
 		zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
-		zxs.MainState = 1;
+		if(zxs)
+			zxs.MainState = 1;
+		else
+			faulty_span = true;
 		}
 
 
 	zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
 
-	if(!zxsm)
+	if(!zxsm or faulty_span)
 		Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
 
 
@@ -2350,7 +2358,7 @@ public void SetPropertyValue(string id, string val)
 
 		Type = FindTypeByLens(ex_lins);
 
-		LC.FindPossibleSgn(ex_sgn, ex_lins);			//  генерируем розжиг
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  генерируем розжиг
 		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, false, 0);
  		}
  }
@@ -2417,7 +2425,7 @@ public void LinkPropertyValue(string id)
 			ab4 = 0;
 
 
-		LC.FindPossibleSgn(ex_sgn, ex_lins);			//  генерируем розжиг
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  генерируем розжиг
 
 		if(Type & ST_PROTECT)
 			{
@@ -2432,7 +2440,7 @@ public void LinkPropertyValue(string id)
 				bool[] ex_lins = new bool[10];
 
 				CreateLinsArr(lens_kit, ex_lins, pos_lins);
-				LC.FindPossibleSgn(ex_sgn, ex_lins);
+				kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);
 
 				if(ex_sgn[1])
 					{
@@ -2656,7 +2664,7 @@ public void LinkPropertyValue(string id)
 					bool[] ex_lins = new bool[10];
 
 					CreateLinsArr(lens_kit, ex_lins, pos_lins);
-					LC.FindPossibleSgn(ex_sgn, ex_lins);
+					kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);
 					}
 				else
 					{
@@ -3366,9 +3374,12 @@ public void SetProperties(Soup soup)
 
 	string ex_sign_1 = soup.GetNamedTag("ExSignals_str");
 	if(ex_sign_1=="")
-		LC.FindPossibleSgn(ex_sgn, ex_lins);			// если розжиг не сгенерирован, генерируем
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			// если розжиг не сгенерирован, генерируем
 	else
+		{
 		ex_sgn=StrToExSignals(ex_sign_1);
+		kbm_mode = soup.GetNamedTagAsInt("ExSignals_kbm_mode", 0);
+		}
 
 
 	if(Type < 0)
@@ -3405,7 +3416,7 @@ public void SetProperties(Soup soup)
 			bool[] ex_lins = new bool[10];
 
 			CreateLinsArr(lens_kit, ex_lins, pos_lins);
-			LC.FindPossibleSgn(ex_sgn, ex_lins);
+			kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);
 
 			if(ex_sgn[1])
 				{
@@ -3568,6 +3579,9 @@ public void SetProperties(Soup soup)
 		else
 			SetSignalState(2, "");
 
+		if(MainState == 3)
+			(cast<bb_RWb>LC.sgn_st[3].l).white_lens = kbm_mode;
+
 		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
 		NewSignal(set_lens,0,0.7);
 
@@ -3605,6 +3619,8 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("GetSignalType()",Type);
 
 	retSoup.SetNamedTag("ExSignals_str",ExSignalsToStr(ex_sgn));
+	retSoup.SetNamedTag("ExSignals_kbm_mode",kbm_mode);
+
 
 	retSoup.SetNamedTag("lens_kit_n",lens_kit_n);
 	retSoup.SetNamedTag("lens_kit",lens_kit);

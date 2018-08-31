@@ -18,7 +18,7 @@ class BinarySortedStrings
 			SE[i]=null;
 			}
 
-		SE[0,N]=null;
+		SE[0, ]=null;
 
 		SE=SE2;
 
@@ -97,7 +97,7 @@ class BinarySortedStrings
 
 
 	
-	public bool AddElement(string Name)
+	public int AddElement(string Name)
 		{
 				
 		if(SE.size()>0 and Find(Name,false)<0)
@@ -110,30 +110,28 @@ class BinarySortedStrings
 				s_tmp[0]=Name+"";
 				SE[t,t]=s_tmp;
 				N++;
-				return true;
+				return t;
 				}
 			}	
-		return false;		
+		return -1;		
 		}
+
+
+	public void DeleteElementByNmb(int a)
+		{
+		if(a>=0)
+			{
+			SE[a]=null;
+			SE[a,a+1]=null;
+			N--;
+			}	
+		}
+
 
 	public void DeleteElement(string a)
 		{
 		int t = Find(a,false);
-		if(t>=0)
-			{
-			SE[t,t+1]=null;
-			N--;
-			}	
-		}
-
-	public void DeleteElementByNmb(int a)
-		{
-		
-		if(a>=0)
-			{
-			SE[a,a+1]=null;
-			N--;
-			}	
+		DeleteElementByNmb(t);	
 		}
 
 

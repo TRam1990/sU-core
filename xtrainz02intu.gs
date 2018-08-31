@@ -1,9 +1,9 @@
 include "gs.gs"
 include "xtrainz02a.gs"
 
-class BinarySortedArraySu
+class BinarySortedArrayIntu
 	{
-	public BinarySortedElementS[] DBSE=new BinarySortedElementS[0];	// основной массив элементов
+	public BinarySortedElementInt[] DBSE=new BinarySortedElementInt[0];	// основной массив элементов
 
 	public int N=0;			// число инициализированных элементов
 
@@ -14,44 +14,35 @@ class BinarySortedArraySu
 		int i;
 		int old_size = DBSE.size();
 
-		BinarySortedElementS[] DBSE2= new BinarySortedElementS[NewN];
+		BinarySortedElementInt[] DBSE2= new BinarySortedElementInt[NewN];
 
 		for(i=0;(i<old_size) and (i < NewN);i++)			// пересохраняем старый массив
 			DBSE2[i]=DBSE[i];
 
-		DBSE[0, ] = null;
-
 		for(i=old_size;i<NewN;i++)
-			DBSE2[i]=new BinarySortedElementS();
-				
+			DBSE2[i]=new BinarySortedElementInt();
+		
+		DBSE[0, ] = null;		
+		
 		DBSE=DBSE2; 
 		}
 
 
-	bool Comp_str_FL(string a,string b)
+
+
+
+
+
+	bool Comp_int_FL(string a,string b)
 		{
-		if(a.size()>b.size())
-			return false;
-		if(a.size()<b.size())
+		if(a < b)
 			return true;
-
-		int i=0;
-
-		while(i<a.size())
-			{
-			if(a[i]>b[i])
-				return false;
-			if(a[i]<b[i])
-				return true;
-			++i;
-			}
-
 
 		return false;
 		}
 
 
-	public int Find(string a, bool mode) // при mode = true указывает место, где мог бы находиться новый элемент 
+	public int Find(int a, bool mode) // при mode = true указывает место, где мог бы находиться новый элемент 
 		{
 		int i=0,f=0,b=N-1;
 		if(N>0)
@@ -61,14 +52,14 @@ class BinarySortedArraySu
 			if(DBSE[b].a == a)
 				return b;
 
-			if(Comp_str_FL(a,DBSE[f].a))
+			if(a < DBSE[f].a)
 				{
 				if(mode)
 					return 0;
 				else
 					return -1;
 				}
-			if(Comp_str_FL(DBSE[b].a,a))
+			if(DBSE[b].a < a)
 				{
 				if(mode)
 					return N;
@@ -83,16 +74,16 @@ class BinarySortedArraySu
 				if(DBSE[i].a==a)
 					return i;
 
-				if( Comp_str_FL(DBSE[f].a,a) and Comp_str_FL(a,DBSE[i].a))	// на отрезке от f до i
+				if( (DBSE[f].a < a) and (a < DBSE[i].a))	// на отрезке от f до i
 					b=i;
-				if( Comp_str_FL(DBSE[i].a,a) and Comp_str_FL(a,DBSE[b].a))	// на отрезке от i до b
+				if( (DBSE[i].a < a) and (a < DBSE[b].a))	// на отрезке от i до b
 					f=i;
 				}
 
-			if(DBSE[f+1].a==a or (mode and Comp_str_FL(DBSE[f].a,a) and Comp_str_FL(a,DBSE[f+1].a)))
+			if(DBSE[f+1].a==a or (mode and (DBSE[f].a < a) and (a < DBSE[f+1].a)))
 				return f+1;
 
-			if(mode and Comp_str_FL(DBSE[f+1].a,a) and Comp_str_FL(a,DBSE[f+2].a))
+			if(mode and (DBSE[f+1].a < a) and (a < DBSE[f+2].a))
 				return f+2;
 			}
 		
@@ -103,11 +94,11 @@ class BinarySortedArraySu
 
 
 	
-	public int AddElement(string Name, GSObject NObject)
+	public int AddElement(int a, GSObject NObject)
 		{		
 		if(DBSE.size()>0)
 			{
-			int t = Find(Name,true);
+			int t = Find(a,true);
 
 			if(t>=0 and t<=N)
 				{
@@ -117,7 +108,7 @@ class BinarySortedArraySu
 					DBSE[i+1].a=DBSE[i].a;
 					DBSE[i+1].Object=DBSE[i].Object;
 					}
-				DBSE[t].a=Name;
+				DBSE[t].a=a;
 				DBSE[t].Object=NObject;
 				N++;
 
@@ -133,7 +124,6 @@ class BinarySortedArraySu
 		
 		if(a>=0)
 			{
-			DBSE[a].a=null;
 			DBSE[a].Object=null;
 
 
@@ -145,12 +135,11 @@ class BinarySortedArraySu
 				}
 			N--;
 
-			DBSE[N].a=null;
 			DBSE[N].Object=null;
 			}	
 		}
 
-	public void DeleteElement(string a)
+	public void DeleteElement(int a)
 		{
 		int t = Find(a,false);
 		DeleteElementByNmb(t);	
