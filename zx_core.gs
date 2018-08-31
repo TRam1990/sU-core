@@ -847,22 +847,7 @@ void SetChangeSoup(Soup sp)
 		int num = Signals.Find( sp.GetNamedTag("id"+i) ,false);
 
 
-		float speed_limit = sp.GetNamedTagAsFloat("limit"+i, -1);
-		float old_limit = (cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.GetSpeedLimit();
-
-		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.speed_limit = speed_limit;
-
-		if((cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.zxSP)
-			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.zxSP.SetNewSpeed(speed_limit, true);
-
-
-
-		if((speed_limit > 0) and (old_limit != speed_limit))
-			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( speed_limit );
-
-		if(((speed_limit == 0) and (old_limit > 0)) or (speed_limit < 0))
-			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( -1 );
-
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLim( sp.GetNamedTagAsFloat("limit"+i, -1) );
 
 		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSignalState( sp.GetNamedTagAsInt("default_state"+i,2) , "");
 
@@ -890,6 +875,10 @@ void SetChangeSoup(Soup sp)
 void SendMessagesToClients(Soup data, string type_msg)
 	{
 	data.SetNamedTag("type_msg",type_msg);
+
+//	Interface.Print("message sended to client with type "+type_msg);
+
+
 	MultiplayerGame.BroadcastGameplayMessage("sU_signals", "mult_client", data);
 	}
 
@@ -944,26 +933,18 @@ void MultiplayerClientHandler1(Message msg)
 	string type = sp.GetNamedTag("type_msg");
 
 
+//	Interface.Print("message to client with type "+type);
+
+
+
 	if(type == "sU_SetSettings")
 		{
 		int num = Signals.Find( sp.GetNamedTag("id") ,false);
 
 
 		float speed_limit = sp.GetNamedTagAsFloat("limit", -1);
-		float old_limit = (cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.GetSpeedLimit();
 
-		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.speed_limit = speed_limit;
-
-		if((cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.zxSP)
-			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.zxSP.SetNewSpeed(speed_limit, true);
-
-
-
-		if((speed_limit > 0) and (old_limit != speed_limit))
-			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( speed_limit );
-
-		if(((speed_limit == 0) and (old_limit > 0)) or (speed_limit < 0))
-			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( -1 );
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLim( sp.GetNamedTagAsFloat("limit", -1) );
 
 
 		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSignalState( sp.GetNamedTagAsInt("default_state",2) , "");
@@ -993,21 +974,7 @@ void MultiplayerClientHandler1(Message msg)
 		{
 		int num = Signals.Find( sp.GetNamedTag("id") ,false);
 		
-		float speed_limit = sp.GetNamedTagAsFloat("limit", -1);
-		float old_limit = (cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.GetSpeedLimit();
-
-		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.speed_limit = speed_limit;
-
-		if((cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.zxSP)
-			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.zxSP.SetNewSpeed(speed_limit, true);
-
-
-
-		if((speed_limit > 0) and (old_limit != speed_limit))
-			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( speed_limit );
-
-		if(((speed_limit == 0) and (old_limit > 0)) or (speed_limit < 0))
-			(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLimit( -1 );
+		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLim( sp.GetNamedTagAsFloat("limit", -1) );
 
 		
 		}
@@ -1328,10 +1295,9 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		MapObject MO = GSTS.SearchNext();
 		bool temp_dir;
 
-		int TypeToFind = Str.ToInt(stringParam[0]);
 		bool dirToFind = true;
 
-		if(stringParam.size()>1 and stringParam[1]=="reverse")
+		if(stringParam[1]=="reverse")
 			dirToFind=false;
 
 		stringParam[0] = "--";
@@ -1340,16 +1306,16 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		zxMarker zxMrk;
 
 
-		while(MO and !( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (((cast<zxSignal>MO).Type & TypeToFind) == TypeToFind) and  !(((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED or (cast<zxSignal>MO).barrier_closed) and  !((cast<zxSignal>MO).Type & zxSignal.ST_OUT  and !(cast<zxSignal>MO).train_open)   ) and ((cast<zxSignal>MO).MainState != 19)  )  )   // синий и не входящий в цепи пропускаем
+		while(MO and !( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (cast<zxSignal>MO).IsObligatory()  )  )
 			{
 
 			if(MO.isclass(zxSignal))
 				{
+				if(!(cast<zxSignal>MO).Inited)
+					return "";
+
 				if(!(cast<zxSignal>MO).barrier_closed)
 					{
-					if(!(cast<zxSignal>MO).Inited)
-						return "";
-
 
 					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and ((cast<zxSignal>MO).MainState == 19)  )		// если есть маршрутный с синим
 						{
@@ -1447,10 +1413,10 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		stringParam[1] = marker+"";
 
-		if(!MO or (((cast<zxSignal>MO).Type & TypeToFind)!=TypeToFind) or GSTS.GetFacingRelativeToSearchDirection() != dirToFind)
-			sig1.Cur_next=null;
-		else
+		if(MO and MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (cast<zxSignal>MO).IsObligatory())
 			sig1.Cur_next=cast<zxSignal>MO;
+		else
+			sig1.Cur_next=null;
 
 
 
@@ -1471,10 +1437,9 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		MapObject MO = GSTS.SearchNext();
 		bool temp_dir;
 
-		int TypeToFind = Str.ToInt(stringParam[0]);
 		bool dirToFind = true;
 
-		if(stringParam.size()>1 and stringParam[1]=="reverse")
+		if(stringParam[1]=="rev")
 			dirToFind=false;
 
 		int marker=0;
@@ -1489,14 +1454,16 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		bool blue_signal = false;
 
 
-		while(MO and !( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() != dirToFind  and (((cast<zxSignal>MO).Type & TypeToFind) == TypeToFind) and  !( ((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED or (cast<zxSignal>MO).barrier_closed) and !((cast<zxSignal>MO).Type & zxSignal.ST_OUT  and !(cast<zxSignal>MO).train_open)   )   and !((cast<zxSignal>MO).MainState == 19) ))
+		while(MO and !( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() != dirToFind  and (cast<zxSignal>MO).IsObligatory() ) )
 			{
 			if(MO.isclass(zxSignal))
 				{
+				if(!(cast<zxSignal>MO).Inited)
+					return "";
+
 				if(!(cast<zxSignal>MO).barrier_closed)
 					{
-					if(!(cast<zxSignal>MO).Inited)
-						return "";
+
 
 					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and ((cast<zxSignal>MO).Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT) ) and ((cast<zxSignal>MO).MainState == 19))
 						blue_signal=true;							// то ж-ж-ж не используем
@@ -1597,10 +1564,10 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				MO = null;
 			}
 
-		if(!MO or (((cast<zxSignal>MO).Type & TypeToFind)!=TypeToFind) or GSTS.GetFacingRelativeToSearchDirection() == dirToFind)
-			sig1.Cur_prev=null;
-		else
+		if(MO and MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() != dirToFind  and  (cast<zxSignal>MO).IsObligatory() )
 			sig1.Cur_prev=cast<zxSignal>MO;
+		else
+			sig1.Cur_prev=null;
 
 		stringParam[1] = marker+"";
 		}
@@ -1680,14 +1647,10 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			Interface.Exception("signal with error!");
 			return "";
 			}
-		if( sig1.MainState == 19)
+		if( sig1.MainState == 19 )
 			{
-			sig1.SetSpeedLimit( -1 );
-			sig1.speed_limit = -1;
+			Interface.Exception("error with call NewSpeed");
 
-			if(MP_started)
-				SendNewSignalSpeed(sig1.GetName(), -1.0);
-			
 			return "";
 			}
 
@@ -1697,34 +1660,21 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		MapObject MO = GSTS.SearchNext();
 		bool temp_dir;
 
-		float limit;
+		float limit = sig1.GetSpeedLim(Str.ToInt(stringParam[0]));
 
-		if(stringParam.size()>1 and stringParam[1]=="-")
+		int i = 0;
+
+
+		while(MO and !( MO.isclass(Vehicle) and stringParam[1] != "-") and !(i>1 and MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  (!((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)) and (!((cast<zxSignal>MO).MainState == 19))  ) )
 			{
-			limit = sig1.GetSpeedLim(Str.ToInt(stringParam[0]));
-			}
-		else
-			{
-			limit = sig1.SetSpeedLim(Str.ToInt(stringParam[0]));
-
-			if(MP_started)
-				SendNewSignalSpeed(sig1.GetName(), limit);	
-			}
-
-		int i=0;
-
-
-		while(MO and !( MO.isclass(Vehicle) and  !(stringParam.size()>1 and stringParam[1]=="-" and i==0)) and !(i>1 and MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  (!((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)) and (!((cast<zxSignal>MO).MainState == 19))  ) )
-			{
-
-			if(limit > 0 and MO.isclass(zxSpeedBoard) )
+			if(MO.isclass(zxSpeedBoard))
 				{
 				(cast<zxSpeedBoard>MO).SetNewSpeed(limit, false);
 
 				if(MP_started)
 					SendNewRepeaterSpeed(MO.GetName(), limit);
-					
 				}
+					
 
 			if(MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and (cast<zxSignal>MO).speed_soup)
 				{
@@ -1734,24 +1684,32 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 				if(  ((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or ((cast<zxSignal>MO).MainState == 19))
 					{
-					(cast<zxSignal>MO).SetSpeedLimit( -1 );
-					(cast<zxSignal>MO).speed_limit = -1;
 
-					if(MP_started)
-						SendNewSignalSpeed(MO.GetName(), (cast<zxSignal>MO).speed_limit);
-
+					if((cast<zxSignal>MO).SetSpeedLim(0))
+						{
+						if(MP_started)
+							SendNewSignalSpeed(MO.GetName(), (cast<zxSignal>MO).speed_limit);
+						}
 					}
 				else
 					{
-					limit = (cast<zxSignal>MO).SetSpeedLim(Str.ToInt(stringParam[0])) ;
-
-
-					if(MP_started)
-						SendNewSignalSpeed(MO.GetName(), limit);
-												
-
 					if( ((cast<zxSignal>MO).MainState == 0) or ((cast<zxSignal>MO).MainState == 1) or ((cast<zxSignal>MO).MainState == 2))
 						return "";
+
+
+					limit = (cast<zxSignal>MO).GetSpeedLim(Str.ToInt(stringParam[0]));
+
+
+					if( (cast<zxSignal>MO).SetSpeedLim(limit) )
+						{
+						if(MP_started)
+							SendNewSignalSpeed(MO.GetName(), limit);
+						}
+
+					
+					if( i == 0 )
+						stringParam[1] = "";
+
 					i++;
 					}
 				}
@@ -1883,7 +1841,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
 				if(!temp)
 					delta++;
-				else
+				else if(delta != 0)
 					tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTag(i+""));
 				}
 
@@ -1946,7 +1904,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 			if(!temp or (tempsoup.GetNamedTag(i+"") == sig1.GetName()))
 				delta++;
-			else
+			else if(delta != 0)
 				tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTag(i+""));
 			}
 

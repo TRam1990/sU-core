@@ -194,59 +194,35 @@ public void SetSignal(bool set_auto_state)
 		}
 	}
 
-void MakeSignalSearch()
-	{
-
-	string[] type_ToFind = new string[2];
-	type_ToFind[0]=ST_UNTYPED+"";
-
-	if(MainState == 19 )
-		return;
-
-	mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
-
-
-	}
 
 
 public void CheckPrevSignals(bool no_train)
 	{
 
-	string[] type_ToFind = new string[2];
-	type_ToFind[0]=ST_UNTYPED+"";
+	string[] track_params = new string[2];
 
-	if(MainState == 19 )
+	if(!Inited or !IsObligatory() )
+		{
 		return;
-	int sch1 = ST_UNLINKED+ST_OUT;
-	int sch2 = ST_UNLINKED+ST_IN;
-
-	if( ( (Type & sch1)==sch1 or (Type & sch2)==sch2 ) and !train_open)
-		return;
+		}
 
 
-	mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
+	mainLib.LibraryCall("find_prev_signal",track_params,GSO);
 
 
-	if(!Cur_prev)
+	if(!Cur_prev or !Cur_prev.Inited)
 		return;
 
 	int Other_OldState =  Cur_prev.MainState;
-	int Other_MainState = LC.FindSignalState((type_ToFind[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(type_ToFind[1]), Cur_prev.train_open, Cur_prev.shunt_open, (type_ToFind[0])[1]=='+', MainState);
+	int Other_MainState = LC.FindSignalState((track_params[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(track_params[1]), Cur_prev.train_open, Cur_prev.shunt_open, (track_params[0])[1]=='+', MainState);
 
 
-	if(Cur_prev and ((type_ToFind[0])[0]!='+' or no_train) and Other_OldState != Other_MainState)
+	if( ((track_params[0])[0]!='+' or no_train) and Other_OldState != Other_MainState)
 		{
 		Cur_prev.MainState = Other_MainState;
-		Cur_prev.SetSignal(true);
 		Cur_prev.CheckPrevSignals(false);
-		Cur_prev.SetSpeedLim(Cur_prev.FindTrainPrior(false));
-
-		if(IsServer)
-			{
-			GSO[0] = Cur_prev;
-			mainLib.LibraryCall("mult_settings",null,GSO);
-			GSO[0] = me;
-			}
+		Cur_prev.SetSpeedLim( Cur_prev.GetSpeedLim( Cur_prev.FindTrainPrior(false) ) );
+		Cur_prev.SetSignal(true);
 		}
 
 	}
@@ -254,11 +230,10 @@ public void CheckPrevSignals(bool no_train)
 void CheckMySignal(float dt1,float dt2, bool train_entered)
 	{
 
-	string[] type_ToFind = new string[2];
+	string[] track_params = new string[2];
 
-	type_ToFind[0]=ST_UNTYPED+"";		//
 
-	mainLib.LibraryCall("find_next_signal",type_ToFind,GSO);
+	mainLib.LibraryCall("find_next_signal",track_params,GSO);
 	int next_state = 0;
 
 	if(Cur_next)
@@ -266,13 +241,10 @@ void CheckMySignal(float dt1,float dt2, bool train_entered)
 	else
 		{
 		next_state = 1;
-		(type_ToFind[0])[0]='+';
+		(track_params[0])[0]='+';
 		}
 
-	MainState = LC.FindSignalState(((type_ToFind[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(type_ToFind[1]), train_open, shunt_open, (type_ToFind[0])[1]=='+', next_state);
-
-	SetSignal(true);
-
+	MainState = LC.FindSignalState(((track_params[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(track_params[1]), train_open, shunt_open, (track_params[0])[1]=='+', next_state);
 
 	}
 
@@ -337,7 +309,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 	{				// reason : 0 - команда изменения состояния 1 - наезд поезда в направлении 2 - съезд поезда в направлении 3 - наезд поезда против 4 - съезд поезда против 5 - покидание зоны светофора поездом
  	inherited(reason,priority);
 
-	if(MP_NotServer)
+	if(!Inited or MP_NotServer)
 		return;
 
 	if(!(Type & ST_UNTYPED))
@@ -350,48 +322,21 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			if(!pre_protected)
 				{
 				MainState=1;
-
 				SetSignalState(0, "");
-				SetSignal(false);
 				}
 			else
 				{
 				MainState=6;
-
 				SetSignalState(2, "");
-				SetSignal(false);
 				}
 
+
+			SetSignal(false);
 
 			if(!protect_influence)
 				return;
 
-			string[] type_ToFind = new string[2];
-			type_ToFind[0]=ST_UNTYPED+"";			// находим предыдущий светофор
-
-			mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
-
-
-			if(!Cur_prev)
-				return;
-
-			int Other_OldState =  Cur_prev.MainState;
-			int Other_MainState = LC.FindSignalState((type_ToFind[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(type_ToFind[1]), Cur_prev.train_open, Cur_prev.shunt_open, (type_ToFind[0])[1]=='+', MainState);
-
-			if(Cur_prev and Other_OldState != Other_MainState)
-				{
-				Cur_prev.MainState = Other_MainState;
-				Cur_prev.SetSignal(true);
-				Cur_prev.CheckPrevSignals(false);
-				Cur_prev.SetSpeedLim(Cur_prev.FindTrainPrior(false));
-
-				if(IsServer)
-					{
-					GSO[0] = Cur_prev;
-					mainLib.LibraryCall("mult_settings",null,GSO);
-					GSO[0] = me;
-					}
-				}
+			CheckPrevSignals(true);
 
 			return;
 			}
@@ -400,66 +345,22 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			SetSignalState(2, "");
 
 			if(!(Type & ST_UNLINKED))
-				{
 				MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, false, 0);
-
-				SetSignal(false);
-
-				}
 			else
-				{
 				MainState = 0;
-				SetSignal(false);
-				}
 
+			string[] track_params = new string[2];
+				
+			mainLib.LibraryCall("find_next_signal",track_params,GSO);
 
-			string[] type_ToFind = new string[2];
-			type_ToFind[0]=ST_UNTYPED+"";			// находим следующий светофор
-
-			mainLib.LibraryCall("find_next_signal",type_ToFind,GSO);
-
-
-			int sch1 = ST_UNLINKED+ST_OUT;
-			int sch2 = ST_UNLINKED+ST_IN;
-
-			if(Cur_next and (Cur_next.MainState != 19) and !(( (Cur_next.Type & sch1)==sch1 or (Cur_next.Type & sch2)==sch2 ) and !Cur_next.train_open) )
-				Cur_next.CheckPrevSignals(true);
-			else
+			if(Cur_next)
 				{
-				if(!protect_influence)
-					return;
-
-				type_ToFind[0]=ST_UNTYPED+"";			// находим предыдущий светофор
-
-				mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
-
-
-				if(!Cur_prev)
-					return;
-
-				int Other_OldState =  Cur_prev.MainState;
-				int Other_MainState = LC.FindSignalState((type_ToFind[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(type_ToFind[1]), Cur_prev.train_open, Cur_prev.shunt_open, (type_ToFind[0])[1]=='+', MainState);
-
-
-				if(Cur_prev and Other_OldState != Other_MainState)
-					{
-					Cur_prev.MainState = Other_MainState;
-					Cur_prev.SetSignal(true);
-					Cur_prev.CheckPrevSignals(false);
-					Cur_prev.SetSpeedLim(Cur_prev.FindTrainPrior(false));
-
-					if(IsServer)
-						{
-						GSO[0] = Cur_prev;
-						mainLib.LibraryCall("mult_settings",null,GSO);
-						GSO[0] = me;
-						}
-
-					}
-
-
+				MainState = Cur_next.MainState;
+				Cur_next.CheckPrevSignals(false);
 				}
 
+			
+			SetSignal(false);
 			}
 		}
 
@@ -469,8 +370,10 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		{
 		if(Type & (ST_IN+ST_OUT) )
 			{
-			if(reason==1 and train_open)
+			if(reason==1 and (train_open or shunt_open))
 				{
+				train_open = false;
+				shunt_open = false;
 				MainState=1;
 				SetSignalState(0, "");
 				SetSignal(false);
@@ -478,30 +381,30 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				}
 			if(reason==0)
 				{
-				if(!train_open)
+				if(!train_open and !shunt_open)
 					{
 					MainState=1;
-					train_open=true;
 					SetSignalState(0, "");
 					CheckPrevSignals(false);
-					train_open=false;
 					SetSignal(false);
 					}
+				else
+					{
+					SetSignalState(2, "");
 
-				string[] type_ToFind = new string[2];
-				type_ToFind[0]=ST_UNTYPED+"";
+					if(shunt_open)
+						MainState=20;
+					else
+						{						
 
-				mainLib.LibraryCall("find_next_signal",type_ToFind,GSO);
+						string[] track_params = new string[2];
+						mainLib.LibraryCall("find_next_signal",track_params,GSO);
 
-				if(Cur_next)
-					MainState = Cur_next.MainState;
-
-				CheckPrevSignals(false);
-				SetSignalState(2, "");
-
-					SetSignal(false);
+						if(Cur_next)
+							Cur_next.CheckPrevSignals(false);
+						}	
+					}
 				}
-
 			}
 
 		}
@@ -511,21 +414,21 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			{
 			shunt_open=false;
 			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, false, 0);
-			SetSignal(true);
+
+
+			float new_speed_limit = 0;
 
 			if(MainState != 19)
 				{
 				if(priority < 0)
 					priority = FindTrainPrior(false);
 
-				string[] type_ToFind = new string[1];
-				type_ToFind[0] = priority;
-				mainLib.LibraryCall("new_speed",type_ToFind,GSO);
+				new_speed_limit = GetSpeedLim(priority);
 				}
-			else
-				mainLib.LibraryCall("new_speed",null,GSO);
-			}
 
+			SetSpeedLim(new_speed_limit);
+			SetSignal(true);
+			}
 		}
 
 
@@ -537,13 +440,11 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		if(train_open and (Type & ST_ROUTER))			// запускаем маршрутный (с синим)
 			{
 
-			string[] type_ToFind = new string[2];
-			type_ToFind[0]=ST_UNTYPED+"";		//
+			string[] track_params = new string[2];
+			
+			mainLib.LibraryCall("find_prev_signal",track_params,GSO);
 
-
-			mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
-
-			if((type_ToFind[0])[0]=='+')
+			if((track_params[0])[0]=='+')
 				{					// если перед светофором есть поезд, открываем в обычном порядке
 				CheckMySignal(0,0.7,false);
 				CheckPrevSignals(false);
@@ -552,17 +453,10 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				{
 				MainState = 19;
 
-				SetSignal(true);			// иначе включаем синюю линзу
-
-
-
-				type_ToFind[0]=ST_UNTYPED+"";			// находим следующий светофор
-
-				mainLib.LibraryCall("find_next_signal",type_ToFind,GSO);
+				mainLib.LibraryCall("find_next_signal",track_params,GSO);
 
 				if(Cur_next)
 					Cur_next.CheckPrevSignals(false);
-
 				}
 
 			}
@@ -572,30 +466,32 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 			if(MainState == 19)
 				{
-				string[] type_ToFind = new string[2];
-				type_ToFind[0]=ST_UNTYPED+"";
+				string[] track_params = new string[2];
+				
+				mainLib.LibraryCall("find_next_signal",track_params,GSO);
 
-				mainLib.LibraryCall("find_next_signal",type_ToFind,GSO);
-
-				if(Cur_next)
+				if(Cur_next and Cur_next.Inited)
 					Cur_next.CheckPrevSignals(false);
+
 				}
 			else
 				CheckPrevSignals(false);		// поиск следующего светофора
 			}
+
+		float new_limit = 0;
 
 		if(MainState != 19)
 			{
 			if(priority < 0)
 				priority = FindTrainPrior(false);
 
-			string[] type_ToFind = new string[1];
-			type_ToFind[0] = priority;
-			mainLib.LibraryCall("new_speed",type_ToFind,GSO);
+			new_limit = GetSpeedLim( priority );
 			}
-		else
-			mainLib.LibraryCall("new_speed",null,GSO);			
 
+		SetSpeedLim( new_limit );
+
+
+		SetSignal(true);	
 		}
 
 	else if(reason==1 and train_open)
@@ -606,23 +502,26 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		if(priority < 0)
 			priority = FindTrainPrior(false);
 
-		type_ToFind[0]=priority;
-		type_ToFind[1]="-";
-		mainLib.LibraryCall("new_speed",type_ToFind,GSO);
-
-
 		if(!(Type & ST_PERMOPENED))
 			train_open = false;
 
 		CheckMySignal(0,1.5,true);
 
-		MakeSignalSearch();
+		type_ToFind[0]=priority;
+		type_ToFind[1]="-";
+		mainLib.LibraryCall("new_speed",type_ToFind,GSO);
 
+		SetSignal(true);
+
+		mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
 		}
 
 	else if(reason==2)
 		{
-		CheckPrevSignals(false);
+		if( IsObligatory() )
+			{
+			CheckPrevSignals(false);
+			}
 		}
 
 
@@ -1104,7 +1003,7 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 	while(MO and !( MO.isclass(zxSignal) and (GSTS.GetFacingRelativeToSearchDirection() == true) and (cast<zxSignal>MO).Type & ST_IN ) )
 		{
 
-		if( MO.isclass(Vehicle))				// or ((MO.isclass(zxSignal) and (cast<zxSignal>MO).barrier_closed)  ))
+		if( MO.isclass(Vehicle))
 			{
 			return false;
 			}
@@ -1283,7 +1182,10 @@ public int GetALSNCode(void)
 	else if(yellow_code and (MainState == 9 or MainState == 11) )
 		return CODE_YELLOW;		
 	else if(MainState >= 9 and MainState != 19)
-		return CODE_GREEN;	
+		return CODE_GREEN;
+
+	if(MainState == 19)	
+		return CODE_YELLOW;
 
 	return CODE_NONE;
 	}
@@ -1292,7 +1194,7 @@ public int GetALSNCode(void)
 
 public int GetALSNTypeSignal(void)
 	{
-	if(MainState == 19 or (Type & ST_UNTYPED) == 0 )
+	if((Type & ST_UNTYPED) == 0 or MainState == 19)
 		return TYPE_NONE;
 	
 	if(barrier_closed and protect_influence)
@@ -3328,8 +3230,6 @@ public void SetProperties(Soup soup)
 
 	privateName = soup.GetNamedTag("privateName");
 
-	//name_decoded = soup.GetNamedTag("name_decoded");
-
 	ShowName(false);
 	MainState = soup.GetNamedTagAsInt("MainState",0);
 	Type = soup.GetNamedTagAsInt("GetSignalType()",-1);
@@ -3516,24 +3416,6 @@ public void SetProperties(Soup soup)
 
 	yellow_code = soup.GetNamedTagAsBool("yellow_code",false);
 
-	UpdateState(0,-1);
-
-	if( Type &  ST_UNLINKED)
-		{
-		if(Type &  ST_OUT and !train_open)
-			{
-			MainState=1;
-			SetSignalState(0, "");
-			}
-		else
-			SetSignalState(2, "");
-
-		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
-		NewSignal(set_lens,0,0.7);
-
-		if(IsServer)
-			mainLib.LibraryCall("mult_settings",null,GSO);
-		}
 
 	if(Type & ST_IN)
 		AddHandler(me,"SetSpanDirection","","OldSpanHandler");
@@ -3583,6 +3465,28 @@ public void SetProperties(Soup soup)
 		}
 
 	Inited=true;
+
+
+	if( Type &  ST_UNLINKED)
+		{
+		if((Type &  (ST_IN | ST_OUT)) and !train_open)
+			{
+			MainState=1;
+			SetSignalState(0, "");
+			}
+		else
+			SetSignalState(2, "");
+
+		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
+		NewSignal(set_lens,0,0.7);
+
+		if(IsServer)
+			mainLib.LibraryCall("mult_settings",null,GSO);
+		}
+	else
+		UpdateState(0,-1);
+
+
 	}
 
 

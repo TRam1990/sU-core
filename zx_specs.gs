@@ -195,20 +195,57 @@ class zxSignal isclass Signal, ALSN_Provider
 		}
 
 
-	public float SetSpeedLim(int prior)
+/*
+
+	public bool SetSpeedLim(int prior)
 		{
 		speed_limit = GetSpeedLim(prior);
+
+*/
+
+
+	public bool SetSpeedLim(float speed_limit_new)
+		{
+		if(speed_limit != speed_limit_new)
+			speed_limit = speed_limit_new;
+		else
+			return false;
+
 
 		if(zxSP)
 			zxSP.SetNewSpeed(speed_limit, true);
 
-		if((speed_limit > 0) and (GetSpeedLimit() != speed_limit))
+
+		if(speed_limit > 0)
+			{
 			SetSpeedLimit( speed_limit );
-
-		if((speed_limit == 0) and (GetSpeedLimit() > 0))
+			}
+		else
+			{
 			SetSpeedLimit( -1 );
+			}
 
-		return speed_limit;
+		return true;
+		}
+
+	public bool IsObligatory()
+		{
+		if(!Inited)
+			return true;
+
+		if(MainState == 19)
+			return false;
+
+		if(protect_influence and barrier_closed)
+			return true;
+
+
+		if(Type & ST_UNLINKED)
+			if(!train_open and !shunt_open and (Type & (ST_IN | ST_OUT)) )
+				return true;
+			else
+				return false;
+		return true;
 		}
 
 
