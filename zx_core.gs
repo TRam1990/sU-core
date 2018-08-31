@@ -339,7 +339,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train) // ожидание съезда по
 			
 			int train_position = SearchForTrain(entered_sign, curr_train.GetId() );
 
-			if(train_position == 0 and (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1] == 0)
+			if(  (TrainzScript.GetTrainzVersion() < 3.7) or (train_position == 0 and (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1] == 0)  )
 				{
 				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[num1,num1+1]=null;
 				(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[num1,num1+1]=null;
@@ -669,7 +669,7 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 						UpdateSignState(sig1,4,priority);
 						}
 
-					if(new_state == 0 and state == 0)
+					if(new_state == 0 and state == 0 and (TrainzScript.GetTrainzVersion() >= 3.7))
 						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject( Str.ToInt(train_arr.DBSE[i].a) ) ) )  );
 
 
