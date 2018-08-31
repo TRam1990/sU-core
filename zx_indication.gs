@@ -892,8 +892,8 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 		if(trmrk_mod_2 == 1)
 			{
-			if(possible_sig[7])		// жёлтый мигающий - жёлтый
-				return 7;
+			if(possible_sig[4])		// жёлтый - жёлтый
+				return 4;
 			}
 
 			

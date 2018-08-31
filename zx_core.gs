@@ -31,6 +31,23 @@ Soup temp_speed_sp;
 string[] tabl_str;
 
 
+zxExtraLink[] zxExtra;
+
+
+
+void UpdateSignState(zxSignal zxSign, int state, int priority)
+	{
+	zxSign.UpdateState(state,priority);
+
+	if(zxExtra.size() > 0)
+		{
+		int i;
+		for(i=0;i<zxExtra.size();i++)
+			zxExtra[i].UpdateSignalState(zxSign, state, priority);
+		}
+
+	}
+
 
 void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость светофора
 	{
@@ -43,22 +60,22 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 	if(msg.minor=="MayOpen^true" and !curr_sign.shunt_open and !(curr_sign.Type & zxSignal.ST_SHUNT))
 		{
 		curr_sign.train_open = true;
-		curr_sign.UpdateState(0,-1);
+		UpdateSignState(curr_sign,0,-1);
 		}
 	else if(msg.minor=="ShuntMode.true" and !curr_sign.train_open)
 		{
 		curr_sign.shunt_open = true;
-		curr_sign.UpdateState(0,-1);
+		UpdateSignState(curr_sign,0,-1);
 		}
 	else if(msg.minor=="MayOpen^false" and !(curr_sign.Type & zxSignal.ST_PERMOPENED))
 		{
 		curr_sign.train_open = false;
-		curr_sign.UpdateState(0,-1);
+		UpdateSignState(curr_sign,0,-1);
 		}
 	else if(msg.minor=="ShuntMode.false" or msg.minor=="Close")
 		{
 		curr_sign.shunt_open = false;
-		curr_sign.UpdateState(0,-1);
+		UpdateSignState(curr_sign,0,-1);
 		}
 
 	else if(msg.minor[0,4]=="ALS-")
@@ -227,7 +244,7 @@ void RemoveTrain(Message msg)
 			{
 			int number = (cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[i];
 			
-			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.UpdateState(5,2);
+			UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,2);
 			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(curr_train.GetId());
 			}
 
@@ -288,7 +305,7 @@ void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object
 
 
 				entered_sign.RemoveTrainId(curr_train.GetId());
-				entered_sign.UpdateState(5,-1);
+				UpdateSignState(entered_sign,5,-1);
 
 
 				train_arr.DeleteElementByNmb(train_nmb);
@@ -325,7 +342,7 @@ void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object
 			
 			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(curr_train.GetId());
 
-			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.UpdateState(5,-1);
+			UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,-1);
 
 
 
@@ -607,39 +624,39 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 					if(new_state == 2 and (state == 1 or state == 6) )
 						{
-						sig1.UpdateState(1,priority);
+						UpdateSignState(sig1,1,priority);
 						sig1.train_is_l = true;						
 						}
 
 
 					else if(new_state == 5 and (state == 3 or state == 4) )
 						{
-						sig1.UpdateState(3,priority);
+						UpdateSignState(sig1,3,priority);
 						}
 
 
 					else if((new_state == 3 and (state == 2 or state == 5)) or (new_state == 0 and state == 2))
 						{
-						sig1.UpdateState(2,priority);
+						UpdateSignState(sig1,2,priority);
 						sig1.train_is_l = false;						
 						}
 
 					else if((new_state == 6 and (state == 2 or state == 5)) or (new_state == 0 and state == 5))
 						{
-						sig1.UpdateState(4,priority);
+						UpdateSignState(sig1,4,priority);
 						}
 
 					else if((new_state == 3 and (state == 1 or state == 6)) or (new_state == 0 and state == 1))
 						{
-						sig1.UpdateState(1,priority);
-						sig1.UpdateState(2,priority);
+						UpdateSignState(sig1,1,priority);
+						UpdateSignState(sig1,2,priority);
 						sig1.train_is_l = false;						
 						}
 
 					else if((new_state == 6 and (state == 3 or state == 4)) or (new_state == 0 and state == 4))
 						{
-						sig1.UpdateState(3,priority);
-						sig1.UpdateState(4,priority);
+						UpdateSignState(sig1,3,priority);
+						UpdateSignState(sig1,4,priority);
 						}
 
 
@@ -676,6 +693,8 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		Stations=new BinarySortedStrings();
 		Stations.UdgradeArraySize(20);
+
+		zxExtra = new zxExtraLink[0];
 
 		SignalInitiation();
 		AddHandler(me, "Object", "Enter", "TrainCatcher");
@@ -1244,6 +1263,11 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				return "";
 			}		
 
+		}
+	else if(function=="add_extra_obj")
+		{
+		zxExtra[zxExtra.size(),zxExtra.size()+1]=new zxExtraLink[0];
+		zxExtra[(zxExtra.size()-1)]= cast<zxExtraLink> objectParam[0];
 		}
 
 

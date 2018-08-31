@@ -1,5 +1,5 @@
 ﻿
-kuid                                    <kuid:400260:100120>
+kuid                                    <kuid2:400260:100120:1>
 username                                "sU core"
 trainz-build                            3.3
 kind                                    "library"
@@ -29,8 +29,8 @@ extensions
 
 kuid-table
 {
-  0                                     <kuid:236443:103204>
-  1                                     <kuid:236443:103206>
-  2                                     <kuid:236443:103210>
-  3                                     <kuid:236443:103209>
+  0                                     <kuid2:236443:103204:1>
+  1                                     <kuid2:236443:103206:1>
+  2                                     <kuid2:236443:103210:1>
+  3                                     <kuid2:236443:103209:1>
 }
