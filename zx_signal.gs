@@ -1129,6 +1129,90 @@ public void GenerateSpan(bool recurs)
 
 
 
+
+
+
+
+
+
+
+
+
+public int GetALSNCode(void)
+	{
+	if( MainState == 1 or MainState == 3 or ( (MainState == 20 or MainState == 21 ) and Type&(ST_IN+ST_OUT+ST_ROUTER) ) )
+		return CODE_REDYELLOW;
+	else if( (MainState >= 4 and MainState <= 7) or MainState == 13 or MainState == 16 or MainState == 18 or MainState == 22 or MainState == 23)
+		return CODE_YELLOW;
+	else if(MainState >= 9 and MainState != 19)
+		return CODE_GREEN;	
+
+	return CODE_NONE;
+	}
+
+
+
+public int GetALSNTypeSignal(void)
+	{
+	if(MainState == 19 or ((Type & ST_UNTYPED) == 0) or ((Type & ST_UNLINKED) == ST_UNLINKED))
+		return TYPE_NONE;
+
+	int type1 = TYPE_NONE;
+
+	if((Type & ST_IN) == ST_IN)
+		type1 = type1 + TYPE_IN;
+
+	if((Type & ST_OUT) == ST_OUT)
+		type1 = type1 + TYPE_OUT;
+
+	if((Type & ST_ROUTER) == ST_ROUTER)
+		type1 = type1 + TYPE_DIVIDE;
+
+	if((Type & ST_PERMOPENED) == ST_PERMOPENED)
+		type1 = type1 + TYPE_PASSING;
+
+	return type1;
+	}
+
+
+public int GetALSNFrequency(void)
+	{
+	return code_freq;
+	} 
+  
+public int GetALSNSiding(void)
+	{
+	return code_dev;
+	}
+
+public string GetALSNSignalName()
+	{
+	return privateName;
+	} 
+
+public string GetALSNStationName()
+	{
+	if( (Type & ST_PERMOPENED) == ST_PERMOPENED )
+		return "";
+	return stationName;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 string TranslNames(string name)
 	{
 	string ret="";
@@ -2199,10 +2283,6 @@ public void LinkPropertyValue(string id)
 		{
 		mainLib.LibraryCall("speed_paste",null,GSO);
 		}
-//	else if(id=="code_dev")
-//		{
-//		code_dev=!code_dev;
-//		}
 	else if(id=="kor_BU_1")
 		{
 		kor_BU_1 = !kor_BU_1;

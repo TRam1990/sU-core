@@ -1,6 +1,7 @@
 include "Signal.gs"
 include "TrackMark.gs"
 include "Browser.gs"
+include "alsn_provider.gs"
 
 
 class TrainContainer isclass GSObject
@@ -35,7 +36,7 @@ class zxSpeedBoard isclass Trackside
 };
 
 
-class zxSignal isclass Signal
+class zxSignal isclass Signal, ALSN_Provider
 {
 
 	public define int ST_UNTYPED	= 1;		// ?
