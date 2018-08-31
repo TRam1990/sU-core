@@ -1667,7 +1667,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 							{
 							zxSpeedBoard zxSB_t = temp_sign.zxSP;
 							if(zxSB_t.SetNewSpeed(limit, true) and MP_started)
-								SendNewRepeaterSpeed(MO.GetName(), limit);
+								SendNewRepeaterSpeed(zxSB_t.GetName(), limit);
 
 /*
 							GSTrackSearch GSTS2 = zxSB_t.BeginTrackSearch(true);
