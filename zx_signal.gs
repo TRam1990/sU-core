@@ -224,7 +224,10 @@ public void CheckPrevSignals(bool no_train)
 		return;
 
 	int Other_OldState =  Cur_prev.MainState;
-	int Other_MainState = LC.FindSignalState((track_params[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(track_params[1]), Cur_prev.train_open, Cur_prev.shunt_open, (track_params[0])[1]=='+', MainState);
+	int MyState = MainState;
+	if (wrong_dir)
+		MyState = 2;
+	int Other_MainState = LC.FindSignalState((track_params[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(track_params[1]), Cur_prev.train_open, Cur_prev.shunt_open, (track_params[0])[1]=='+', MyState);
 
 
 	if( ((track_params[0])[0]!='+' or no_train) and Other_OldState != Other_MainState)
@@ -247,8 +250,12 @@ void CheckMySignal(bool train_entered)
 	mainLib.LibraryCall("find_next_signal",track_params,GSO);
 	int next_state = 0;
 
-	if(Cur_next)
-		next_state = Cur_next.MainState;
+	if(Cur_next) {
+		if (Cur_next.wrong_dir)
+			next_state = 2;
+		else
+			next_state = Cur_next.MainState;
+	}
 	else
 		{
 		next_state = 1;
@@ -986,17 +993,20 @@ public void Deswitch_span()
 		{
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
 		zxs.MainState = 2;
+		zxs.wrong_dir = true;
 		zxs.SetSignal(true);
 		}
+
+
+	wrong_dir = true;
 
 	if(n>0)
 		{
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+(n-1))));
 		zxs.CheckPrevSignals(false);
 		}
-
-
-	wrong_dir = true;
+	else
+		CheckPrevSignals(false);
 
 	if(SetOwnSignalState(true))
 		NewSignal(set_lens,0,0.7);
@@ -1051,8 +1061,10 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 	for(i=0;i<n;i++)
 		{
 		zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
-		if(zxs)
+		if(zxs) {
 			zxs.MainState = 1;
+			zxs.wrong_dir = false;
+		}
 		else
 			faulty_span = true;
 		}
@@ -1097,6 +1109,7 @@ public void Switch_span2()		// повернуть светофор в сторону этого светофора
 		{
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
 		zxs.MainState = 1;
+		zxs.wrong_dir = false;
 		}
 
 
