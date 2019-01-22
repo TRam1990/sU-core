@@ -405,6 +405,7 @@ public int trmrk_mod;
 256 конец АБ
 512 нет 4-значной АБ
 1024 маркер направления
+2048 маркер конца контролируемого участка
 
 
 */
@@ -421,6 +422,7 @@ public int trmrk_mod;
 	public define int MRENDAB	= 256;
 	public define int MREND4AB	= 512;
 	public define int MRN		= 1024;
+	public define int MRENDCONTROL	= 2048;
 
 	public int trmrk_flag;
 

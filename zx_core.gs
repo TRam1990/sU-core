@@ -1342,7 +1342,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 
 
-			if(MO.isclass(Vehicle))
+			if(MO.isclass(Vehicle) and !(marker & zxMarker.MRENDCONTROL))
 				(stringParam[0])[0]='+';
 
 
@@ -1482,6 +1482,9 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 				if((marker & zxMarker.MRHALFBL) and blue_signal)
 					marker = marker ^ zxMarker.MRHALFBL;
+
+				if(zxMrk.trmrk_flag & zxMarker.MRENDCONTROL)
+					(stringParam[0])[0] = '-';
 				}
 
 
