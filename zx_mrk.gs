@@ -88,8 +88,8 @@ public string GetDescriptionHTML(void)
 	
 	str=str+hw.StartRow();
         str=str+hw.StartCell("bgcolor='#888888' colspan=2");
-	str=str+hw.CheckBox("live://property/marker_type/"+mrn_Mark, (trmrk_flag & MRN));
-	str=str+" "+hw.MakeLink("live://property/marker_type/"+mrn_Mark, ST.GetString("marker_type-"+mrn_Mark))+" "+tok[mrn_Mark];
+	str=str+hw.CheckBox("live://property/marker_type/"+MRN, (trmrk_flag & MRN));
+	str=str+" "+hw.MakeLink("live://property/marker_type/"+MRN, ST.GetString("marker_type-"+mrn_Mark))+" "+tok[mrn_Mark];
        	str=str+hw.EndCell();
         str=str+hw.EndRow();
 
