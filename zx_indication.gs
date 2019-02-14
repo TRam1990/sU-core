@@ -1062,7 +1062,7 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	if(NextState == 4 or NextState == 7 or NextState == 13   or NextState == 22   or NextState == 23)		// следующее отклонение
+	if(NextState == 4 or NextState == 7   or NextState == 13   or NextState == 22   or NextState == 23)		// следующее отклонение
 		{
 
 		if(trmrk_flag & zxMarker.MRWW)
@@ -1089,10 +1089,6 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 			if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
 				return 25;
-
-
-			if(possible_sig[18])		// жёлтый миг. + белый
-				return 18;
 
 
 			if(possible_sig[17])		// зелёный + белый	
@@ -1186,7 +1182,7 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	if(ab4 and (NextState == 6  or ((NextState == 10 or NextState == 11) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or NextState == 15 or NextState ==  16) and !(trmrk_flag & zxMarker.MREND4AB) and ((trmrk_flag & NoState) == 0))
+	if(ab4 and (NextState == 6  or NextState == 10 or NextState == 11 or NextState == 15 or NextState ==  16) and !(trmrk_flag & zxMarker.MREND4AB) and ((trmrk_flag & NoState) == 0))
 			// 4-значная АБ
 
 		{
@@ -1253,7 +1249,7 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		if(possible_sig[14])		 
 			return 14;		// зелёный
 
-		if(possible_sig[19])		// синий
+		if(possible_sig[19])	// синий
 			return 19;
 
 		if(possible_sig[6])		// жёлтый
@@ -1285,7 +1281,7 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		if(possible_sig[14])		 
 			return 14;		// зелёный
 
-		if(possible_sig[19])		// синий
+		if(possible_sig[19])	// синий
 			return 19;
 
 		if(possible_sig[6])		// жёлтый

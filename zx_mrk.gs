@@ -6,8 +6,6 @@ class zxMarker_main isclass zxMarker
 
 StringTable ST;
 
-string[] tok;
-int mrn_Mark;
 
 /*
 
@@ -25,8 +23,6 @@ int mrn_Mark;
 512 нет 4-значной АБ
 1024 маркер направления
 
-2048 маркер зелёного на 4АБ перед Жмиг/Змиг
-4096 маркер конца контролируемого участка
 
 */
 
@@ -48,6 +44,20 @@ public string GetDescriptionHTML(void)
         HTMLWindow hw=HTMLWindow;
 	int i;
 
+	string[] tok = new string[12];
+
+	tok[0] = "MRFT";
+	tok[1] = "MRT";
+	tok[2] = "MRT18";
+	tok[3] = "MRNOPR";
+	tok[4] = "MRWW";
+	tok[5] = "MRPAB";
+	tok[6] = "MRALS";
+	tok[7] = "MRDAB";
+	tok[8] = "MRHALFBL";
+	tok[9] = "MRENDAB";
+	tok[10] = "MREND4AB";
+	tok[11] = "MRN";
 
         string str="<html><body>";
         str=str+"<font size=\"10\" color=\"#00EFBF\"><b>"+ST.GetString("object_desc");
@@ -58,17 +68,17 @@ public string GetDescriptionHTML(void)
 
 	int q = 1;
 
-	for(i=1;i<tok.size();i++)
+	int mrn_Mark = 11;
+
+
+	for(i=1;i<mrn_Mark;i++)
 		{
-		if(i != mrn_Mark)
-			{
-	        	str=str+hw.StartRow();
-        		str=str+hw.StartCell("bgcolor='#888888' colspan=2");
-			str=str+hw.CheckBox("live://property/marker_type/"+i, (trmrk_flag & q) );
-			str=str+" "+hw.MakeLink("live://property/marker_type/"+i, ST.GetString("marker_type-"+i))+" "+tok[i];
-        		str=str+hw.EndCell();
-	        	str=str+hw.EndRow();
-			}
+	        str=str+hw.StartRow();
+        	str=str+hw.StartCell("bgcolor='#888888' colspan=2");
+		str=str+hw.CheckBox("live://property/marker_type/"+i, (trmrk_flag & q) );
+		str=str+" "+hw.MakeLink("live://property/marker_type/"+i, ST.GetString("marker_type-"+i))+" "+tok[i];
+        	str=str+hw.EndCell();
+	        str=str+hw.EndRow();
 
 		q = q * 2;
         	}
@@ -103,6 +113,21 @@ public string GetDescriptionHTML(void)
 
 void SetName()
 	{
+	string[] tok = new string[12];
+
+	tok[0] = "MRFT ";
+	tok[1] = "MRT ";
+	tok[2] = "MRT18 ";
+	tok[3] = "MRNOPR ";
+	tok[4] = "MRWW ";
+	tok[5] = "MRPAB ";
+	tok[6] = "MRALS ";
+	tok[7] = "MRDAB ";
+	tok[8] = "MRHALFBL ";
+	tok[9] = "MRENDAB ";
+	tok[10] = "MREND4AB ";
+	tok[11] = "MRN";
+
 	string res = "";
 
 	if(trmrk_flag == 0)
@@ -111,17 +136,10 @@ void SetName()
 		{
 		int q = 1;
 		int i;
-		for(i = 1; i < tok.size(); i++)
+		for(i = 1; i < 12; i++)
 			{
 			if(trmrk_flag & q)
-				{
-				if (res != "")
-					res = res + " " + tok[i];
-				else
-					res = tok[i];
-				if (i == mrn_Mark)
-					res = res + " " + info;
-				}
+				res = res + tok[i];
 			q = q * 2;
 			}
 
@@ -142,7 +160,7 @@ void SetName()
 void  LinkPropertyValue (string id)
 {
 	string[] tok=Str.Tokens(id,"/");
-	if(tok.size()==2 and tok[0] == "marker_type")
+	if(tok.size()==2)
 		{
 		int a1 = Str.ToInt(tok[1]);
 
@@ -247,26 +265,6 @@ public void Init(Asset asset)
 {
 	inherited(asset);
 	ST=asset.GetStringTable();
-
-	tok = new string[14];
-
-	tok[0] = "MRFT";
-	tok[1] = "MRT";
-	tok[2] = "MRT18";
-	tok[3] = "MRNOPR";
-	tok[4] = "MRWW";
-	tok[5] = "MRPAB";
-	tok[6] = "MRALS";
-	tok[7] = "MRDAB";
-	tok[8] = "MRHALFBL";
-	tok[9] = "MRENDAB";
-	tok[10] = "MREND4AB";
-	tok[11] = "MRN";
-	tok[12] = "MRGR4ABFL";
-	tok[13] = "MRENDCONTROL";
-
-	mrn_Mark = 11;
-
 }
 	
 
