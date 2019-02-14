@@ -224,7 +224,10 @@ public void CheckPrevSignals(bool no_train)
 		return;
 
 	int Other_OldState =  Cur_prev.MainState;
-	int Other_MainState = LC.FindSignalState((track_params[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(track_params[1]), Cur_prev.train_open, Cur_prev.shunt_open, (track_params[0])[1]=='+', MainState);
+	int MyState = MainState;
+	if (wrong_dir)
+		MyState = 2;
+	int Other_MainState = LC.FindSignalState((track_params[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(track_params[1]), Cur_prev.train_open, Cur_prev.shunt_open, (track_params[0])[1]=='+', MyState);
 
 
 	if( ((track_params[0])[0]!='+' or no_train) and Other_OldState != Other_MainState)
@@ -248,7 +251,12 @@ void CheckMySignal(bool train_entered)
 	int next_state = 0;
 
 	if(Cur_next)
-		next_state = Cur_next.MainState;
+		{
+		if (Cur_next.wrong_dir)
+			next_state = 2;
+		else
+			next_state = Cur_next.MainState;
+		}
 	else
 		{
 		next_state = 1;
@@ -986,17 +994,20 @@ public void Deswitch_span()
 		{
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
 		zxs.MainState = 2;
+		zxs.wrong_dir = true;
 		zxs.SetSignal(true);
 		}
+
+	wrong_dir = true;
 
 	if(n>0)
 		{
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+(n-1))));
 		zxs.CheckPrevSignals(false);
 		}
+	else
+		CheckPrevSignals(false);
 
-
-	wrong_dir = true;
 
 	if(SetOwnSignalState(true))
 		NewSignal(set_lens,0,0.7);
@@ -1008,39 +1019,39 @@ public void Deswitch_span()
 }
 
 
-public bool Switch_span()		// повернуть светофор в сторону этого светофора
+public bool Switch_span(bool obligatory)		// повернуть светофор в сторону этого светофора
 {
 	if(MP_NotServer)
 		return true;
 
-	GSTrackSearch GSTS = me.BeginTrackSearch(false);
-	MapObject MO = GSTS.SearchNext();
 
-	bool temp_dir;
-
-
-	while(MO and !( MO.isclass(zxSignal) and (GSTS.GetFacingRelativeToSearchDirection() == true) and (cast<zxSignal>MO).Type & ST_IN ) )
+	if(!obligatory)
 		{
 
-		if( MO.isclass(Vehicle))
+		GSTrackSearch GSTS = me.BeginTrackSearch(false);
+		MapObject MO = GSTS.SearchNext();
+
+		bool temp_dir;
+		while(MO and !( MO.isclass(zxSignal) and (GSTS.GetFacingRelativeToSearchDirection() == true) and (cast<zxSignal>MO).Type & ST_IN ) )
 			{
+
+			if( MO.isclass(Vehicle))
+				{
+				return false;
+				}
+
+
+
+			if(MO.isclass(Trackside) and !MO.isclass(Junction) and GSTS.GetDistance()>3000 )
+				{
+				temp_dir=GSTS.GetFacingRelativeToSearchDirection();
+				GSTS = (cast<Trackside>MO).BeginTrackSearch(temp_dir);
+				}
+			MO = GSTS.SearchNext();
+			}
+		if(!MO)
 			return false;
-			}
-
-
-
-		if(MO.isclass(Trackside) and !MO.isclass(Junction) and GSTS.GetDistance()>3000 )
-			{
-			temp_dir=GSTS.GetFacingRelativeToSearchDirection();
-			GSTS = (cast<Trackside>MO).BeginTrackSearch(temp_dir);
-			}
-		MO = GSTS.SearchNext();
 		}
-	if(!MO)
-		return false;
-
-
-
 
 
 	int n = span_soup.GetNamedTagAsInt("Extra_sign",0);
@@ -1048,13 +1059,35 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 	bool faulty_span = false;
 	zxSignal zxs;
 
-	for(i=0;i<n;i++)
+
+	if(obligatory)
 		{
-		zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
-		if(zxs)
-			zxs.MainState = 1;
-		else
-			faulty_span = true;
+		for(i=0;i<n;i++)
+			{
+			zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
+			if(zxs)
+				{
+				zxs.MainState = 1;
+				zxs.wrong_dir = false;
+
+				zxs.UpdateState(0, -1);
+				}
+			}
+		}
+	else
+		{
+		for(i=0;i<n;i++)
+			{
+			zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
+			if(zxs)
+				{
+				zxs.MainState = 1;
+				zxs.wrong_dir = false;
+				}
+			else
+				faulty_span = true;
+			}
+
 		}
 
 
@@ -1083,36 +1116,9 @@ public bool Switch_span()		// повернуть светофор в сторону этого светофора
 
 
 
-
 public void Switch_span2()		// повернуть светофор в сторону этого светофора
 {
-
-	if(MP_NotServer)
-		return;
-
-	int n = span_soup.GetNamedTagAsInt("Extra_sign",0);
-	int i;
-
-	for(i=0;i<n;i++)
-		{
-		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
-		zxs.MainState = 1;
-		}
-
-
-	zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
-
-	if(!zxsm)
-		Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
-
-	zxsm.Deswitch_span();
-
-	wrong_dir=false;
-
-	UpdateState(0,-1);
-
-	if(IsServer)
-		mainLib.LibraryCall("mult_settings",null,GSO);
+	Switch_span(true);
 }
 
 
@@ -1194,7 +1200,7 @@ public void GenerateSpan(bool recurs)
 	if(recurs)
 		{
 		zx_oth.GenerateSpan(false);
-		Switch_span2();
+		Switch_span(true);
 		}
 
 	span_soup.SetNamedTag("Inited",true);
@@ -2458,7 +2464,7 @@ public void LinkPropertyValue(string id)
 		}
 	else if(id=="spanTrackFromMe")
 		{
-		Switch_span2();
+		Switch_span(true);
 		}
 	else if(id=="spanTrackFromOther")
 		{
@@ -2467,7 +2473,7 @@ public void LinkPropertyValue(string id)
 		if(!zxsm)
 			Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
 
-		zxsm.Switch_span2();
+		zxsm.Switch_span(true);
 		}
 	else if(id=="speed_init")
 		{
@@ -2971,12 +2977,12 @@ public void ChangeText(Message msg)
  	if(tok2.size()==1)
 		{
 		if(tok2[0]=="spanTrackFromMe")
-			Switch_span();
+			Switch_span(false);
 
 		if(tok2[0]=="spanTrackFromOther")
 			{
 			zxSignal zxs2 = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
-			zxs2.Switch_span();
+			zxs2.Switch_span(false);
 			}
 		PostMessage(me,"RefreshBrowser","",0.5);
 		}
@@ -3183,7 +3189,7 @@ void OldSpanHandler(Message msg)
 			Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
 
 
-		if(zxsm.Switch_span())
+		if(zxsm.Switch_span(false))
 			{
 			PostMessage(null,"CTRL3", "SpanDirectionChanged^any^"+msg.minor,0);
 			}

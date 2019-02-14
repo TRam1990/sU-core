@@ -233,9 +233,14 @@ class zxSignal isclass Signal, ALSN_Provider
 		{
 		}
 
-	public bool Switch_span()		// повернуть светофор в сторону этого светофора
+	public bool Switch_span(bool obligatory)		// повернуть светофор в сторону этого светофора
 		{
 		return false;
+		}
+
+	public bool Switch_span()		// оставлено для совместимости
+		{
+		return Switch_span(false);
 		}
 
 	public float GetCurrSpeedLim(float SpeedLim, int prior)
@@ -383,6 +388,8 @@ class zxMarker isclass Trackside
 7 маркер "располовиненого" пути (для ЖЖЖ)   - доп.
 8 конец АБ
 9 маркер направления
+10 маркер включения З перед Жм на 4АБ
+11 маркер отсутствия контроля занятости перегона
 
 
 public int trmrk_mod;
@@ -405,7 +412,8 @@ public int trmrk_mod;
 256 конец АБ
 512 нет 4-значной АБ
 1024 маркер направления
-
+2048 маркер зелёного на 4АБ перед Жмиг/Змиг
+4096 маркер конца контролируемого участка
 
 */
 
@@ -421,6 +429,8 @@ public int trmrk_mod;
 	public define int MRENDAB	= 256;
 	public define int MREND4AB	= 512;
 	public define int MRN		= 1024;
+	public define int MRGR4ABFL	= 2048;
+	public define int MRENDCONTROL	= 4096;
 
 	public int trmrk_flag;
 
