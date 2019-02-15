@@ -190,12 +190,15 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 		return;
 		}
 
-	int state1 = SearchForTrain(entered_sign, curr_train.GetId(), 1 );
+	int train_id = curr_train.GetId();
+
+
+	int state1 = SearchForTrain(entered_sign, train_id, 1 );
 	bool high_speed = false;
 
 	if(state1 == 0)
 		{
-		state1 = SearchForTrain(entered_sign, curr_train.GetId(), 2 );
+		state1 = SearchForTrain(entered_sign, train_id, 2 );
 		high_speed = true;		
 		if(state1 == 0)
 			{
@@ -204,7 +207,6 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 			}
 		}
 
-	int train_id = curr_train.GetId();
 	int train_nmb=train_arr.Find(train_id,false);
 
 	if(train_nmb<0)
@@ -474,7 +476,7 @@ void TrainStarting(Message msg)
 		Interface.Exception("A train contains a bad vehicle!");
 		return;
 		}
-	int train_id =curr_train.GetId();
+	int train_id = curr_train.GetId();
 	int train_nmb=train_arr.Find(train_id,false);
 
 	if(train_nmb>=0)
@@ -762,7 +764,7 @@ void SetClient()
 
 		if(curr_train)
 			{
-			Sniff(curr_train , "Train", "StartedMoving", false);
+			Sniff(curr_train, "Train", "StartedMoving", false);
 			Sniff(curr_train, "Train", "StoppedMoving", false);
 			Sniff(curr_train, "Train", "Cleanup", false);
 			}
@@ -1354,7 +1356,10 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				marker = marker | zxMrk.trmrk_flag;
 
 				if((marker & zxMarker.MRT) and (marker & zxMarker.MRT18)  )
-					marker = marker ^ zxMarker.MRT18;	
+					marker = marker ^ zxMarker.MRT18;
+
+				if(zxMrk.trmrk_flag & zxMarker.MRENDCONTROL)
+					(stringParam[0])[0] = '-';
 				}
 
 
@@ -1381,7 +1386,8 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		else
 			{
 			sig1.Cur_next=null;
-			(stringParam[0])[0]='+';
+			if(! (marker & zxMarker.MRENDAB) )
+				(stringParam[0])[0]='+';
 			}
 
 		}
@@ -1465,7 +1471,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			
 
 
-			if(MO.isclass(Vehicle))
+			if(MO.isclass(Vehicle) and !(marker & zxMarker.MRENDCONTROL))
 				{
 				(stringParam[0])[0]='+';
 				}
