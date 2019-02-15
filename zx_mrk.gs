@@ -12,21 +12,21 @@ int mrn_Mark;
 /*
 
 
-0 прямой путь
-1 отклонение
-2 отклонение пологое
-4 нет сковозного пропуска
-8 неправильный
-16 ПАБ (ЗЗ)
-32 АЛС
-64 неправильного с двух сторонней АБ
-128 маркер "располовиненого" пути (для ЖЖЖ)
-256 конец АБ
-512 нет 4-значной АБ
-1024 маркер направления
+0 ГЇГ°ГїГ¬Г®Г© ГЇГіГІГј
+1 Г®ГІГЄГ«Г®Г­ГҐГ­ГЁГҐ
+2 Г®ГІГЄГ«Г®Г­ГҐГ­ГЁГҐ ГЇГ®Г«Г®ГЈГ®ГҐ
+4 Г­ГҐГІ Г±ГЄГ®ГўГ®Г§Г­Г®ГЈГ® ГЇГ°Г®ГЇГіГ±ГЄГ 
+8 Г­ГҐГЇГ°Г ГўГЁГ«ГјГ­Г»Г©
+16 ГЏГЂГЃ (Г‡Г‡)
+32 ГЂГ‹Г‘
+64 Г­ГҐГЇГ°Г ГўГЁГ«ГјГ­Г®ГЈГ® Г± Г¤ГўГіГµ Г±ГІГ®Г°Г®Г­Г­ГҐГ© ГЂГЃ
+128 Г¬Г Г°ГЄГҐГ° "Г°Г Г±ГЇГ®Г«Г®ГўГЁГ­ГҐГ­Г®ГЈГ®" ГЇГіГІГЁ (Г¤Г«Гї Г†Г†Г†)
+256 ГЄГ®Г­ГҐГ¶ ГЂГЃ
+512 Г­ГҐГІ 4-Г§Г­Г Г·Г­Г®Г© ГЂГЃ
+1024 Г¬Г Г°ГЄГҐГ° Г­Г ГЇГ°Г ГўГ«ГҐГ­ГЁГї
 
-2048 маркер зелёного на 4АБ перед Жмиг/Змиг
-4096 маркер конца контролируемого участка
+2048 Г¬Г Г°ГЄГҐГ° Г§ГҐГ«ВёГ­Г®ГЈГ® Г­Г  4ГЂГЃ ГЇГҐГ°ГҐГ¤ Г†Г¬ГЁГЈ/Г‡Г¬ГЁГЈ
+4096 Г¬Г Г°ГЄГҐГ° ГЄГ®Г­Г¶Г  ГЄГ®Г­ГІГ°Г®Г«ГЁГ°ГіГҐГ¬Г®ГЈГ® ГіГ·Г Г±ГІГЄГ 
 
 */
 
@@ -48,7 +48,6 @@ public string GetDescriptionHTML(void)
         HTMLWindow hw=HTMLWindow;
 	int i;
 
-
         string str="<html><body>";
         str=str+"<font size=\"10\" color=\"#00EFBF\"><b>"+ST.GetString("object_desc");
         str=str+"</b></font><br><br>";
@@ -64,8 +63,8 @@ public string GetDescriptionHTML(void)
 			{
 	        	str=str+hw.StartRow();
         		str=str+hw.StartCell("bgcolor='#888888' colspan=2");
-			str=str+hw.CheckBox("live://property/marker_type/"+i, (trmrk_flag & q) );
-			str=str+" "+hw.MakeLink("live://property/marker_type/"+i, ST.GetString("marker_type-"+i))+" "+tok[i];
+			str=str+hw.CheckBox("live://property/marker_type/"+q, (trmrk_flag & q) );
+			str=str+" "+hw.MakeLink("live://property/marker_type/"+q, ST.GetString("marker_type-"+i))+" "+tok[i];
         		str=str+hw.EndCell();
 	        	str=str+hw.EndRow();
 			}
@@ -75,8 +74,8 @@ public string GetDescriptionHTML(void)
 	
 	str=str+hw.StartRow();
         str=str+hw.StartCell("bgcolor='#888888' colspan=2");
-	str=str+hw.CheckBox("live://property/marker_type/"+mrn_Mark, (trmrk_flag & MRN));
-	str=str+" "+hw.MakeLink("live://property/marker_type/"+mrn_Mark, ST.GetString("marker_type-"+mrn_Mark))+" "+tok[mrn_Mark];
+	str=str+hw.CheckBox("live://property/marker_type/"+MRN, (trmrk_flag & MRN));
+	str=str+" "+hw.MakeLink("live://property/marker_type/"+MRN, ST.GetString("marker_type-"+mrn_Mark))+" "+tok[mrn_Mark];
        	str=str+hw.EndCell();
         str=str+hw.EndRow();
 
@@ -124,9 +123,6 @@ void SetName()
 				}
 			q = q * 2;
 			}
-
-		if(trmrk_flag & MRN)
-			res = res + " " + info;
 		}
 
 
@@ -144,14 +140,7 @@ void  LinkPropertyValue (string id)
 	string[] tok=Str.Tokens(id,"/");
 	if(tok.size()==2 and tok[0] == "marker_type")
 		{
-		int a1 = Str.ToInt(tok[1]);
-
-		int q = 1;
-		int i;
-		for(i = 1; i < a1; i++)
-			{
-			q = q * 2;
-			}
+		int q = Str.ToInt(tok[1]);
 
 		trmrk_flag = trmrk_flag ^ q;
 
