@@ -35,6 +35,8 @@ string last_edited_station = "";
 bool IsInited=false;
 bool All_added=false;
 
+zxSignal[] blink_sig;
+
 public bool MP_started = false;
 public bool MP_NotServer = false;											// не является сервером в мультиплеерной игре (отключение логики)
 
@@ -72,6 +74,10 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 	if(!curr_sign)
 		return;
 
+	bool update_signal = false;
+
+
+
 	if(curr_sign.Type & zxSignal.ST_PROTECT)
 		{
 		if(msg.minor=="MayOpen^true")
@@ -79,7 +85,7 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 			if(curr_sign.ProtectGroup == "")
 				{
 				curr_sign.barrier_closed = false;
-				UpdateSignState(curr_sign,0,-1);
+				update_signal = true;
 				}
 			else
 				{
@@ -102,7 +108,7 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 			if(curr_sign.ProtectGroup == "")
 				{
 				curr_sign.barrier_closed = true;
-				UpdateSignState(curr_sign,0,-1);
+				update_signal = true;
 				}
 			else
 				{
@@ -126,31 +132,44 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 		if(msg.minor=="MayOpen^true" and !curr_sign.shunt_open and !(curr_sign.Type & zxSignal.ST_SHUNT))
 			{
 			curr_sign.train_open = true;	
-			UpdateSignState(curr_sign,0,-1);
+			update_signal = true;
 			}
 		else if(msg.minor=="MayOpen^false" and !(curr_sign.Type & zxSignal.ST_PERMOPENED))
 			{
 			curr_sign.train_open = false;
-			UpdateSignState(curr_sign,0,-1);
+			update_signal = true;
 			}
 		}
 
 	if(msg.minor=="ShuntMode.true" and !curr_sign.train_open)
 		{
 		curr_sign.shunt_open = true;
-		UpdateSignState(curr_sign,0,-1);
+		update_signal = true;
 		}
 	else if(msg.minor=="ShuntMode.false" or msg.minor=="Close")
 		{
 		curr_sign.shunt_open = false;
-		UpdateSignState(curr_sign,0,-1);
+		update_signal = true;
 		}
 
+	else if(msg.minor=="PriglMode.true")
+		{
+		curr_sign.prigl_open = true;
+		update_signal = true;
+		}
+	else if(msg.minor=="PriglMode.false")
+		{
+		curr_sign.prigl_open = false;
+		update_signal = true;
+		}
 	else if(msg.minor[0,4]=="ALS-")
 		{
 		curr_sign.code_freq= Str.ToInt(msg.minor[4,]);
 		}
 
+
+	if(update_signal)
+		UpdateSignState(curr_sign,0,-1);
 
 	}
 
@@ -428,6 +447,24 @@ void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object
 	TrainCleaner( entered_sign, curr_train, true );
 	}
 
+
+
+thread void BlinkProcessing()
+	{
+
+	while(true)
+		{
+		int i = 0;
+		while(i < blink_sig.size())
+			{
+			if(blink_sig[i].ToggleBlinker())
+				i++;
+			else
+				blink_sig[i,i+1] = null;
+			}
+		Sleep(0.7);
+		}
+	}
 
 
 
@@ -734,6 +771,8 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 					(cast<TrainContainer>(train_arr.DBSE[i].Object)).HighSpeed = false;
 
 				}
+			if((i % 10) == 9)
+				Sleep(0.05);
 			}
 		Sleep(0.5);
 		}
@@ -753,13 +792,10 @@ void SetClient()
 	AddHandler(me, "Train", "StoppedMoving", "");
 	AddHandler(me, "Train", "Cleanup", "");
 
-
 	int i,j;
 
 	for(i = train_arr.N - 1; i >= 0; i--)
 		{
-
-
 		Train curr_train = cast<Train>(Router.GetGameObject(train_arr.DBSE[i].a));
 
 		if(curr_train)
@@ -803,7 +839,6 @@ Soup GetChangeSoup()
 
 			zxSignal temp_sign = (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign;
 
-			
 			Temp_soup.SetNamedTag("id"+j, Signals.DBSE[i].a );
 			Temp_soup.SetNamedTag("state"+j,temp_sign.MainState);
 
@@ -1106,6 +1141,9 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		Stations = new BinarySortedStrings();
 		Stations.UdgradeArraySize(20);
 
+		blink_sig = new zxSignal[0];
+
+
 		zxExtra = new zxExtraLink[0];
 
 		ProtectGroups = new BinarySortedStrings();
@@ -1138,6 +1176,9 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		Sniff(mp_lib, "MultiplayerSession", "", true);
 
 		AddHandler(me, "MultiplayerSession", "", "MultiplayerSessionHandler");
+
+
+		BlinkProcessing();
 		}
 
 	if(function=="name_str")
@@ -1338,8 +1379,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and temp_signal.protect_influence)
 						(stringParam[0])[1]='+';		
 					}
-
-
 				}
 
 
@@ -1780,6 +1819,27 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 
 		}
+	else if(function=="blink_start")
+		{
+		zxSignal sig1=cast<zxSignal>objectParam[0];
+
+		int old_size = blink_sig.size();
+		int i, old_pos = -1;
+
+		for(i = 0; (i < old_size) and (old_pos < 0); i++)
+			{
+			if(blink_sig[i] == sig1)
+				old_pos = i;
+			}
+
+		if(old_pos < 0)
+			{
+			blink_sig[old_size,old_size+1] = new zxSignal[1];
+			blink_sig[old_size]= sig1;
+			}
+
+		}
+
 	else if(function=="add_extra_obj")
 		{
 		int old_size = zxExtra.size();

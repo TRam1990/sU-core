@@ -6,7 +6,7 @@ include "zx_router.gs"
 
 
 
-class zxSignal_main isclass zxSignal			// ГІГ®, Г·ГІГ® Г­ГҐ ГўГ Г¦Г­Г® Г¤Г«Гї Г±ГўГїГ§ГЁ Г± ГЎГіГ¤ГЄГ®Г©
+class zxSignal_main isclass zxSignal			// то, что не важно для связи с будкой
 {
 Library  mainLib;
 GSObject[] GSO;
@@ -17,6 +17,7 @@ public zxMeshController MC;
 
 public bool[] set_lens;
 public bool[] set_blink;
+
 
 public string lens_kit;
 public int lens_kit_n;
@@ -75,6 +76,10 @@ string name_decoded;
 Soup NullSoup;
 
 
+int[] blink_lens;
+bool blink_state;
+
+
 string[] GetLensKit();
 void CreateLinsArr(string s, bool[] ex_lins, int[] pos_lins);
 int FindTypeByLens(bool[] ex_lins);
@@ -85,36 +90,61 @@ void SetBUArrow(bool state);
 define float DegToRad = 0.01745;
 
 
-
-public thread void Blinker()
+int BlinkLensCount()
 	{
+	int i,j=0;
+	for(i=0;i<10;i++)
+		{
+		if(set_blink[i])
+			j++;
+		}
+	return j;	
+	}
 
-	int[] arr=new int[0];
+
+public bool SetBlink()
+	{
+	int blink_count = BlinkLensCount();
+
+	if(blink_count == 0)
+		{
+		if(blink_lens.size() > 0)
+			blink_lens[0,] = null;
+		return false;
+		}
+
+	blink_lens = new int[blink_count];
+
 	int i,j=0;
 	for(i=0;i<10;i++)
 		{
 		if(set_blink[i])
 			{
-			arr[j,j+1]=new int[1];
-			arr[j]=i;
+			blink_lens[j]=i;
 			j++;
 			}
 		}
-	if(arr.size()==0)
-		return;
-	while(set_blink[arr[0]])
-		{
-		for(i=0;i<arr.size();i++)
-			MC.SetMesh(arr[i],true);
-		Sleep(0.7);
-		if(set_blink[arr[0]])
-			{
-			for(i=0;i<arr.size();i++)
-				MC.SetMesh(arr[i],false);
-			Sleep(0.7);
-			}
-		}
 
+	blink_state = true;
+
+	mainLib.LibraryCall("blink_start",null,GSO);
+
+	return true;
+	}
+
+
+public bool ToggleBlinker()
+	{
+	if((blink_lens.size() <= 0) or !set_blink[blink_lens[0]])
+		return false;
+
+	blink_state = !blink_state;
+
+	int i;
+	for(i=0;i<blink_lens.size();i++)
+		MC.SetMesh(blink_lens[i],blink_state);
+
+	return true;
 	}
 
 
@@ -125,7 +155,8 @@ public thread void NewSignal(bool[] set_lens, float dt1, float dt2)
 	MC.OffMeshes(set_lens);
 	Sleep(dt2);
 	MC.SetMeshes(set_lens);
-	Blinker();
+
+	SetBlink();
 	}
 
 
@@ -227,7 +258,7 @@ public void CheckPrevSignals(bool no_train)
 	int MyState = MainState;
 	if (wrong_dir)
 		MyState = 2;
-	int Other_MainState = LC.FindSignalState((track_params[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(track_params[1]), Cur_prev.train_open, Cur_prev.shunt_open, (track_params[0])[1]=='+', MyState);
+	int Other_MainState = LC.FindSignalState((track_params[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(track_params[1]), Cur_prev.train_open, Cur_prev.shunt_open, Cur_prev.prigl_open, (track_params[0])[1]=='+', MyState);
 
 
 	if( ((track_params[0])[0]!='+' or no_train) and Other_OldState != Other_MainState)
@@ -246,7 +277,6 @@ void CheckMySignal(bool train_entered)
 
 	string[] track_params = new string[2];
 
-
 	mainLib.LibraryCall("find_next_signal",track_params,GSO);
 	int next_state = 0;
 
@@ -263,7 +293,7 @@ void CheckMySignal(bool train_entered)
 		(track_params[0])[0]='+';
 		}
 
-	MainState = LC.FindSignalState(((track_params[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(track_params[1]), train_open, shunt_open, (track_params[0])[1]=='+', next_state);
+	MainState = LC.FindSignalState(((track_params[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(track_params[1]), train_open, shunt_open, prigl_open, (track_params[0])[1]=='+', next_state);
 
 	}
 
@@ -324,8 +354,8 @@ void SetBUArrow(bool state)
 
 
 
-public void UpdateState(int reason, int priority)  	// Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г±Г®Г±ГІГ®ГїГ­ГЁГї Г±ГўГҐГІГ®ГґГ®Г°Г , Г®Г±Г­Г®ГўГ­Г®Г© ГЄГіГ±Г®ГЄ Г±ГЁГЈГ­Г Г«ГјГ­Г®ГЈГ® Г¤ГўГЁГ¦ГЄГ 
-	{				// reason : 0 - ГЄГ®Г¬Г Г­Г¤Г  ГЁГ§Г¬ГҐГ­ГҐГ­ГЁГї Г±Г®Г±ГІГ®ГїГ­ГЁГї 1 - Г­Г ГҐГ§Г¤ ГЇГ®ГҐГ§Г¤Г  Гў Г­Г ГЇГ°Г ГўГ«ГҐГ­ГЁГЁ 2 - Г±ГєГҐГ§Г¤ ГЇГ®ГҐГ§Г¤Г  Гў Г­Г ГЇГ°Г ГўГ«ГҐГ­ГЁГЁ 3 - Г­Г ГҐГ§Г¤ ГЇГ®ГҐГ§Г¤Г  ГЇГ°Г®ГІГЁГў 4 - Г±ГєГҐГ§Г¤ ГЇГ®ГҐГ§Г¤Г  ГЇГ°Г®ГІГЁГў 5 - ГЇГ®ГЄГЁГ¤Г Г­ГЁГҐ Г§Г®Г­Г» Г±ГўГҐГІГ®ГґГ®Г°Г  ГЇГ®ГҐГ§Г¤Г®Г¬
+public void UpdateState(int reason, int priority)  	// обновление состояния светофора, основной кусок сигнального движка
+	{				// reason : 0 - команда изменения состояния 1 - наезд поезда в направлении 2 - съезд поезда в направлении 3 - наезд поезда против 4 - съезд поезда против 5 - покидание зоны светофора поездом
  	inherited(reason,priority);
 
 	if(!Inited or MP_NotServer)
@@ -364,7 +394,7 @@ public void UpdateState(int reason, int priority)  	// Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г±Г®
 			SetSignalState(2, "");
 
 			if(!(Type & ST_UNLINKED))
-				MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, false, 0);
+				MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
 			else
 				MainState = 0;
 
@@ -441,7 +471,7 @@ public void UpdateState(int reason, int priority)  	// Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г±Г®
 		if(shunt_open)
 			{
 			shunt_open=false;
-			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, false, 0);
+			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
 
 
 			float new_speed_limit = 0;
@@ -465,7 +495,7 @@ public void UpdateState(int reason, int priority)  	// Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г±Г®
 		if(train_open and shunt_open)
 			Interface.Exception("train didn't checked:"+train_open+" "+shunt_open);
 
-		if(train_open and (Type & ST_ROUTER))			// Г§Г ГЇГіГ±ГЄГ ГҐГ¬ Г¬Г Г°ГёГ°ГіГІГ­Г»Г© (Г± Г±ГЁГ­ГЁГ¬)
+		if(train_open and (Type & ST_ROUTER))			// запускаем маршрутный (с синим)
 			{
 
 			string[] track_params = new string[2];
@@ -473,7 +503,7 @@ public void UpdateState(int reason, int priority)  	// Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г±Г®
 			mainLib.LibraryCall("find_prev_signal",track_params,GSO);
 
 			if((track_params[0])[0]=='+')
-				{					// ГҐГ±Г«ГЁ ГЇГҐГ°ГҐГ¤ Г±ГўГҐГІГ®ГґГ®Г°Г®Г¬ ГҐГ±ГІГј ГЇГ®ГҐГ§Г¤, Г®ГІГЄГ°Г»ГўГ ГҐГ¬ Гў Г®ГЎГ»Г·Г­Г®Г¬ ГЇГ®Г°ГїГ¤ГЄГҐ
+				{					// если перед светофором есть поезд, открываем в обычном порядке
 				CheckMySignal(false);
 				CheckPrevSignals(false);
 				}
@@ -513,7 +543,7 @@ public void UpdateState(int reason, int priority)  	// Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г±Г®
 
 				}
 			else
-				CheckPrevSignals(false);		// ГЇГ®ГЁГ±ГЄ Г±Г«ГҐГ¤ГіГѕГ№ГҐГЈГ® Г±ГўГҐГІГ®ГґГ®Г°Г 
+				CheckPrevSignals(false);		// поиск следующего светофора
 			}
 
 		float new_limit = 0;
@@ -592,9 +622,9 @@ public void UnlinkedUpdate(int mainstate)
 
 
 		if(ex_sgn[1] or ex_sgn[6])
-			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, false, false, mainstate);
+			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, false, false, false, mainstate);
 		else if(ex_sgn[14])
-			{		// ГїГўГ«ГїГҐГІГ±Гї ГЇГ®ГўГІГ®Г°ГЁГІГҐГ«ГјГ­Г»Г¬, ГІ.ГЄ. ГЁГ¬ГҐГҐГІ ГІГ®Г«ГјГЄГ® Г§ГҐГ«ВёГ­ГіГѕ Г«ГЁГ­Г§Гі
+			{		// является повторительным, т.к. имеет только зелёную линзу
 			if(mainstate == 0 or mainstate == 1  or mainstate == 2  or mainstate == 3 or mainstate == 20  or mainstate == 21)
 				MainState = 0;
 			else
@@ -620,7 +650,6 @@ public void UnlinkedUpdate(int mainstate)
 		MainState = mainstate;
 		SetSignal(false);
 		}
-
 	}
 
 
@@ -659,11 +688,11 @@ public void SetLinkedMU(Trackside MU2)
 
 	22 47 48 50
 
-CP1251	A  Г™  Гќ  Гџ
+CP1251	A  Щ  Э  Я
 
-UTF-8	ГђВђ ГђВ© ГђВ­ ГђВЇ
+UTF-8	Рђ Р© Р­ РЇ
 
-	ГђВ° Г‘В‰ Г‘ВЌ Г‘ВЏ
+	Р° С‰ СЌ СЏ
 
 */
 
@@ -671,29 +700,29 @@ UTF-8	ГђВђ ГђВ© ГђВ­ ГђВЇ
 
 int GetCirillic(string s)
 	{
-	if(s>="ГђВђ" and s<="ГђВ©")
+	if(s>="Рђ" and s<="Р©")
 		{
-		return (22 + s[1] - 'Вђ');
+		return (22 + s[1] - 'ђ');
 		}
 
-	if(s>="ГђВ­" and s<="ГђВЇ")
+	if(s>="Р­" and s<="РЇ")
 		{
-		return (48 + s[1] - 'В­');
+		return (48 + s[1] - '­');
 		}
 
-	if(s>="ГђВ°" and s<="Г‘В‰")
+	if(s>="Р°" and s<="С‰")
 		{
-		if(s[0]=='Гђ')
-			return (22 + s[1] - 'В°');
+		if(s[0]=='Р')
+			return (22 + s[1] - '°');
 		else
 			{
-			return (86 + s[1] - 'В°');
+			return (86 + s[1] - '°');
 			}
 		}
 
-	if(s>="Г‘ВЌ" and s<="Г‘ВЏ")
+	if(s>="СЌ" and s<="СЏ")
 		{
-		return (48 + s[1] - 'ВЌ');
+		return (48 + s[1] - 'Ќ');
 		}
 
 
@@ -922,7 +951,7 @@ public void ShowName(bool reset)
 
 
 /*
-Г°ГїГ¤Г» ГІГ ГЎГЁГ·ГҐГЄ
+ряды табичек
 
 
 01234
@@ -1019,7 +1048,7 @@ public void Deswitch_span()
 }
 
 
-public bool Switch_span(bool obligatory)		// ГЇГ®ГўГҐГ°Г­ГіГІГј Г±ГўГҐГІГ®ГґГ®Г° Гў Г±ГІГ®Г°Г®Г­Гі ГЅГІГ®ГЈГ® Г±ГўГҐГІГ®ГґГ®Г°Г 
+public bool Switch_span(bool obligatory)		// повернуть светофор в сторону этого светофора
 {
 	if(MP_NotServer)
 		return true;
@@ -1116,7 +1145,7 @@ public bool Switch_span(bool obligatory)		// ГЇГ®ГўГҐГ°Г­ГіГІГј Г±ГўГҐГІГ®ГґГ®Г°
 
 
 
-public void Switch_span2()		// ГЇГ®ГўГҐГ°Г­ГіГІГј Г±ГўГҐГІГ®ГґГ®Г° Гў Г±ГІГ®Г°Г®Г­Гі ГЅГІГ®ГЈГ® Г±ГўГҐГІГ®ГґГ®Г°Г 
+public void Switch_span2()		// повернуть светофор в сторону этого светофора
 {
 	Switch_span(true);
 }
@@ -1623,7 +1652,7 @@ public string GetDescriptionHTML(void)
 
 	s=s+"<br>";
 
-// Г°Г®Г§Г¦ГЁГЈ
+// розжиг
 
 
 
@@ -1654,7 +1683,7 @@ public string GetDescriptionHTML(void)
 
 
 
-	if(Type & (ST_IN+ST_OUT+ST_ROUTER))	// Г±ГІГ Г­Г¶ГЁГ®Г­Г­Г»Г© Г±ГўГҐГІГ®ГґГ®Г°
+	if(Type & (ST_IN+ST_OUT+ST_ROUTER))	// станционный светофор
 		{
 
 		s=s+hw.StartTable("border='1' width=90%");
@@ -1844,7 +1873,7 @@ public string GetDescriptionHTML(void)
 	s=s+hw.EndTable();
 
 
-	if(Type & ST_IN)	// ГўГµГ®Г¤Г­Г®Г©. ГЏГ Г­ГҐГ«Гј ГЇГҐГ°ГҐГЈГ®Г­Г .
+	if(Type & ST_IN)	// входной. Панель перегона.
 		{
 
 
@@ -2093,10 +2122,7 @@ void SetNewGolPosition(bool enable)
 			{
 			SetMeshTranslation("kreplenie"+i, 0, 0, 0);
 			}
-
-
 		}
-
 }
 
 
@@ -2142,148 +2168,144 @@ public void SetPropertyValue(string id, int val)
 
 void SetNewGolTex(bool[] ex_lins, int[] pos_lins, bool reset)
 {
-			int num = head_conf.size();
+	int num = head_conf.size();
 
 
 
-			koz_mesh = new bool[10];
+	koz_mesh = new bool[10];
 
-			int[] gol_conf = new int[num];
-			int[] koz_conf = new int[num];
-			gol_tex_id = new int[num];
-
-
-			int i;
-
-			for(i=0;i<num;i++)
-				{
-				gol_conf[i] = head_conf[i]-'0';
-				koz_conf[i] = 0;
-				gol_tex_id[i] = -1;
-				}
-
-			int[] gol_meshes = new int[num];
+	int[] gol_conf = new int[num];
+	int[] koz_conf = new int[num];
+	gol_tex_id = new int[num];
 
 
+	int i;
+
+	for(i=0;i<num;i++)
+		{
+		gol_conf[i] = head_conf[i]-'0';
+		koz_conf[i] = 0;
+		gol_tex_id[i] = -1;
+		}
+
+	int[] gol_meshes = new int[num];
 
 
+	for(i=0;i<10;i++)
+		{
+		koz_mesh[i] = true;
 
-			for(i=0;i<10;i++)
-				{
-				koz_mesh[i] = true;
-
-				if(ex_lins[i])
-					{
-					int pos1 = pos_lins[i];
-					int j=0;
-					int temp1 = 1;
-					int k;
-
-					while( (pos1 - gol_conf[j]) >= 0 )
-						{
-						pos1 = pos1 - gol_conf[j];
-						j++;
-						}
-
-					for(k=0;k < pos1;k++)
-						temp1 = temp1 * 2;
-
-					koz_conf[j] = koz_conf[j] + temp1;
-					}
-				}
-
-
-			int temp_koz_num=0;
-			dis_koz = false;
-
-
-			for(i=0;i< num;i++)
-				{
-
-				if( gol_conf[i] == 2  )
-					{
-					if( koz_conf[i] == 2  )
-						{
-						gol_tex_id[i] = 0;
-						dis_koz = true;
-						}
-
-					else if( koz_conf[i] == 1  )
-						{
-						int j =0;
-						while(!ex_lins[j] or (pos_lins[j] !=  temp_koz_num))
-							j++;
-
-						koz_mesh[j] = false;
-
-
-						gol_tex_id[i] = 1;
-						dis_koz = true;
-						}
-
-					else if( koz_conf[i] == 0  )
-						{
-						gol_tex_id[i] = 2;
-						dis_koz = true;
-						}
-
-
-					}
-				else if( gol_conf[i] == 3  )
-					{
-
-					if( koz_conf[i] == 2+4  )
-						{
-						gol_tex_id[i] = 3;
-						dis_koz = true;
-						}
-
-					else if( koz_conf[i] == 1+4  )
-						{
-						int j =0;
-						while(!ex_lins[j] or (pos_lins[j] !=  temp_koz_num))
-							j++;
-
-						koz_mesh[j] = false;
-						gol_tex_id[i] = 4;
-						dis_koz = true;
-
-						}
-					else if( koz_conf[i] == 1+2  )
-						{
-						int j =0;
-						while(!ex_lins[j] or (pos_lins[j] !=  (temp_koz_num+1)) )
-							j++;
-
-						koz_mesh[j] = false;
-						gol_tex_id[i] = 5;
-						dis_koz = true;
-						}
-
-					}
-
-				temp_koz_num=temp_koz_num + gol_conf[i];
-				}
-
-
-		if(reset)
+		if(ex_lins[i])
 			{
-			for(i=0;i< num;i++)
+			int pos1 = pos_lins[i];
+			int j=0;
+			int temp1 = 1;
+			int k;
+
+			while( (pos1 - gol_conf[j]) >= 0 )
 				{
-				if(gol_tex_id[i] >= 0)
-					SetFXTextureReplacement("gol"+i,gol_tex,gol_tex_id[i]);
-				else
-					SetFXTextureReplacement("gol"+i,null,0);
+				pos1 = pos1 - gol_conf[j];
+				j++;
+				}
+
+			for(k=0;k < pos1;k++)
+				temp1 = temp1 * 2;
+
+			koz_conf[j] = koz_conf[j] + temp1;
+			}
+		}
+
+
+	int temp_koz_num=0;
+	dis_koz = false;
+
+
+	for(i=0;i< num;i++)
+		{
+
+		if( gol_conf[i] == 2  )
+			{
+			if( koz_conf[i] == 2  )
+				{
+				gol_tex_id[i] = 0;
+				dis_koz = true;
+				}
+
+			else if( koz_conf[i] == 1  )
+				{
+				int j =0;
+				while(!ex_lins[j] or (pos_lins[j] !=  temp_koz_num))
+					j++;
+
+				koz_mesh[j] = false;
+
+
+				gol_tex_id[i] = 1;
+				dis_koz = true;
+				}
+
+			else if( koz_conf[i] == 0  )
+				{
+				gol_tex_id[i] = 2;
+				dis_koz = true;
+				}
+
+
+			}
+		else if( gol_conf[i] == 3  )
+			{
+
+			if( koz_conf[i] == 2+4  )
+				{
+				gol_tex_id[i] = 3;
+				dis_koz = true;
+				}
+
+			else if( koz_conf[i] == 1+4  )
+				{
+				int j =0;
+				while(!ex_lins[j] or (pos_lins[j] !=  temp_koz_num))
+					j++;
+
+				koz_mesh[j] = false;
+				gol_tex_id[i] = 4;
+				dis_koz = true;
+
+				}
+			else if( koz_conf[i] == 1+2  )
+				{
+				int j =0;
+				while(!ex_lins[j] or (pos_lins[j] !=  (temp_koz_num+1)) )
+					j++;
+
+				koz_mesh[j] = false;
+				gol_tex_id[i] = 5;
+				dis_koz = true;
 				}
 			}
-		else
+
+		temp_koz_num=temp_koz_num + gol_conf[i];
+		}
+
+
+	if(reset)
+		{
+		for(i=0;i< num;i++)
 			{
-			for(i=0;i< num;i++)
-				{
-				if(gol_tex_id[i] >= 0)
-					SetFXTextureReplacement("gol"+i,gol_tex,gol_tex_id[i]);
-				}
+			if(gol_tex_id[i] >= 0)
+				SetFXTextureReplacement("gol"+i,gol_tex,gol_tex_id[i]);
+			else
+				SetFXTextureReplacement("gol"+i,null,0);
 			}
+		}
+	else
+		{
+		for(i=0;i< num;i++)
+			{
+			if(gol_tex_id[i] >= 0)
+				SetFXTextureReplacement("gol"+i,gol_tex,gol_tex_id[i]);
+			}
+		}
 
 	if(!dis_koz)
 		koz_mesh = null;
@@ -2348,8 +2370,8 @@ public void SetPropertyValue(string id, string val)
 
 		Type = FindTypeByLens(ex_lins);
 
-		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  ГЈГҐГ­ГҐГ°ГЁГ°ГіГҐГ¬ Г°Г®Г§Г¦ГЁГЈ
-		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, false, 0);
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  генерируем розжиг
+		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
  		}
  }
 
@@ -2374,10 +2396,10 @@ public void LinkPropertyValue(string id)
 		train_open = false;
 		shunt_open = false;
 
-		string[] l_k_arr = GetLensKit();	// ГҐГ±Г«ГЁ Г­Г ГЎГ®Г° Г«ГЁГ­Г§ ГЇГ®-ГіГ¬Г®Г«Г·Г Г­ГЁГѕ
+		string[] l_k_arr = GetLensKit();	// если набор линз по-умолчанию
 
 		if(lens_kit_n >= l_k_arr.size())
-			lens_kit_n = 0;			// Г±ГЁГ«ГјГ­Г® ГЎГ®Г«ГјГёГ®Г©
+			lens_kit_n = 0;			// сильно большой
 
 
 
@@ -2415,7 +2437,7 @@ public void LinkPropertyValue(string id)
 			ab4 = 0;
 
 
-		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  ГЈГҐГ­ГҐГ°ГЁГ°ГіГҐГ¬ Г°Г®Г§Г¦ГЁГЈ
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  генерируем розжиг
 
 		if(Type & ST_PROTECT)
 			{
@@ -2445,7 +2467,7 @@ public void LinkPropertyValue(string id)
 				}
 			}
 
-		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, false, 0);
+		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
 
 		}
 	else if(id=="abtype")
@@ -2868,10 +2890,26 @@ public string GetImgShuntMode(bool state)
 }
 
 
-public string GetContentViewDetails(void)
+
+public string GetImgPriglMode(bool state)
+{
+ 	HTMLWindow hw=HTMLWindow;
+ 	string s="";
+
+	if(state)
+	 	s=hw.MakeImage("<kuid2:236443:103210:1>",true,32,32);
+	else
+		s=hw.MakeImage("<kuid2:236443:103206:1>",true,32,32);
+
+ 	return s;
+}
+
+
+
+public string GetContentViewDetails()
 {
 
- 	string s1="",s2="",s3="";
+ 	string s1="",s2="",s3="",s4="";
  	HTMLWindow hw=HTMLWindow;
 
  	s1=hw.MakeTable(
@@ -2906,20 +2944,26 @@ public string GetContentViewDetails(void)
  		 		);
 		}
 
-	if( !(Type & ST_PERMOPENED) )
-		s3 =	hw.MakeRow(
+	if( !(Type & ST_PERMOPENED) and ex_sgn[20])	// только если есть маневровый
+		s2 = s2+ hw.MakeRow(
  	 			hw.MakeCell(STT.GetString("ability_to_shnt"),"bgcolor=#777777")+
  	 			hw.MakeCell(hw.MakeLink("live://ShuntMode^"+!shunt_open,GetImgShuntMode(shunt_open)),"bgcolor=#777777")
  	 		);
 
 
+	if( (Type & (ST_IN | ST_OUT | ST_ROUTER)) and !(Type & ST_SHUNT) )
+		s2 = s2+ hw.MakeRow(
+ 	 			hw.MakeCell(STT.GetString("ability_to_prigl"),"bgcolor=#777777")+
+ 	 			hw.MakeCell(hw.MakeLink("live://PriglMode^"+!prigl_open,GetImgPriglMode(prigl_open)),"bgcolor=#777777")
+ 	 		);
 
 
-	if((Type & ST_IN) and span_soup and span_soup.GetNamedTagAsBool("Inited",false) )	// ГўГµГ®Г¤Г­Г®Г©. ГЏГ Г­ГҐГ«Гј ГЇГҐГ°ГҐГЈГ®Г­Г .
+
+
+	if((Type & ST_IN) and span_soup and span_soup.GetNamedTagAsBool("Inited",false) )	// входной. Панель перегона.
 		{
 
 		string[] bb_s = new string[4];
-
 
 
 		if(!wrong_dir)
@@ -2937,8 +2981,7 @@ public string GetContentViewDetails(void)
 			bb_s[3]="";
 			}
 
-
-		s3 = s3 + hw.MakeRow(
+		s2 = s2 + hw.MakeRow(
         		  		hw.MakeCell(STT.GetString("dir_track_to")+"<br>"+
 
 	                		hw.MakeLink("live://spanTrackFromOther",bb_s[0]+privateName+"@"+stationName+"  &gt;&gt;&gt; "+bb_s[1])+" . "+
@@ -2946,15 +2989,10 @@ public string GetContentViewDetails(void)
 
 					hw.MakeCell("","bgcolor='#555555'")
 
-
 			                );
-
-
 		}
 
-	s1=s1+hw.MakeTable(
-			s2 + s3
- 	 	,"width=100% border=1");
+	s1=s1+hw.MakeTable( s2, "width=100% border=1");
 
 
  	s1=hw.MakeTable(
@@ -2998,7 +3036,7 @@ public void ChangeText(Message msg)
  				PostMessage(me,"CTRL","MayOpen^false",0);
 
  			}
- 		if(tok2[0]=="ShuntMode")
+ 		else if(tok2[0]=="ShuntMode")
 			{
  			if(tok2[1]=="true")
  				PostMessage(me,"CTRL","ShuntMode.true",0);
@@ -3006,6 +3044,16 @@ public void ChangeText(Message msg)
  				PostMessage(me,"CTRL","ShuntMode.false",0);
 
  			}
+ 		else if(tok2[0]=="PriglMode")
+			{
+ 			if(tok2[1]=="true")
+ 				PostMessage(me,"CTRL","PriglMode.true",0);
+ 			else if(tok2[1]=="false")
+ 				PostMessage(me,"CTRL","PriglMode.false",0);
+
+ 			}
+
+
  		PostMessage(me,"RefreshBrowser","",0.5);
  		}
 }
@@ -3155,11 +3203,11 @@ int FindTypeByLens(bool[] ex_lins)
 	int type1 = ST_UNTYPED;
 
 
-	if(ex_lins[0] and ex_lins[8] and (ex_lins[1] or ex_lins[3]))	// Г¬Г Г°ГёГ°ГіГІГ­Г»Г© Г®ГЎГ«Г Г¤Г ГҐГІ ГЁ Г±ГЁГ­ГЁГ¬, ГЁ Г§ГҐГ«ВёГ­Г»Г¬(Г¦ВёГ«ГІГ»Г¬)
+	if(ex_lins[0] and ex_lins[8] and (ex_lins[1] or ex_lins[3]))	// маршрутный обладает и синим, и зелёным(жёлтым)
 		type1 = type1 + ST_ROUTER;
 	else
 		{
-		if(!(ex_lins[0] and ex_lins[8]) and  !ex_lins[1] and !ex_lins[3] and !ex_lins[4]) // Г±ГЁГ­ГҐГЄГ°Г Г±Г­Г»ГҐ - Г­ГҐ Г¬Г Г­ГҐГўГ°Г®ГўГ»ГҐ ГЁ Г®Г±Г­Г®ГўГ­Г»Гµ Г«ГЁГ­Г§ Г­ГҐГІ
+		if(!(ex_lins[0] and ex_lins[8]) and  !ex_lins[1] and !ex_lins[3] and !ex_lins[4]) // синекрасные - не маневровые и основных линз нет
 			type1 = type1 + ST_SHUNT;
 		}
 
@@ -3295,7 +3343,7 @@ public void SetProperties(Soup soup)
 	//inherited(soup);
 	stationName = soup.GetNamedTag("stationName");
 
-// Г¤Г®ГЎГ ГўГ«ГїГҐГ¬ Г±ГІГ Г­Г¶ГЁГѕ Г±ГўГҐГІГ®ГґГ®Г°Г 
+// добавляем станцию светофора
 
 
 	if(stationName != "")
@@ -3324,13 +3372,13 @@ public void SetProperties(Soup soup)
 
 
 	lens_kit_n = soup.GetNamedTagAsInt("lens_kit_n",0);
-	if(lens_kit_n < 0)						// Г±Г®ГЎГ±ГІГўГҐГ­Г­Г»Г© Г­Г ГЎГ®Г° Г«ГЁГ­Г§
+	if(lens_kit_n < 0)						// собственный набор линз
 		lens_kit = soup.GetNamedTag("lens_kit");
 	else
 		{
-		string[] l_k_arr=	GetLensKit();				// ГҐГ±Г«ГЁ Г­Г ГЎГ®Г° Г«ГЁГ­Г§ ГЇГ®-ГіГ¬Г®Г«Г·Г Г­ГЁГѕ ГЎГҐГ°ВёГ¬ ГҐГЈГ®
+		string[] l_k_arr=	GetLensKit();				// если набор линз по-умолчанию берём его
 		if(lens_kit_n < l_k_arr.size())
-			lens_kit = l_k_arr[lens_kit_n];			// ГҐГ±Г«ГЁ Г®Г­ ГўГ®Г®ГЎГ№ГҐ ГҐГ±ГІГј?
+			lens_kit = l_k_arr[lens_kit_n];			// если он вообще есть?
 
 		if(ST.GetString("lensT"+lens_kit_n)!="")
 			Type = Str.ToInt( ST.GetString("lensT"+lens_kit_n) );
@@ -3364,7 +3412,7 @@ public void SetProperties(Soup soup)
 
 	string ex_sign_1 = soup.GetNamedTag("ExSignals_str");
 	if(ex_sign_1=="")
-		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			// ГҐГ±Г«ГЁ Г°Г®Г§Г¦ГЁГЈ Г­ГҐ Г±ГЈГҐГ­ГҐГ°ГЁГ°Г®ГўГ Г­, ГЈГҐГ­ГҐГ°ГЁГ°ГіГҐГ¬
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			// если розжиг не сгенерирован, генерируем
 	else
 		{
 		ex_sgn=StrToExSignals(ex_sign_1);
@@ -3389,6 +3437,9 @@ public void SetProperties(Soup soup)
 		train_open = soup.GetNamedTagAsBool("train_open",false);
 
 	shunt_open = soup.GetNamedTagAsBool("shunt_open",false);
+
+	prigl_open = soup.GetNamedTagAsBool("prigl_open",false);
+
 
 	if(Type & ST_PROTECT)
 		{
@@ -3541,8 +3592,6 @@ public void SetProperties(Soup soup)
 	code_dev = soup.GetNamedTagAsInt("code_dev");
 	def_path_priority = soup.GetNamedTagAsInt("def_path_priority",0);
 
-//	AttachedJunction = soup.GetNamedTag("AttachedJunction");
-
 
 	if(station_edited and stationName!="")
 		{
@@ -3590,6 +3639,8 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("train_open",train_open);
 	retSoup.SetNamedTag("shunt_open",shunt_open);
 	retSoup.SetNamedTag("barrier_closed",barrier_closed);
+	retSoup.SetNamedTag("prigl_open",prigl_open);
+
 
 	retSoup.SetNamedTag("stationName",stationName);
 	retSoup.SetNamedTag("privateName",privateName);
@@ -3598,9 +3649,9 @@ public Soup GetProperties(void)
 	if(!wrong_dir)
 		{
 		if(Type & (ST_UNLINKED|ST_PROTECT))
-			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[19].l.MainState   );	// Г¤Г«Гї Г±Г®ГўГ¬ГҐГ±ГІГЁГ¬Г®Г±ГІГЁ Г± z7
+			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[19].l.MainState   );	// для совместимости с z7
 		else
-			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[MainState].l.MainState   );	// Г¤Г«Гї Г±Г®ГўГ¬ГҐГ±ГІГЁГ¬Г®Г±ГІГЁ Г± z7
+			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[MainState].l.MainState   );	// для совместимости с z7
 		}
 	else
 		retSoup.SetNamedTag("privateStateEx", 1000   );
@@ -3634,8 +3685,6 @@ public Soup GetProperties(void)
 
 
 	retSoup.SetNamedTag("pause_bef_red",pause_bef_red);
-
-//	retSoup.SetNamedTag("AttachedJunction",AttachedJunction);
 
 	if(isMacht)
 		{
@@ -3742,8 +3791,6 @@ public void Init(Asset asset)
 	tex=asset.FindAsset("tex_tabl");
 	tabl_m=asset.FindAsset("tabl");
 
-//	AttachedJunction ="";
-
 
 	ST = asset.GetStringTable();
   	STT = asset.FindAsset("main_lib").GetStringTable();
@@ -3764,6 +3811,8 @@ public void Init(Asset asset)
 	set_lens = new bool[10];
 	set_blink = new bool[10];
 	ex_sgn = new bool[26];
+
+	blink_lens = new int[0];
 
 	code_freq=2;
 

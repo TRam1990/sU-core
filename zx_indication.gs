@@ -814,11 +814,15 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// К-Бм - белая
 	}
 
 
-public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool sup_closed, int NextState)
+public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool is_prigl, bool sub_closed, int NextState)
 // определение типа сигнала по 
 	{
+	if(is_prigl and possible_sig[3])	// только если есть есть только К-Бм
+		return 3;
 
-	if(sup_closed)
+
+
+	if(sub_closed)
 		{
 		if(is_opend and OldState == 2)
 			return 2;
@@ -832,6 +836,10 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		return 0;
 
 		}
+
+
+
+
 
 
 	if(is_shunt)		// манёвры
@@ -1296,6 +1304,11 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 	return 0;
+	}
+
+public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool sub_closed, int NextState)	//для совместимости
+	{
+	return FindSignalState(any_train, OldState, possible_sig, ab4, trmrk_flag, is_opend, is_shunt, false, sub_closed, NextState);
 	}
 
 };
