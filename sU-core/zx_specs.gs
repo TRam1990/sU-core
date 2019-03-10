@@ -266,7 +266,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 	public float GetSpeedLim(int prior)
 		{
-		if(MainState == 19)
+		if(MainState == zxIndication.STATE_B)
 			return -1.0;
 
 
@@ -313,7 +313,7 @@ class zxSignal isclass Signal, ALSN_Provider
 		if(!Inited)
 			return true;
 
-		if(MainState == 19)
+		if(MainState == zxIndication.STATE_B)
 			return false;
 
 
@@ -337,7 +337,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 		MapObject MO = GSTS.SearchNext();
 
-		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !(((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)   or ((cast<zxSignal>MO).MainState == 19) ) ) )
+		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !(((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)   or ((cast<zxSignal>MO).MainState == zxIndication.STATE_B) ) ) )
 			MO = GSTS.SearchNext();
 
 		if(!MO or !MO.isclass(Vehicle))

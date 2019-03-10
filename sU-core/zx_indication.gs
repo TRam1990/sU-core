@@ -8,6 +8,31 @@ public string name;
 public int MainState;
 public int ind_num;
 
+public define int STATE_R		= 1;
+public define int STATE_Rx 		= 2;
+public define int STATE_RWb		= 3;
+public define int STATE_YY		= 4;
+public define int STATE_YYL		= 5;
+public define int STATE_Y		= 6;
+public define int STATE_YbY		= 7;
+public define int STATE_YbYL	= 8;
+public define int STATE_GY		= 9;
+public define int STATE_Gb		= 10;
+public define int STATE_Yb		= 11;
+public define int STATE_GbYL	= 12;
+public define int STATE_YYY		= 13;
+public define int STATE_G		= 14;
+public define int STATE_GG		= 15;
+public define int STATE_YW		= 16;
+public define int STATE_GW		= 17;
+public define int STATE_YbW		= 18;
+public define int STATE_B		= 19;
+public define int STATE_W		= 20;
+public define int STATE_WW		= 21;
+public define int STATE_YYW		= 22;
+public define int STATE_YbYW	= 23;
+public define int STATE_YYWL	= 24;
+public define int STATE_GbYWL	= 25;
 
 public void Init()
 	{
@@ -34,7 +59,7 @@ class bb_R isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=1;
+	ind_num = STATE_R;
 	MainState=0;
 	name="R";
 	}
@@ -55,7 +80,7 @@ class bb_Rx isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=2;
+	ind_num = STATE_Rx;
 	MainState=1000;
 	name="X";
 	}
@@ -75,7 +100,7 @@ public int white_lens; // 0 - отсутствует, 1 - "немигающая"
 public void Init()
 	{
 	inherited();
-	ind_num=3;
+	ind_num = STATE_RWb;
 	MainState=1;
 	name="RWb";
 	white_lens = 2;
@@ -113,7 +138,7 @@ class bb_YY isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=4;
+	ind_num = STATE_YY;
 	MainState=2;
 	name="YY";
 	}
@@ -135,7 +160,7 @@ class bb_YYL isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=5;
+	ind_num = STATE_YYL;
 	MainState=3;
 	name="YYL";
 	}
@@ -160,7 +185,7 @@ class bb_Y isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=6;
+	ind_num = STATE_Y;
 	MainState=4;
 	name="Y";
 	}
@@ -181,7 +206,7 @@ class bb_YbY isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=7;
+	ind_num = STATE_YbY;
 	MainState=5;
 	name="YbY";
 	}
@@ -207,7 +232,7 @@ class bb_YbYL isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=8;
+	ind_num = STATE_YbYL;
 	MainState=6;
 	name="YbYL";
 	}
@@ -234,7 +259,7 @@ class bb_GY isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=9;
+	ind_num = STATE_GY;
 	MainState=7;
 	name="GY";
 	}
@@ -256,7 +281,7 @@ class bb_Gb isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=10;
+	ind_num = STATE_Gb;
 	MainState=8;
 	name="Gb";
 	}
@@ -283,7 +308,7 @@ class bb_Yb isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=11;
+	ind_num = STATE_Yb;
 	MainState=9;
 	name="Yb";
 	}
@@ -308,7 +333,7 @@ class bb_GbYL isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=12;
+	ind_num = STATE_GbYL;
 	MainState=10;
 	name="GbYL";
 	}
@@ -337,7 +362,7 @@ class bb_YYY isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=13;
+	ind_num = STATE_YYY;
 	MainState=11;
 	name="YYY";
 	}
@@ -363,7 +388,7 @@ class bb_G isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=14;
+	ind_num = STATE_G;
 	MainState=12;
 	name="G";
 	}
@@ -387,7 +412,7 @@ class bb_GG isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=15;
+	ind_num = STATE_GG;
 	MainState=27;
 	name="GG";
 	}
@@ -412,7 +437,7 @@ class bb_YW isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=16;
+	ind_num = STATE_YW;
 	MainState=34;
 	name="YW";
 	}
@@ -437,7 +462,7 @@ class bb_GW isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=17;
+	ind_num = STATE_GW;
 	MainState=37;
 	name="GW";
 	}
@@ -459,7 +484,7 @@ class bb_YbW isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=18;
+	ind_num = STATE_YbW;
 	MainState=34;
 	name="YbW";
 	}
@@ -484,7 +509,7 @@ class bb_B isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=19;
+	ind_num = STATE_B;
 	MainState=100;
 	name="B";
 	}
@@ -507,7 +532,7 @@ class bb_W isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=20;
+	ind_num = STATE_W;
 	MainState=101;
 	name="W";
 	}
@@ -529,7 +554,7 @@ class bb_WW isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=21;
+	ind_num = STATE_WW;
 	MainState=102;
 	name="WW";
 	}
@@ -554,7 +579,7 @@ class bb_YYW isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=22;
+	ind_num = STATE_YYW;
 	MainState=35;
 	name="YYW";
 	}
@@ -580,7 +605,7 @@ class bb_YbYW isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=23;
+	ind_num = STATE_YbYW;
 	MainState=36;
 	name="YbYW";
 	}
@@ -609,7 +634,7 @@ class bb_YYWL isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=24;
+	ind_num = STATE_YYWL;
 	MainState=3;
 	name="YYWL";
 	}
@@ -635,7 +660,7 @@ class bb_GbYWL isclass zxIndication
 public void Init()
 	{
 	inherited();
-	ind_num=25;
+	ind_num = STATE_GbYWL;
 	MainState=10;
 	name="GbYWL";
 	}
@@ -745,31 +770,31 @@ public void Init()
 
 
 	sgn_st[0].l = nosign;	
-	sgn_st[1].l = R;	
-	sgn_st[2].l = Rx;	
-	sgn_st[3].l = RWb;	
-	sgn_st[4].l = YY;	
-	sgn_st[5].l = YYL;	
-	sgn_st[6].l = Y;
-	sgn_st[7].l = YbY;	
-	sgn_st[8].l = YbYL;
-	sgn_st[9].l = GY;
-	sgn_st[10].l = Gb;
-	sgn_st[11].l = Yb;
-	sgn_st[12].l = GbYL;
-	sgn_st[13].l = YYY;	
-	sgn_st[14].l = G;
-	sgn_st[15].l = GG;
-	sgn_st[16].l = YW;
-	sgn_st[17].l = GW;
-	sgn_st[18].l = YbW;
-	sgn_st[19].l = B;
-	sgn_st[20].l = W;
-	sgn_st[21].l = WW;
-	sgn_st[22].l = YYW;
-	sgn_st[23].l = YbYW;
-	sgn_st[24].l = YYWL;
-	sgn_st[25].l = GbYWL;
+	sgn_st[zxIndication.STATE_R].l = R;	
+	sgn_st[zxIndication.STATE_Rx].l = Rx;	
+	sgn_st[zxIndication.STATE_RWb].l = RWb;	
+	sgn_st[zxIndication.STATE_YY].l = YY;	
+	sgn_st[zxIndication.STATE_YYL].l = YYL;	
+	sgn_st[zxIndication.STATE_Y].l = Y;
+	sgn_st[zxIndication.STATE_YbY].l = YbY;	
+	sgn_st[zxIndication.STATE_YbYL].l = YbYL;
+	sgn_st[zxIndication.STATE_GY].l = GY;
+	sgn_st[zxIndication.STATE_Gb].l = Gb;
+	sgn_st[zxIndication.STATE_Yb].l = Yb;
+	sgn_st[zxIndication.STATE_GbYL].l = GbYL;
+	sgn_st[zxIndication.STATE_YYY].l = YYY;	
+	sgn_st[zxIndication.STATE_G].l = G;
+	sgn_st[zxIndication.STATE_GG].l = GG;
+	sgn_st[zxIndication.STATE_YW].l = YW;
+	sgn_st[zxIndication.STATE_GW].l = GW;
+	sgn_st[zxIndication.STATE_YbW].l = YbW;
+	sgn_st[zxIndication.STATE_B].l = B;
+	sgn_st[zxIndication.STATE_W].l = W;
+	sgn_st[zxIndication.STATE_WW].l = WW;
+	sgn_st[zxIndication.STATE_YYW].l = YYW;
+	sgn_st[zxIndication.STATE_YbYW].l = YbYW;
+	sgn_st[zxIndication.STATE_YYWL].l = YYWL;
+	sgn_st[zxIndication.STATE_GbYWL].l = GbYWL;
 
 	for(i=0;i<26;i++)
 		sgn_st[i].l.Init();
@@ -807,7 +832,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// К-Бм - б
 		else
 			result_kbm = 0;
 
-		possible_sgn[3] = true;
+		possible_sgn[zxIndication.STATE_RWb] = true;
 		}
 
 	return result_kbm;
@@ -817,21 +842,21 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// К-Бм - б
 public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool is_prigl, bool sub_closed, int NextState)
 // определение типа сигнала по 
 	{
-	if(is_prigl and possible_sig[3])	// только если есть есть только К-Бм
-		return 3;
+	if(is_prigl and possible_sig[zxIndication.STATE_RWb])	// только если есть есть только К-Бм
+		return zxIndication.STATE_RWb;
 
 
 
 	if(sub_closed)
 		{
-		if(is_opend and OldState == 2)
-			return 2;
+		if(is_opend and OldState == zxIndication.STATE_Rx)
+			return zxIndication.STATE_Rx;
 
-		if( possible_sig[1] )
-			return 1;
+		if( possible_sig[zxIndication.STATE_R] )
+			return zxIndication.STATE_R;
 
-		if(possible_sig[19])
-			return 19;
+		if(possible_sig[zxIndication.STATE_B])
+			return zxIndication.STATE_B;
 
 		return 0;
 
@@ -853,34 +878,34 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-		if( possible_sig[21] and !any_train) // если есть 2 белых, и путь свободен
-			return 21;
-		if( possible_sig[20] )		// есть 1 белый
-			return 20;
+		if( possible_sig[zxIndication.STATE_WW] and !any_train) // если есть 2 белых, и путь свободен
+			return zxIndication.STATE_WW;
+		if( possible_sig[zxIndication.STATE_W] )		// есть 1 белый
+			return zxIndication.STATE_W;
 
 
-		if( possible_sig[3] )		// есть только К-Бм
-			return 3;
+		if( possible_sig[zxIndication.STATE_RWb] )		// есть только К-Бм
+			return zxIndication.STATE_RWb;
 
-		if( possible_sig[1] )		// белых нет - красный
-			return 1;
+		if( possible_sig[zxIndication.STATE_R] )		// белых нет - красный
+			return zxIndication.STATE_R;
 
 		return 0;
 		}
 
 	if(!is_opend)		// светофор закрыт
 		{
-		if(OldState == 1)
-			return 1;
-		if(OldState == 2)
-			return 2;
+		if(OldState == zxIndication.STATE_R)
+			return zxIndication.STATE_R;
+		if(OldState == zxIndication.STATE_Rx)
+			return zxIndication.STATE_Rx;
 
-		if(possible_sig[1])	// красный , т.к. он более "закрытый", чем синий
-			return 1;
+		if(possible_sig[zxIndication.STATE_R])	// красный , т.к. он более "закрытый", чем синий
+			return zxIndication.STATE_R;
 
 
-		if(possible_sig[19])	// синий
-			return 19;
+		if(possible_sig[zxIndication.STATE_B])	// синий
+			return zxIndication.STATE_B;
 
 		return 0;
 		}
@@ -890,17 +915,17 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 //    светофор (пред) открыт в поездном порядке
 
 
-	if(OldState == 2)		// открытие обратного маршрута не позволяет развернуть перегон
-		return 2;
+	if(OldState == zxIndication.STATE_Rx)		// открытие обратного маршрута не позволяет развернуть перегон
+		return zxIndication.STATE_Rx;
 
 
-	if(any_train or NextState == 2)		// впереди поезд или неправильный перегон
+	if(any_train or NextState == zxIndication.STATE_Rx)		// впереди поезд или неправильный перегон
 		{
-		if(possible_sig[1])	// красный
-			return 1;
+		if(possible_sig[zxIndication.STATE_R])	// красный
+			return zxIndication.STATE_R;
 
-		if(possible_sig[19])	// синий
-			return 19;
+		if(possible_sig[zxIndication.STATE_B])	// синий
+			return zxIndication.STATE_B;
 
 		return 0;
 		}
@@ -909,22 +934,22 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	if(OldState == 2)	// открыт, но перегон перед ним направлен в обратную сторону
-		return 2;
+	if(OldState == zxIndication.STATE_Rx)	// открыт, но перегон перед ним направлен в обратную сторону
+		return zxIndication.STATE_Rx;
 
 
 
 	if(trmrk_flag & zxMarker.MRENDAB)	// АБ нету
 		{
-		if( possible_sig[20] )	// отправление по белому
-			return 20;
+		if( possible_sig[zxIndication.STATE_W] )	// отправление по белому
+			return zxIndication.STATE_W;
 
-		if(possible_sig[1])	// красный
-			return 1;
+		if(possible_sig[zxIndication.STATE_R])	// красный
+			return zxIndication.STATE_R;
 
 
-		if(possible_sig[19])	// синий
-			return 19;
+		if(possible_sig[zxIndication.STATE_B])	// синий
+			return zxIndication.STATE_B;
 
 		return 0;
 		}
@@ -937,23 +962,23 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 		if(trmrk_flag & zxMarker.MRT)
 			{
-			if(possible_sig[4])		// жёлтый - жёлтый
-				return 4;
+			if(possible_sig[zxIndication.STATE_YY])		// жёлтый - жёлтый
+				return zxIndication.STATE_YY;
 			}
 
 			
-		if(possible_sig[15])		// ПАБ ЗЗ
-			return 15;
+		if(possible_sig[zxIndication.STATE_GG])		// ПАБ ЗЗ
+			return zxIndication.STATE_GG;
 
-		if(possible_sig[14])		// ПАБ
-			return 14;
+		if(possible_sig[zxIndication.STATE_G])		// ПАБ
+			return zxIndication.STATE_G;
 		
 		return 0;
 		}
 
 
 
-	if(NextState == 1 or NextState == 3 or NextState == 18 or NextState == 20 or NextState == 21 or (trmrk_flag & zxMarker.MRNOPR))
+	if(NextState == zxIndication.STATE_R or NextState == zxIndication.STATE_RWb or NextState == zxIndication.STATE_YbW or NextState == zxIndication.STATE_W or NextState == zxIndication.STATE_WW or (trmrk_flag & zxMarker.MRNOPR))
 
 // следующий красный, три жёлтых, белый или Жм+Б, или путь без пропуска
 
@@ -961,11 +986,11 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 		if(trmrk_flag & zxMarker.MRHALFBL)
 			{
-			if(possible_sig[13])	// жёлтый - жёлтый - жёлтый
-				return 13;
+			if(possible_sig[zxIndication.STATE_YYY])	// жёлтый - жёлтый - жёлтый
+				return zxIndication.STATE_YYY;
 
-			if(possible_sig[1])	// красный
-				return 1;
+			if(possible_sig[zxIndication.STATE_R])	// красный
+				return zxIndication.STATE_R;
 
 			return 0;
 			}
@@ -973,20 +998,20 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 		if(trmrk_flag & zxMarker.MRWW)	// неправильный путь
 			{
-			if((trmrk_flag & zxMarker.MRT) and possible_sig[24]) // жёлтый + жёлтый + белый + полоса	
-				return 24;
+			if((trmrk_flag & zxMarker.MRT) and possible_sig[zxIndication.STATE_YYWL]) // жёлтый + жёлтый + белый + полоса	
+				return zxIndication.STATE_YYWL;
 
-			if(possible_sig[18])		// жёлтый миг. + белый
-				return 18;
+			if(possible_sig[zxIndication.STATE_YbW])		// жёлтый миг. + белый
+				return zxIndication.STATE_YbW;
 			
-			if(possible_sig[4])		// жёлтый - жёлтый
-				return 4;
+			if(possible_sig[zxIndication.STATE_YY])		// жёлтый - жёлтый
+				return zxIndication.STATE_YY;
 
-			if(possible_sig[6])		// жёлтый
-				return 6;
+			if(possible_sig[zxIndication.STATE_Y])		// жёлтый
+				return zxIndication.STATE_Y;
 
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
-				return 14;
+			if(possible_sig[zxIndication.STATE_G])		// если жёлтых нет, значит ПАБ
+				return zxIndication.STATE_G;
 
 			return 0;
 
@@ -994,41 +1019,41 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		else if(trmrk_flag & zxMarker.MRALS)	// АЛС
 			{
 
-			if((trmrk_flag & zxMarker.MRT) and possible_sig[22]) // жёлтый + жёлтый + белый	
-				return 22;
+			if((trmrk_flag & zxMarker.MRT) and possible_sig[zxIndication.STATE_YYW]) // жёлтый + жёлтый + белый	
+				return zxIndication.STATE_YYW;
 
-			if((trmrk_flag & zxMarker.MRT18) and possible_sig[24]) // жёлтый + жёлтый + белый + полоса	
-				return 24;
+			if((trmrk_flag & zxMarker.MRT18) and possible_sig[zxIndication.STATE_YYWL]) // жёлтый + жёлтый + белый + полоса	
+				return zxIndication.STATE_YYWL;
 
-			if(possible_sig[16])		// жёлтый + белый	
-				return 16;
+			if(possible_sig[zxIndication.STATE_YW])		// жёлтый + белый	
+				return zxIndication.STATE_YW;
 
-			if(possible_sig[6])		// жёлтый
-				return 6;
+			if(possible_sig[zxIndication.STATE_Y])		// жёлтый
+				return zxIndication.STATE_Y;
 
 			return 0;
 			}
 
-		else if((trmrk_flag & zxMarker.MRDAB) and (possible_sig[15] or !possible_sig[6]) and possible_sig[1])	// на неправильный путь с АБ 
+		else if((trmrk_flag & zxMarker.MRDAB) and (possible_sig[zxIndication.STATE_GG] or !possible_sig[zxIndication.STATE_Y]) and possible_sig[zxIndication.STATE_R])	// на неправильный путь с АБ 
 			{												// если есть 2 зелёных или нет жёлтого
-			return 1;		// красный
+			return zxIndication.STATE_R;		// красный
 			}
 
 		else if(trmrk_flag & zxMarker.MRT)		// отклонение
 			{
 
-			if(possible_sig[4])		// жёлтый - жёлтый
-				return 4;
+			if(possible_sig[zxIndication.STATE_YY])		// жёлтый - жёлтый
+				return zxIndication.STATE_YY;
 
 
-			if(possible_sig[6])		// жёлтый
-				return 6;
+			if(possible_sig[zxIndication.STATE_Y])		// жёлтый
+				return zxIndication.STATE_Y;
 
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
-				return 14;
+			if(possible_sig[zxIndication.STATE_G])		// если жёлтых нет, значит ПАБ
+				return zxIndication.STATE_G;
 
-			if(possible_sig[19])	// синий
-				return 19;
+			if(possible_sig[zxIndication.STATE_B])	// синий
+				return zxIndication.STATE_B;
 
 
 			return 0;
@@ -1038,28 +1063,28 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
 			{
 
-			if(possible_sig[5])		// жёлтый - жёлтый - полоса
-				return 5;
+			if(possible_sig[zxIndication.STATE_YYL])		// жёлтый - жёлтый - полоса
+				return zxIndication.STATE_YYL;
 
-			if(possible_sig[4])		// жёлтый - жёлтый
-				return 4;
+			if(possible_sig[zxIndication.STATE_YY])		// жёлтый - жёлтый
+				return zxIndication.STATE_YY;
 
-			if(possible_sig[6])		// жёлтый
-				return 6;
+			if(possible_sig[zxIndication.STATE_Y])		// жёлтый
+				return zxIndication.STATE_Y;
 
 			return 0;
 			}
 
 		else 					// модификаций нет
 			{
-			if(possible_sig[6])		// жёлтый
-				return 6;
+			if(possible_sig[zxIndication.STATE_Y])		// жёлтый
+				return zxIndication.STATE_Y;
 
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
-				return 14;
+			if(possible_sig[zxIndication.STATE_G])		// если жёлтых нет, значит ПАБ
+				return zxIndication.STATE_G;
 
-			if(possible_sig[19])	// синий
-				return 19;
+			if(possible_sig[zxIndication.STATE_B])	// синий
+				return zxIndication.STATE_B;
 
 
 			return 0;
@@ -1070,88 +1095,88 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	if(NextState == 4 or NextState == 7 or NextState == 13   or NextState == 22   or NextState == 23)		// следующее отклонение
+	if(NextState == zxIndication.STATE_YY or NextState == zxIndication.STATE_YbY or NextState == zxIndication.STATE_YYY   or NextState == zxIndication.STATE_YYW   or NextState == zxIndication.STATE_YbYW)		// следующее отклонение
 		{
 
 		if(trmrk_flag & zxMarker.MRWW)
 			{
-			if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
-				return 25;
+			if((trmrk_flag & zxMarker.MRT18) and possible_sig[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
+				return zxIndication.STATE_GbYWL;
 
-			if(possible_sig[18])		// жёлтый миг. + белый
-				return 18;
+			if(possible_sig[zxIndication.STATE_YbW])		// жёлтый миг. + белый
+				return zxIndication.STATE_YbW;
 			
-			if(possible_sig[7])		// жёлтый мигающий - жёлтый
-				return 7;
+			if(possible_sig[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
+				return zxIndication.STATE_YbY;
 
-			if(possible_sig[11])		// жёлтый мигающий
-				return 11;
+			if(possible_sig[zxIndication.STATE_Yb])		// жёлтый мигающий
+				return zxIndication.STATE_Yb;
 
 			return 0;
 
 			}
 		else if(trmrk_flag & zxMarker.MRALS)			// АЛС 
 			{
-			if((trmrk_flag & zxMarker.MRT) and possible_sig[23])
-				return 23;
+			if((trmrk_flag & zxMarker.MRT) and possible_sig[zxIndication.STATE_YbYW])
+				return zxIndication.STATE_YbYW;
 
-			if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
-				return 25;
-
-
-			if(possible_sig[18])		// жёлтый миг. + белый
-				return 18;
+			if((trmrk_flag & zxMarker.MRT18) and possible_sig[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
+				return zxIndication.STATE_GbYWL;
 
 
-			if(possible_sig[17])		// зелёный + белый	
-				return 17;
+			if(possible_sig[zxIndication.STATE_YbW])		// жёлтый миг. + белый
+				return zxIndication.STATE_YbW;
 
-			if(possible_sig[11])		// жёлтый мигающий
-				return 11;
+
+			if(possible_sig[zxIndication.STATE_GW])		// зелёный + белый	
+				return zxIndication.STATE_GW;
+
+			if(possible_sig[zxIndication.STATE_Yb])		// жёлтый мигающий
+				return zxIndication.STATE_Yb;
 
 			return 0;
 			}
 
-		else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[15])	// на неправильный путь с АБ
+		else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[zxIndication.STATE_GG])	// на неправильный путь с АБ
 			{
-			if(possible_sig[11])		// жёлтый мигающий
-				return 11;
+			if(possible_sig[zxIndication.STATE_Yb])		// жёлтый мигающий
+				return zxIndication.STATE_Yb;
 
 			return 0;
 			}
 		else if(trmrk_flag & zxMarker.MRT)		// отклонение
 			{
 
-			if(possible_sig[7])		// жёлтый мигающий - жёлтый
-				return 7;
+			if(possible_sig[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
+				return zxIndication.STATE_YbY;
 
 
-			if(possible_sig[14])		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
-				return 14;
+			if(possible_sig[zxIndication.STATE_G])		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
+				return zxIndication.STATE_G;
 
 
-			if(possible_sig[11])		// жёлтый мигающий
-				return 11;
+			if(possible_sig[zxIndication.STATE_Yb])		// жёлтый мигающий
+				return zxIndication.STATE_Yb;
 
 
 			return 0;
 			}
 		else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
 			{
-			if(possible_sig[8])		// жёлтый миг. - жёлтый - полоса
-				return 8;
+			if(possible_sig[zxIndication.STATE_YbYL])		// жёлтый миг. - жёлтый - полоса
+				return zxIndication.STATE_YbYL;
 
 
-			if(possible_sig[7])		// жёлтый мигающий - жёлтый
-				return 7;
+			if(possible_sig[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
+				return zxIndication.STATE_YbY;
 
 
-			if(possible_sig[14])		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
-				return 14;
+			if(possible_sig[zxIndication.STATE_G])		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
+				return zxIndication.STATE_G;
 
 
-			if(possible_sig[11])		// жёлтый мигающий
-				return 11;
+			if(possible_sig[zxIndication.STATE_Yb])		// жёлтый мигающий
+				return zxIndication.STATE_Yb;
 
 
 			return 0;
@@ -1160,14 +1185,14 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		else					// модификаций нет
 			{
 
-			if(possible_sig[11])		// жёлтый мигающий
-				return 11;
+			if(possible_sig[zxIndication.STATE_Yb])		// жёлтый мигающий
+				return zxIndication.STATE_Yb;
 
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
-				return 14;
+			if(possible_sig[zxIndication.STATE_G])		// если жёлтых нет, значит ПАБ
+				return zxIndication.STATE_G;
 
-			if(possible_sig[19])	// синий
-				return 19;
+			if(possible_sig[zxIndication.STATE_B])	// синий
+				return zxIndication.STATE_B;
 
 			return 0;
 			}
@@ -1177,15 +1202,15 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 	int NoState = zxMarker.MRT | zxMarker.MRT18 | zxMarker.MRWW | zxMarker.MRALS | zxMarker.MRDAB;
 
 
-	if((NextState == 5 or NextState == 8 or NextState == 12 or NextState == 24 or NextState == 25 ) and 
+	if((NextState == zxIndication.STATE_YYL or NextState == zxIndication.STATE_YbYL or NextState == zxIndication.STATE_GbYL or NextState == zxIndication.STATE_YYWL or NextState == zxIndication.STATE_GbYWL ) and 
 	  (trmrk_flag & NoState)== 0)
 
 		{
-		if(possible_sig[10])		// зелёный мигающий
-			return 10;
+		if(possible_sig[zxIndication.STATE_Gb])		// зелёный мигающий
+			return zxIndication.STATE_Gb;
 
-		if(possible_sig[14])		 
-			return 14;		// зелёный
+		if(possible_sig[zxIndication.STATE_G])		 
+			return zxIndication.STATE_G;		// зелёный
 
 		return 0;
 		}
@@ -1194,15 +1219,15 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	if(ab4 and (NextState == 6  or ((NextState == 10 or NextState == 11) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or NextState == 15 or NextState ==  16) and !(trmrk_flag & zxMarker.MREND4AB) and ((trmrk_flag & NoState) == 0))
+	if(ab4 and (NextState == zxIndication.STATE_Y  or ((NextState == zxIndication.STATE_Gb or NextState == zxIndication.STATE_Yb) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or NextState == zxIndication.STATE_GG or NextState ==  zxIndication.STATE_YW) and !(trmrk_flag & zxMarker.MREND4AB) and ((trmrk_flag & NoState) == 0))
 			// 4-значная АБ
 
 		{
-		if(possible_sig[9])		// жёлтый зелёный
-			return 9;
+		if(possible_sig[zxIndication.STATE_GY])		// жёлтый зелёный
+			return zxIndication.STATE_GY;
 
-		if(possible_sig[14])		// зелёный
-			return 14;
+		if(possible_sig[zxIndication.STATE_G])		// зелёный
+			return zxIndication.STATE_G;
 
 		return 0;
 		}
@@ -1213,59 +1238,59 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 	if(trmrk_flag & zxMarker.MRWW)
 		{
-		if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
-			return 25;
+		if((trmrk_flag & zxMarker.MRT18) and possible_sig[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
+			return zxIndication.STATE_GbYWL;
 
-		if(possible_sig[18])		// жёлтый миг. + белый
-			return 18;
+		if(possible_sig[zxIndication.STATE_YbW])		// жёлтый миг. + белый
+			return zxIndication.STATE_YbW;
 			
-		if(possible_sig[7])		// жёлтый мигающий - жёлтый
-			return 7;
+		if(possible_sig[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
+			return zxIndication.STATE_YbY;
 
-		if(possible_sig[11])		// жёлтый мигающий
-			return 11;
+		if(possible_sig[zxIndication.STATE_Yb])		// жёлтый мигающий
+			return zxIndication.STATE_Yb;
 
 		return 0;
 		}
 	else if(trmrk_flag & zxMarker.MRALS)		// АЛС 
 		{
-		if((trmrk_flag & zxMarker.MRT) and possible_sig[23])
-			return 23;
+		if((trmrk_flag & zxMarker.MRT) and possible_sig[zxIndication.STATE_YbYW])
+			return zxIndication.STATE_YbYW;
 
-		if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
-			return 25;
+		if((trmrk_flag & zxMarker.MRT18) and possible_sig[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
+			return zxIndication.STATE_GbYWL;
 
-		if(possible_sig[17])		// зелёный + белый	
-			return 17;
+		if(possible_sig[zxIndication.STATE_GW])		// зелёный + белый	
+			return zxIndication.STATE_GW;
 
-		if(possible_sig[14])		 
-			return 14;		// зелёный
+		if(possible_sig[zxIndication.STATE_G])		 
+			return zxIndication.STATE_G;		// зелёный
 
-		if(possible_sig[16])		// жёлтый + белый	
-			return 16;
+		if(possible_sig[zxIndication.STATE_YW])		// жёлтый + белый	
+			return zxIndication.STATE_YW;
 
 		return 0;
 		}
 
-	else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[15])		// на неправильный путь с АБ
+	else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[zxIndication.STATE_GG])		// на неправильный путь с АБ
 		{
-		return 15;		// зелёный зелёный
+		return zxIndication.STATE_GG;		// зелёный зелёный
 		}
 
 	else if(trmrk_flag & zxMarker.MRT)	// отклонение
 		{
-		if(possible_sig[7])		// жёлтый мигающий - жёлтый
-			return 7;
+		if(possible_sig[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
+			return zxIndication.STATE_YbY;
 
 
-		if(possible_sig[14])		 
-			return 14;		// зелёный
+		if(possible_sig[zxIndication.STATE_G])		 
+			return zxIndication.STATE_G;		// зелёный
 
-		if(possible_sig[19])		// синий
-			return 19;
+		if(possible_sig[zxIndication.STATE_B])		// синий
+			return zxIndication.STATE_B;
 
-		if(possible_sig[6])		// жёлтый
-			return 6;
+		if(possible_sig[zxIndication.STATE_Y])		// жёлтый
+			return zxIndication.STATE_Y;
 
 
 
@@ -1275,29 +1300,29 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 	else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
 		{
-		if(possible_sig[12])		// зелёный миг. - жёлтый - полоса
-			return 12;
+		if(possible_sig[zxIndication.STATE_GbYL])		// зелёный миг. - жёлтый - полоса
+			return zxIndication.STATE_GbYL;
 
 
-		if(possible_sig[7])		// жёлтый мигающий - жёлтый
-			return 7;
+		if(possible_sig[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
+			return zxIndication.STATE_YbY;
 
-		if(possible_sig[14])		 
-			return 14;		// зелёный
+		if(possible_sig[zxIndication.STATE_G])		 
+			return zxIndication.STATE_G;		// зелёный
 
 		return 0;
 		}
 
 	else
 		{
-		if(possible_sig[14])		 
-			return 14;		// зелёный
+		if(possible_sig[zxIndication.STATE_G])		 
+			return zxIndication.STATE_G;		// зелёный
 
-		if(possible_sig[19])		// синий
-			return 19;
+		if(possible_sig[zxIndication.STATE_B])		// синий
+			return zxIndication.STATE_B;
 
-		if(possible_sig[6])		// жёлтый
-			return 6;
+		if(possible_sig[zxIndication.STATE_Y])		// жёлтый
+			return zxIndication.STATE_Y;
 
 		return 0;
 		}

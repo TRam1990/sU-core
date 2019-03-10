@@ -1368,7 +1368,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				if(!temp_signal.barrier_closed)
 					{
 
-					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (temp_signal.Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and (temp_signal.MainState == 19)  )		// если есть маршрутный с синим
+					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (temp_signal.Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and (temp_signal.MainState == zxIndication.STATE_B)  )		// если есть маршрутный с синим
 						{
 						if(marker & zxMarker.MRHALFBL)
 							marker = marker ^ zxMarker.MRHALFBL;
@@ -1478,11 +1478,11 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 					{
 
 
-					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (temp_signal.Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT) ) and (temp_signal.MainState == 19))
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (temp_signal.Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT) ) and (temp_signal.MainState == zxIndication.STATE_B))
 						{
 						int old_m_st = sig1.MainState;
 
-						if((temp_signal.Type & zxSignal.ST_ROUTER) and old_m_st != 0 and old_m_st != 1 and old_m_st != 2 and old_m_st != 3 and old_m_st != 20)
+						if((temp_signal.Type & zxSignal.ST_ROUTER) and old_m_st != 0 and old_m_st != zxIndication.STATE_R and old_m_st != zxIndication.STATE_Rx and old_m_st != zxIndication.STATE_RWb and old_m_st != zxIndication.STATE_W)
 							{
 							sig1.Cur_prev=cast<zxSignal>MO;
 							stringParam[1] = marker+"";
@@ -1492,7 +1492,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						blue_signal=true;							// то ж-ж-ж не используем
 						}
 
-					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and temp_signal.shunt_open and (temp_signal.MainState == 1 or temp_signal.MainState == 19) and ((stringParam[0])[1]!='+'))
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and temp_signal.shunt_open and (temp_signal.MainState == zxIndication.STATE_R or temp_signal.MainState == zxIndication.STATE_B) and ((stringParam[0])[1]!='+'))
 						temp_signal.UpdateState(0, -1);
 
 
@@ -1654,7 +1654,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			Interface.Exception("signal with error!");
 			return "";
 			}
-		if( sig1.MainState == 19 )
+		if( sig1.MainState == zxIndication.STATE_B )
 			{
 			//Interface.Exception("error with call NewSpeed");
 
@@ -1677,7 +1677,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		float speedboard_own_lim = 0;
 
 
-		while(MO and !( MO.isclass(Vehicle) and stringParam[1] != "-") and !(i>1 and MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  (!((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)) and (!((cast<zxSignal>MO).MainState == 19))  ) )
+		while(MO and !( MO.isclass(Vehicle) and stringParam[1] != "-") and !(i>1 and MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  (!((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)) and (!((cast<zxSignal>MO).MainState == zxIndication.STATE_B))  ) )
 			{
 
 			if(GSTS.GetFacingRelativeToSearchDirection() == true)
@@ -1692,7 +1692,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						return "";
 
 
-					if(  (temp_sign.Type & zxSignal.ST_UNLINKED) or (temp_sign.MainState == 19))
+					if(  (temp_sign.Type & zxSignal.ST_UNLINKED) or (temp_sign.MainState == zxIndication.STATE_B))
 						{
 
 						if(temp_sign.SetSpeedLim(0))
@@ -1703,7 +1703,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						}
 					else
 						{
-						if( (temp_sign.MainState == 0) or (temp_sign.MainState == 1) or (temp_sign.MainState == 2))
+						if( (temp_sign.MainState == 0) or (temp_sign.MainState == zxIndication.STATE_R) or (temp_sign.MainState == zxIndication.STATE_Rx))
 							return "";
 
 
