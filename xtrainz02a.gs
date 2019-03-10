@@ -3,12 +3,12 @@ include "gs.gs"
 
 class BinarySortedElementS
 	{
-	public string a; 		// индекс
-	public GSObject Object; 	// объект
+	public string a; 		// РёРЅРґРµРєСЃ
+	public GSObject Object; 	// РѕР±СЉРµРєС‚
 	};
 
 class BinarySortedElementInt
 	{
-	public int a; 			// индекс
-	public GSObject Object; 	// объект
+	public int a; 			// РёРЅРґРµРєСЃ
+	public GSObject Object; 	// РѕР±СЉРµРєС‚
 	};

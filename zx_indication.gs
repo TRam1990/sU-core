@@ -70,7 +70,7 @@ public void InitIndif(bool[] used_lens, bool[] blink_lens)
 
 class bb_RWb isclass zxIndication
 {
-public int white_lens; // 0 - отсутствует, 1 - "немигающая", 2 - мигающая
+public int white_lens; // 0 - РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚, 1 - "РЅРµРјРёРіР°СЋС‰Р°СЏ", 2 - РјРёРіР°СЋС‰Р°СЏ
 
 public void Init()
 	{
@@ -91,13 +91,13 @@ public void InitIndif(bool[] used_lens, bool[] blink_lens)
 		case 0:
 			break;
 		case 1:
-			used_lens[6]=true;		// линза, оборудованная мигалкой
+			used_lens[6]=true;		// Р»РёРЅР·Р°, РѕР±РѕСЂСѓРґРѕРІР°РЅРЅР°СЏ РјРёРіР°Р»РєРѕР№
 			blink_lens[6]=true;
 			break;
 
 		case 2:
 		default:
-			used_lens[7]=true;		// линза, оборудованная мигалкой
+			used_lens[7]=true;		// Р»РёРЅР·Р°, РѕР±РѕСЂСѓРґРѕРІР°РЅРЅР°СЏ РјРёРіР°Р»РєРѕР№
 			blink_lens[7]=true;
 		}
 	}
@@ -672,7 +672,7 @@ class zxIndLink isclass GSObject
 static class zxLightContainer
 {
 
-public define string lens = "RGGYYYWWBL";	// красный зелёный жёлтый синий белый зелёная_полоса
+public define string lens = "RGGYYYWWBL";	// РєСЂР°СЃРЅС‹Р№ Р·РµР»С‘РЅС‹Р№ Р¶С‘Р»С‚С‹Р№ СЃРёРЅРёР№ Р±РµР»С‹Р№ Р·РµР»С‘РЅР°СЏ_РїРѕР»РѕСЃР°
 
 public zxIndLink[] sgn_st;
 
@@ -777,7 +777,7 @@ public void Init()
 	}
 
 
-public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// К-Бм - белая линза - 0 - отсутствует, 1 - "немигающая", 2 - мигающая
+public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// Рљ-Р‘Рј - Р±РµР»Р°СЏ Р»РёРЅР·Р° - 0 - РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚, 1 - "РЅРµРјРёРіР°СЋС‰Р°СЏ", 2 - РјРёРіР°СЋС‰Р°СЏ
 	{
 	int i;
 	bool[] Temp_st= new bool[10];
@@ -815,9 +815,9 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// К-Бм - белая
 
 
 public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool is_prigl, bool sub_closed, int NextState)
-// определение типа сигнала по 
+// РѕРїСЂРµРґРµР»РµРЅРёРµ С‚РёРїР° СЃРёРіРЅР°Р»Р° РїРѕ 
 	{
-	if(is_prigl and possible_sig[3])	// только если есть есть только К-Бм
+	if(is_prigl and possible_sig[3])	// С‚РѕР»СЊРєРѕ РµСЃР»Рё РµСЃС‚СЊ РµСЃС‚СЊ С‚РѕР»СЊРєРѕ Рљ-Р‘Рј
 		return 3;
 
 
@@ -842,9 +842,9 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	if(is_shunt)		// манёвры
+	if(is_shunt)		// РјР°РЅС‘РІСЂС‹
 		{
-		if(is_opend)// красный, т.к. ошибка скрипта 
+		if(is_opend)// РєСЂР°СЃРЅС‹Р№, С‚.Рє. РѕС€РёР±РєР° СЃРєСЂРёРїС‚Р° 
 			{
 			Interface.Exception("shunt + train signals ?");
 			return 0;
@@ -853,33 +853,33 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-		if( possible_sig[21] and !any_train) // если есть 2 белых, и путь свободен
+		if( possible_sig[21] and !any_train) // РµСЃР»Рё РµСЃС‚СЊ 2 Р±РµР»С‹С…, Рё РїСѓС‚СЊ СЃРІРѕР±РѕРґРµРЅ
 			return 21;
-		if( possible_sig[20] )		// есть 1 белый
+		if( possible_sig[20] )		// РµСЃС‚СЊ 1 Р±РµР»С‹Р№
 			return 20;
 
 
-		if( possible_sig[3] )		// есть только К-Бм
+		if( possible_sig[3] )		// РµСЃС‚СЊ С‚РѕР»СЊРєРѕ Рљ-Р‘Рј
 			return 3;
 
-		if( possible_sig[1] )		// белых нет - красный
+		if( possible_sig[1] )		// Р±РµР»С‹С… РЅРµС‚ - РєСЂР°СЃРЅС‹Р№
 			return 1;
 
 		return 0;
 		}
 
-	if(!is_opend)		// светофор закрыт
+	if(!is_opend)		// СЃРІРµС‚РѕС„РѕСЂ Р·Р°РєСЂС‹С‚
 		{
 		if(OldState == 1)
 			return 1;
 		if(OldState == 2)
 			return 2;
 
-		if(possible_sig[1])	// красный , т.к. он более "закрытый", чем синий
+		if(possible_sig[1])	// РєСЂР°СЃРЅС‹Р№ , С‚.Рє. РѕРЅ Р±РѕР»РµРµ "Р·Р°РєСЂС‹С‚С‹Р№", С‡РµРј СЃРёРЅРёР№
 			return 1;
 
 
-		if(possible_sig[19])	// синий
+		if(possible_sig[19])	// СЃРёРЅРёР№
 			return 19;
 
 		return 0;
@@ -887,43 +887,43 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-//    светофор (пред) открыт в поездном порядке
+//    СЃРІРµС‚РѕС„РѕСЂ (РїСЂРµРґ) РѕС‚РєСЂС‹С‚ РІ РїРѕРµР·РґРЅРѕРј РїРѕСЂСЏРґРєРµ
 
 
-	if(OldState == 2)		// открытие обратного маршрута не позволяет развернуть перегон
+	if(OldState == 2)		// РѕС‚РєСЂС‹С‚РёРµ РѕР±СЂР°С‚РЅРѕРіРѕ РјР°СЂС€СЂСѓС‚Р° РЅРµ РїРѕР·РІРѕР»СЏРµС‚ СЂР°Р·РІРµСЂРЅСѓС‚СЊ РїРµСЂРµРіРѕРЅ
 		return 2;
 
 
-	if(any_train or NextState == 2)		// впереди поезд или неправильный перегон
+	if(any_train or NextState == 2)		// РІРїРµСЂРµРґРё РїРѕРµР·Рґ РёР»Рё РЅРµРїСЂР°РІРёР»СЊРЅС‹Р№ РїРµСЂРµРіРѕРЅ
 		{
-		if(possible_sig[1])	// красный
+		if(possible_sig[1])	// РєСЂР°СЃРЅС‹Р№
 			return 1;
 
-		if(possible_sig[19])	// синий
+		if(possible_sig[19])	// СЃРёРЅРёР№
 			return 19;
 
 		return 0;
 		}
 
-// поезда впереди нет
+// РїРѕРµР·РґР° РІРїРµСЂРµРґРё РЅРµС‚
 
 
 
-	if(OldState == 2)	// открыт, но перегон перед ним направлен в обратную сторону
+	if(OldState == 2)	// РѕС‚РєСЂС‹С‚, РЅРѕ РїРµСЂРµРіРѕРЅ РїРµСЂРµРґ РЅРёРј РЅР°РїСЂР°РІР»РµРЅ РІ РѕР±СЂР°С‚РЅСѓСЋ СЃС‚РѕСЂРѕРЅСѓ
 		return 2;
 
 
 
-	if(trmrk_flag & zxMarker.MRENDAB)	// АБ нету
+	if(trmrk_flag & zxMarker.MRENDAB)	// РђР‘ РЅРµС‚Сѓ
 		{
-		if( possible_sig[20] )	// отправление по белому
+		if( possible_sig[20] )	// РѕС‚РїСЂР°РІР»РµРЅРёРµ РїРѕ Р±РµР»РѕРјСѓ
 			return 20;
 
-		if(possible_sig[1])	// красный
+		if(possible_sig[1])	// РєСЂР°СЃРЅС‹Р№
 			return 1;
 
 
-		if(possible_sig[19])	// синий
+		if(possible_sig[19])	// СЃРёРЅРёР№
 			return 19;
 
 		return 0;
@@ -932,20 +932,20 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	if(trmrk_flag & zxMarker.MRPAB)		// если ПАБ то не зависит от следующего сигнала
+	if(trmrk_flag & zxMarker.MRPAB)		// РµСЃР»Рё РџРђР‘ С‚Рѕ РЅРµ Р·Р°РІРёСЃРёС‚ РѕС‚ СЃР»РµРґСѓСЋС‰РµРіРѕ СЃРёРіРЅР°Р»Р°
 		{
 
 		if(trmrk_flag & zxMarker.MRT)
 			{
-			if(possible_sig[4])		// жёлтый - жёлтый
+			if(possible_sig[4])		// Р¶С‘Р»С‚С‹Р№ - Р¶С‘Р»С‚С‹Р№
 				return 4;
 			}
 
 			
-		if(possible_sig[15])		// ПАБ ЗЗ
+		if(possible_sig[15])		// РџРђР‘ Р—Р—
 			return 15;
 
-		if(possible_sig[14])		// ПАБ
+		if(possible_sig[14])		// РџРђР‘
 			return 14;
 		
 		return 0;
@@ -955,79 +955,79 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 	if(NextState == 1 or NextState == 3 or NextState == 18 or NextState == 20 or NextState == 21 or (trmrk_flag & zxMarker.MRNOPR))
 
-// следующий красный, три жёлтых, белый или Жм+Б, или путь без пропуска
+// СЃР»РµРґСѓСЋС‰РёР№ РєСЂР°СЃРЅС‹Р№, С‚СЂРё Р¶С‘Р»С‚С‹С…, Р±РµР»С‹Р№ РёР»Рё Р–Рј+Р‘, РёР»Рё РїСѓС‚СЊ Р±РµР· РїСЂРѕРїСѓСЃРєР°
 
 		{
 
 		if(trmrk_flag & zxMarker.MRHALFBL)
 			{
-			if(possible_sig[13])	// жёлтый - жёлтый - жёлтый
+			if(possible_sig[13])	// Р¶С‘Р»С‚С‹Р№ - Р¶С‘Р»С‚С‹Р№ - Р¶С‘Р»С‚С‹Р№
 				return 13;
 
-			if(possible_sig[1])	// красный
+			if(possible_sig[1])	// РєСЂР°СЃРЅС‹Р№
 				return 1;
 
 			return 0;
 			}
 
 
-		if(trmrk_flag & zxMarker.MRWW)	// неправильный путь
+		if(trmrk_flag & zxMarker.MRWW)	// РЅРµРїСЂР°РІРёР»СЊРЅС‹Р№ РїСѓС‚СЊ
 			{
-			if((trmrk_flag & zxMarker.MRT) and possible_sig[24]) // жёлтый + жёлтый + белый + полоса	
+			if((trmrk_flag & zxMarker.MRT) and possible_sig[24]) // Р¶С‘Р»С‚С‹Р№ + Р¶С‘Р»С‚С‹Р№ + Р±РµР»С‹Р№ + РїРѕР»РѕСЃР°	
 				return 24;
 
-			if(possible_sig[18])		// жёлтый миг. + белый
+			if(possible_sig[18])		// Р¶С‘Р»С‚С‹Р№ РјРёРі. + Р±РµР»С‹Р№
 				return 18;
 			
-			if(possible_sig[4])		// жёлтый - жёлтый
+			if(possible_sig[4])		// Р¶С‘Р»С‚С‹Р№ - Р¶С‘Р»С‚С‹Р№
 				return 4;
 
-			if(possible_sig[6])		// жёлтый
+			if(possible_sig[6])		// Р¶С‘Р»С‚С‹Р№
 				return 6;
 
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
+			if(possible_sig[14])		// РµСЃР»Рё Р¶С‘Р»С‚С‹С… РЅРµС‚, Р·РЅР°С‡РёС‚ РџРђР‘
 				return 14;
 
 			return 0;
 
 			}
-		else if(trmrk_flag & zxMarker.MRALS)	// АЛС
+		else if(trmrk_flag & zxMarker.MRALS)	// РђР›РЎ
 			{
 
-			if((trmrk_flag & zxMarker.MRT) and possible_sig[22]) // жёлтый + жёлтый + белый	
+			if((trmrk_flag & zxMarker.MRT) and possible_sig[22]) // Р¶С‘Р»С‚С‹Р№ + Р¶С‘Р»С‚С‹Р№ + Р±РµР»С‹Р№	
 				return 22;
 
-			if((trmrk_flag & zxMarker.MRT18) and possible_sig[24]) // жёлтый + жёлтый + белый + полоса	
+			if((trmrk_flag & zxMarker.MRT18) and possible_sig[24]) // Р¶С‘Р»С‚С‹Р№ + Р¶С‘Р»С‚С‹Р№ + Р±РµР»С‹Р№ + РїРѕР»РѕСЃР°	
 				return 24;
 
-			if(possible_sig[16])		// жёлтый + белый	
+			if(possible_sig[16])		// Р¶С‘Р»С‚С‹Р№ + Р±РµР»С‹Р№	
 				return 16;
 
-			if(possible_sig[6])		// жёлтый
+			if(possible_sig[6])		// Р¶С‘Р»С‚С‹Р№
 				return 6;
 
 			return 0;
 			}
 
-		else if((trmrk_flag & zxMarker.MRDAB) and (possible_sig[15] or !possible_sig[6]) and possible_sig[1])	// на неправильный путь с АБ 
-			{												// если есть 2 зелёных или нет жёлтого
-			return 1;		// красный
+		else if((trmrk_flag & zxMarker.MRDAB) and (possible_sig[15] or !possible_sig[6]) and possible_sig[1])	// РЅР° РЅРµРїСЂР°РІРёР»СЊРЅС‹Р№ РїСѓС‚СЊ СЃ РђР‘ 
+			{												// РµСЃР»Рё РµСЃС‚СЊ 2 Р·РµР»С‘РЅС‹С… РёР»Рё РЅРµС‚ Р¶С‘Р»С‚РѕРіРѕ
+			return 1;		// РєСЂР°СЃРЅС‹Р№
 			}
 
-		else if(trmrk_flag & zxMarker.MRT)		// отклонение
+		else if(trmrk_flag & zxMarker.MRT)		// РѕС‚РєР»РѕРЅРµРЅРёРµ
 			{
 
-			if(possible_sig[4])		// жёлтый - жёлтый
+			if(possible_sig[4])		// Р¶С‘Р»С‚С‹Р№ - Р¶С‘Р»С‚С‹Р№
 				return 4;
 
 
-			if(possible_sig[6])		// жёлтый
+			if(possible_sig[6])		// Р¶С‘Р»С‚С‹Р№
 				return 6;
 
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
+			if(possible_sig[14])		// РµСЃР»Рё Р¶С‘Р»С‚С‹С… РЅРµС‚, Р·РЅР°С‡РёС‚ РџРђР‘
 				return 14;
 
-			if(possible_sig[19])	// синий
+			if(possible_sig[19])	// СЃРёРЅРёР№
 				return 19;
 
 
@@ -1035,30 +1035,30 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 			}
 
-		else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
+		else if(trmrk_flag & zxMarker.MRT18)		// РѕС‚РєР»РѕРЅРµРЅРёРµ РїРѕР»РѕРіРѕРµ
 			{
 
-			if(possible_sig[5])		// жёлтый - жёлтый - полоса
+			if(possible_sig[5])		// Р¶С‘Р»С‚С‹Р№ - Р¶С‘Р»С‚С‹Р№ - РїРѕР»РѕСЃР°
 				return 5;
 
-			if(possible_sig[4])		// жёлтый - жёлтый
+			if(possible_sig[4])		// Р¶С‘Р»С‚С‹Р№ - Р¶С‘Р»С‚С‹Р№
 				return 4;
 
-			if(possible_sig[6])		// жёлтый
+			if(possible_sig[6])		// Р¶С‘Р»С‚С‹Р№
 				return 6;
 
 			return 0;
 			}
 
-		else 					// модификаций нет
+		else 					// РјРѕРґРёС„РёРєР°С†РёР№ РЅРµС‚
 			{
-			if(possible_sig[6])		// жёлтый
+			if(possible_sig[6])		// Р¶С‘Р»С‚С‹Р№
 				return 6;
 
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
+			if(possible_sig[14])		// РµСЃР»Рё Р¶С‘Р»С‚С‹С… РЅРµС‚, Р·РЅР°С‡РёС‚ РџРђР‘
 				return 14;
 
-			if(possible_sig[19])	// синий
+			if(possible_sig[19])	// СЃРёРЅРёР№
 				return 19;
 
 
@@ -1070,103 +1070,103 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-	if(NextState == 4 or NextState == 7 or NextState == 13   or NextState == 22   or NextState == 23)		// следующее отклонение
+	if(NextState == 4 or NextState == 7 or NextState == 13   or NextState == 22   or NextState == 23)		// СЃР»РµРґСѓСЋС‰РµРµ РѕС‚РєР»РѕРЅРµРЅРёРµ
 		{
 
 		if(trmrk_flag & zxMarker.MRWW)
 			{
-			if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
+			if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // Р·РµР»С‘РЅС‹Р№ РјРёРі. + Р¶С‘Р»С‚С‹Р№ + Р±РµР»С‹Р№ + РїРѕР»РѕСЃР°	
 				return 25;
 
-			if(possible_sig[18])		// жёлтый миг. + белый
+			if(possible_sig[18])		// Р¶С‘Р»С‚С‹Р№ РјРёРі. + Р±РµР»С‹Р№
 				return 18;
 			
-			if(possible_sig[7])		// жёлтый мигающий - жёлтый
+			if(possible_sig[7])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№ - Р¶С‘Р»С‚С‹Р№
 				return 7;
 
-			if(possible_sig[11])		// жёлтый мигающий
+			if(possible_sig[11])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№
 				return 11;
 
 			return 0;
 
 			}
-		else if(trmrk_flag & zxMarker.MRALS)			// АЛС 
+		else if(trmrk_flag & zxMarker.MRALS)			// РђР›РЎ 
 			{
 			if((trmrk_flag & zxMarker.MRT) and possible_sig[23])
 				return 23;
 
-			if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
+			if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // Р·РµР»С‘РЅС‹Р№ РјРёРі. + Р¶С‘Р»С‚С‹Р№ + Р±РµР»С‹Р№ + РїРѕР»РѕСЃР°	
 				return 25;
 
 
-			if(possible_sig[18])		// жёлтый миг. + белый
+			if(possible_sig[18])		// Р¶С‘Р»С‚С‹Р№ РјРёРі. + Р±РµР»С‹Р№
 				return 18;
 
 
-			if(possible_sig[17])		// зелёный + белый	
+			if(possible_sig[17])		// Р·РµР»С‘РЅС‹Р№ + Р±РµР»С‹Р№	
 				return 17;
 
-			if(possible_sig[11])		// жёлтый мигающий
+			if(possible_sig[11])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№
 				return 11;
 
 			return 0;
 			}
 
-		else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[15])	// на неправильный путь с АБ
+		else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[15])	// РЅР° РЅРµРїСЂР°РІРёР»СЊРЅС‹Р№ РїСѓС‚СЊ СЃ РђР‘
 			{
-			if(possible_sig[11])		// жёлтый мигающий
+			if(possible_sig[11])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№
 				return 11;
 
 			return 0;
 			}
-		else if(trmrk_flag & zxMarker.MRT)		// отклонение
+		else if(trmrk_flag & zxMarker.MRT)		// РѕС‚РєР»РѕРЅРµРЅРёРµ
 			{
 
-			if(possible_sig[7])		// жёлтый мигающий - жёлтый
+			if(possible_sig[7])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№ - Р¶С‘Р»С‚С‹Р№
 				return 7;
 
 
-			if(possible_sig[14])		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
+			if(possible_sig[14])		// Р·РµР»С‘РЅС‹Р№ (РµСЃР»Рё РґРІСѓС… Р¶С‘Р»С‚С‹С… РЅР° СЃРІРµС‚РѕС„РѕСЂРµ РЅРµС‚ Рё РµСЃС‚СЊ РјР°СЂРєРµСЂ РѕС‚РєР»РѕРЅРµРЅРёСЏ)
 				return 14;
 
 
-			if(possible_sig[11])		// жёлтый мигающий
+			if(possible_sig[11])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№
 				return 11;
 
 
 			return 0;
 			}
-		else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
+		else if(trmrk_flag & zxMarker.MRT18)		// РѕС‚РєР»РѕРЅРµРЅРёРµ РїРѕР»РѕРіРѕРµ
 			{
-			if(possible_sig[8])		// жёлтый миг. - жёлтый - полоса
+			if(possible_sig[8])		// Р¶С‘Р»С‚С‹Р№ РјРёРі. - Р¶С‘Р»С‚С‹Р№ - РїРѕР»РѕСЃР°
 				return 8;
 
 
-			if(possible_sig[7])		// жёлтый мигающий - жёлтый
+			if(possible_sig[7])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№ - Р¶С‘Р»С‚С‹Р№
 				return 7;
 
 
-			if(possible_sig[14])		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
+			if(possible_sig[14])		// Р·РµР»С‘РЅС‹Р№ (РµСЃР»Рё РґРІСѓС… Р¶С‘Р»С‚С‹С… РЅР° СЃРІРµС‚РѕС„РѕСЂРµ РЅРµС‚ Рё РµСЃС‚СЊ РјР°СЂРєРµСЂ РѕС‚РєР»РѕРЅРµРЅРёСЏ)
 				return 14;
 
 
-			if(possible_sig[11])		// жёлтый мигающий
+			if(possible_sig[11])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№
 				return 11;
 
 
 			return 0;
 
 			}
-		else					// модификаций нет
+		else					// РјРѕРґРёС„РёРєР°С†РёР№ РЅРµС‚
 			{
 
-			if(possible_sig[11])		// жёлтый мигающий
+			if(possible_sig[11])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№
 				return 11;
 
-			if(possible_sig[14])		// если жёлтых нет, значит ПАБ
+			if(possible_sig[14])		// РµСЃР»Рё Р¶С‘Р»С‚С‹С… РЅРµС‚, Р·РЅР°С‡РёС‚ РџРђР‘
 				return 14;
 
-			if(possible_sig[19])	// синий
+			if(possible_sig[19])	// СЃРёРЅРёР№
 				return 19;
 
 			return 0;
@@ -1181,11 +1181,11 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 	  (trmrk_flag & NoState)== 0)
 
 		{
-		if(possible_sig[10])		// зелёный мигающий
+		if(possible_sig[10])		// Р·РµР»С‘РЅС‹Р№ РјРёРіР°СЋС‰РёР№
 			return 10;
 
 		if(possible_sig[14])		 
-			return 14;		// зелёный
+			return 14;		// Р·РµР»С‘РЅС‹Р№
 
 		return 0;
 		}
@@ -1195,13 +1195,13 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 	if(ab4 and (NextState == 6  or ((NextState == 10 or NextState == 11) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or NextState == 15 or NextState ==  16) and !(trmrk_flag & zxMarker.MREND4AB) and ((trmrk_flag & NoState) == 0))
-			// 4-значная АБ
+			// 4-Р·РЅР°С‡РЅР°СЏ РђР‘
 
 		{
-		if(possible_sig[9])		// жёлтый зелёный
+		if(possible_sig[9])		// Р¶С‘Р»С‚С‹Р№ Р·РµР»С‘РЅС‹Р№
 			return 9;
 
-		if(possible_sig[14])		// зелёный
+		if(possible_sig[14])		// Р·РµР»С‘РЅС‹Р№
 			return 14;
 
 		return 0;
@@ -1209,62 +1209,62 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 
 
-// в остальных случаях зелёный (или модифицированный)
+// РІ РѕСЃС‚Р°Р»СЊРЅС‹С… СЃР»СѓС‡Р°СЏС… Р·РµР»С‘РЅС‹Р№ (РёР»Рё РјРѕРґРёС„РёС†РёСЂРѕРІР°РЅРЅС‹Р№)
 
 	if(trmrk_flag & zxMarker.MRWW)
 		{
-		if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
+		if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // Р·РµР»С‘РЅС‹Р№ РјРёРі. + Р¶С‘Р»С‚С‹Р№ + Р±РµР»С‹Р№ + РїРѕР»РѕСЃР°	
 			return 25;
 
-		if(possible_sig[18])		// жёлтый миг. + белый
+		if(possible_sig[18])		// Р¶С‘Р»С‚С‹Р№ РјРёРі. + Р±РµР»С‹Р№
 			return 18;
 			
-		if(possible_sig[7])		// жёлтый мигающий - жёлтый
+		if(possible_sig[7])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№ - Р¶С‘Р»С‚С‹Р№
 			return 7;
 
-		if(possible_sig[11])		// жёлтый мигающий
+		if(possible_sig[11])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№
 			return 11;
 
 		return 0;
 		}
-	else if(trmrk_flag & zxMarker.MRALS)		// АЛС 
+	else if(trmrk_flag & zxMarker.MRALS)		// РђР›РЎ 
 		{
 		if((trmrk_flag & zxMarker.MRT) and possible_sig[23])
 			return 23;
 
-		if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // зелёный миг. + жёлтый + белый + полоса	
+		if((trmrk_flag & zxMarker.MRT18) and possible_sig[25]) // Р·РµР»С‘РЅС‹Р№ РјРёРі. + Р¶С‘Р»С‚С‹Р№ + Р±РµР»С‹Р№ + РїРѕР»РѕСЃР°	
 			return 25;
 
-		if(possible_sig[17])		// зелёный + белый	
+		if(possible_sig[17])		// Р·РµР»С‘РЅС‹Р№ + Р±РµР»С‹Р№	
 			return 17;
 
 		if(possible_sig[14])		 
-			return 14;		// зелёный
+			return 14;		// Р·РµР»С‘РЅС‹Р№
 
-		if(possible_sig[16])		// жёлтый + белый	
+		if(possible_sig[16])		// Р¶С‘Р»С‚С‹Р№ + Р±РµР»С‹Р№	
 			return 16;
 
 		return 0;
 		}
 
-	else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[15])		// на неправильный путь с АБ
+	else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[15])		// РЅР° РЅРµРїСЂР°РІРёР»СЊРЅС‹Р№ РїСѓС‚СЊ СЃ РђР‘
 		{
-		return 15;		// зелёный зелёный
+		return 15;		// Р·РµР»С‘РЅС‹Р№ Р·РµР»С‘РЅС‹Р№
 		}
 
-	else if(trmrk_flag & zxMarker.MRT)	// отклонение
+	else if(trmrk_flag & zxMarker.MRT)	// РѕС‚РєР»РѕРЅРµРЅРёРµ
 		{
-		if(possible_sig[7])		// жёлтый мигающий - жёлтый
+		if(possible_sig[7])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№ - Р¶С‘Р»С‚С‹Р№
 			return 7;
 
 
 		if(possible_sig[14])		 
-			return 14;		// зелёный
+			return 14;		// Р·РµР»С‘РЅС‹Р№
 
-		if(possible_sig[19])		// синий
+		if(possible_sig[19])		// СЃРёРЅРёР№
 			return 19;
 
-		if(possible_sig[6])		// жёлтый
+		if(possible_sig[6])		// Р¶С‘Р»С‚С‹Р№
 			return 6;
 
 
@@ -1273,17 +1273,17 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 		}
 
-	else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
+	else if(trmrk_flag & zxMarker.MRT18)		// РѕС‚РєР»РѕРЅРµРЅРёРµ РїРѕР»РѕРіРѕРµ
 		{
-		if(possible_sig[12])		// зелёный миг. - жёлтый - полоса
+		if(possible_sig[12])		// Р·РµР»С‘РЅС‹Р№ РјРёРі. - Р¶С‘Р»С‚С‹Р№ - РїРѕР»РѕСЃР°
 			return 12;
 
 
-		if(possible_sig[7])		// жёлтый мигающий - жёлтый
+		if(possible_sig[7])		// Р¶С‘Р»С‚С‹Р№ РјРёРіР°СЋС‰РёР№ - Р¶С‘Р»С‚С‹Р№
 			return 7;
 
 		if(possible_sig[14])		 
-			return 14;		// зелёный
+			return 14;		// Р·РµР»С‘РЅС‹Р№
 
 		return 0;
 		}
@@ -1291,12 +1291,12 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 	else
 		{
 		if(possible_sig[14])		 
-			return 14;		// зелёный
+			return 14;		// Р·РµР»С‘РЅС‹Р№
 
-		if(possible_sig[19])		// синий
+		if(possible_sig[19])		// СЃРёРЅРёР№
 			return 19;
 
-		if(possible_sig[6])		// жёлтый
+		if(possible_sig[6])		// Р¶С‘Р»С‚С‹Р№
 			return 6;
 
 		return 0;
@@ -1306,7 +1306,7 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 	return 0;
 	}
 
-public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool sub_closed, int NextState)	//для совместимости
+public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool sub_closed, int NextState)	//РґР»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё
 	{
 	return FindSignalState(any_train, OldState, possible_sig, ab4, trmrk_flag, is_opend, is_shunt, false, sub_closed, NextState);
 	}
