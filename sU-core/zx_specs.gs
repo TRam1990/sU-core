@@ -2,6 +2,7 @@ include "Signal.gs"
 include "TrackMark.gs"
 include "Browser.gs"
 include "alsn_provider.gs"
+include "zx_indication.gs"
 
 
 class TrainContainer isclass GSObject

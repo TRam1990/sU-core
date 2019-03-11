@@ -1,5 +1,4 @@
 include "zx_specs.gs"
-include "zx_indication.gs"
 include "zx_meshcontrol.gs"
 include "zx_router.gs"
 
