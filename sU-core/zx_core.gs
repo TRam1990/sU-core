@@ -18,12 +18,12 @@ include "zx_speedboard.gs"
 class zxLibruary_core isclass Library
 {
 
-public BinarySortedArraySl Signals;										//РјР°СЃСЃРёРІ СЃРёРіРЅР°Р»РѕРІ
-public BinarySortedArrayIntu train_arr;										//РјР°СЃСЃРёРІ РїРѕРµР·РґРѕРІ
+public BinarySortedArraySl Signals;										//массив сигналов
+public BinarySortedArrayIntu train_arr;										//массив поездов
 
 
-public BinarySortedStrings Stations;										//РјР°СЃСЃРёРІ СЃС‚Р°РЅС†РёР№
-public BinarySortedStrings ProtectGroups;									//РјР°СЃСЃРёРІ РіСЂСѓРїРї Р·Р°РіСЂР°РґРёС‚РµР»СЊРЅС‹С…
+public BinarySortedStrings Stations;										//массив станций
+public BinarySortedStrings ProtectGroups;									//массив групп заградительных
 
 MultiplayerSessionManager mp_lib;
 
@@ -38,7 +38,7 @@ bool All_added=false;
 zxSignal[] blink_sig;
 
 public bool MP_started = false;
-public bool MP_NotServer = false;											// РЅРµ СЏРІР»СЏРµС‚СЃСЏ СЃРµСЂРІРµСЂРѕРј РІ РјСѓР»СЊС‚РёРїР»РµРµСЂРЅРѕР№ РёРіСЂРµ (РѕС‚РєР»СЋС‡РµРЅРёРµ Р»РѕРіРёРєРё)
+public bool MP_NotServer = false;											// не является сервером в мультиплеерной игре (отключение логики)
 
 zxSignal_Cache[] sig_cache;
 
@@ -67,7 +67,7 @@ void UpdateSignState(zxSignal zxSign, int state, int priority)
 	}
 
 
-void SignalControlHandler(Message msg)//РїСЂРёС‘Рј Р·Р°РґР°РЅРёР№ РЅР° РѕС‚РєСЂС‹С‚РѕСЃС‚СЊ-Р·Р°РєСЂС‹С‚РѕСЃС‚СЊ СЃРІРµС‚РѕС„РѕСЂР°
+void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость светофора
 	{
 	zxSignal curr_sign=cast<zxSignal>(msg.dst);
 
@@ -189,7 +189,7 @@ void LogTrainIdS(int number)
 	}
 
 
-void TrainCatcher(Message msg) // РѕР¶РёРґР°РЅРёРµ РЅР°РµР·РґР° РїРѕРµР·РґР° РЅР° СЃРёРіРЅР°Р», Р»РѕРІР»СЏ Object,Enter
+void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object,Enter
 	{
 	zxSignal entered_sign=cast<zxSignal>(msg.dst);
 	if(!entered_sign or MP_NotServer)
@@ -198,12 +198,12 @@ void TrainCatcher(Message msg) // РѕР¶РёРґР°РЅРёРµ РЅР°РµР·РґР° РїРѕРµР·РґР° РЅР
 
 
 	int number=entered_sign.OwnId;
-	if(number<0)							// Р±Р°Р·Р° СЃРІРµС‚РѕС„РѕСЂРѕРІ РµС‰С‘ РЅРµРїСЂРѕРёРЅРґРµРєСЃРёСЂРѕРІР°РЅР°, РЅРѕ СѓР¶Рµ РїРѕСЃС‚СЂРѕРµРЅР°
+	if(number<0)							// база светофоров ещё непроиндексирована, но уже построена
 		number=Signals.Find(entered_sign.GetName(),false);
 
 	Train curr_train=msg.src;
 
-	if(!curr_train )  // РїРѕРµР·Рґ РїРѕС‚РµСЂСЏРЅ
+	if(!curr_train )  // поезд потерян
 		{
 		Interface.Exception("A train contains a bad vehicle!");
 		return;
@@ -267,7 +267,7 @@ void TrainCatcher(Message msg) // РѕР¶РёРґР°РЅРёРµ РЅР°РµР·РґР° РїРѕРµР·РґР° РЅР
 		Sniff(curr_train, "Train", "Cleanup", true);
 
 		}
-	else				// С‚Р°РєРѕР№ РїРѕРµР·Рґ СѓР¶Рµ РЅР°РµС…Р°Р» РЅР° СЃРІРµС‚РѕС„РѕСЂ
+	else				// такой поезд уже наехал на светофор
 		{
 		int i=0;
 		bool exist=false;
@@ -280,7 +280,7 @@ void TrainCatcher(Message msg) // РѕР¶РёРґР°РЅРёРµ РЅР°РµР·РґР° РїРѕРµР·РґР° РЅР
 			i++;
 			}
 
-		if(!exist)		// РЅРѕ РЅРµ РЅР° СЌС‚РѕС‚
+		if(!exist)		// но не на этот
 			{
 			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1,size1+1]=new int[1];
 			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1,size1+1]=new int[1];
@@ -306,7 +306,7 @@ void RemoveTrain(Message msg)
 
 	Train curr_train=msg.src;
 
-	if(!curr_train)  // РїРѕРµР·Рґ РїРѕС‚РµСЂСЏРЅ
+	if(!curr_train)  // поезд потерян
 		{
 		Interface.Exception("A train contains a bad vehicle!");
 		return;
@@ -314,7 +314,7 @@ void RemoveTrain(Message msg)
 	int train_id = curr_train.GetId();
 	int train_nmb=train_arr.Find(train_id,false);
 
-	if(train_nmb>=0)	// РїРѕРµР·Рґ, СЃС‚РѕСЏС‰РёР№ РЅР° СЃРІРµС‚РѕС„РѕСЂРµ, РµС‰С‘ РЅРµ СѓРґР°Р»С‘РЅ
+	if(train_nmb>=0)	// поезд, стоящий на светофоре, ещё не удалён
 		{
 		int i = 0;
 
@@ -340,16 +340,16 @@ void RemoveTrain(Message msg)
 
 
 
-void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // РѕР¶РёРґР°РЅРёРµ СЃСЉРµР·РґР° РїРѕРµР·РґР° СЃ СЃРёРіРЅР°Р»Р°, Р»РѕРІР»СЏ Object,Leave
+void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // ожидание съезда поезда с сигнала, ловля Object,Leave
 	{
 	if(!entered_sign or MP_NotServer)
 		return;
 
 	int number=entered_sign.OwnId;
-	if(number<0)							// Р±Р°Р·Р° СЃРІРµС‚РѕС„РѕСЂРѕРІ РµС‰С‘ РЅРµРїСЂРѕРёРЅРґРµРєСЃРёСЂРѕРІР°РЅР°
+	if(number<0)							// база светофоров ещё непроиндексирована
 		number=Signals.Find(entered_sign.GetName(),false);
 
-	if(!curr_train)  // РїРѕРµР·Рґ РїРѕС‚РµСЂСЏРЅ
+	if(!curr_train)  // поезд потерян
 		{
 		Interface.Print("A train was deletted or contains a bad vehicle!");
 
@@ -357,7 +357,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // РѕР¶
 		int n = entered_sign.TC_id.size();
 		int i=0;
 
-		while(i<n)						// СЃР±РѕСЂС‰РёРє РјСѓСЃРѕСЂР°
+		while(i<n)						// сборщик мусора
 			{
 			Train tr1 = cast<Train>(Router.GetGameObject( entered_sign.TC_id[i] ));
 
@@ -396,10 +396,10 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // РѕР¶
 			i++;
 			}
 
-		if(num1>=0)		// РїРѕРµР·Рґ РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ РЅР°РµС…Р°Р» РЅР° СЌС‚РѕС‚ СЃРІРµС‚РѕС„РѕСЂ
+		if(num1>=0)		// поезд действительно наехал на этот светофор
 			{
 
-					// РїСЂРѕРІРµСЂРєР° С‚РѕРіРѕ, С‡С‚Рѕ РїРѕРµР·Рґ С‚РѕР»СЊРєРѕ СЃ РѕРґРЅРѕР№ СЃС‚РѕСЂРѕРЅС‹ РѕС‚ СЃРІРµС‚РѕС„РѕСЂР°
+					// проверка того, что поезд только с одной стороны от светофора
 
 			int train_position = 0;
 
@@ -439,7 +439,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // РѕР¶
 
 
 
-void TrainCleaner(Message msg) // РѕР¶РёРґР°РЅРёРµ СЃСЉРµР·РґР° РїРѕРµР·РґР° СЃ СЃРёРіРЅР°Р»Р°, Р»РѕРІР»СЏ Object,Leave
+void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object,Leave
 	{
 	zxSignal entered_sign=cast<zxSignal>(msg.dst);
 	Train curr_train=msg.src;
@@ -483,7 +483,7 @@ public Soup GetProperties(void)
 
 
 
-thread void SignalInitiation()			// Р·Р°РїСѓСЃРє СЃРІРµС‚РѕС„РѕСЂРѕРІ
+thread void SignalInitiation()			// запуск светофоров
 	{
 	Sleep(1);
 	while(!All_added)
@@ -508,7 +508,7 @@ void TrainStarting(Message msg)
 		return;
 
 
-	if(!curr_train)  // РїРѕРµР·Рґ РїРѕС‚РµСЂСЏРЅ
+	if(!curr_train)  // поезд потерян
 		{
 		Interface.Exception("A train contains a bad vehicle!");
 		return;
@@ -531,7 +531,7 @@ void TrainStopping(Message msg)
 	if(MP_NotServer)
 		return;
 
-	if(!curr_train)  // РїРѕРµР·Рґ РїРѕС‚РµСЂСЏРЅ
+	if(!curr_train)  // поезд потерян
 		{
 		Interface.Exception("A train contains a bad vehicle!");
 		return;
@@ -549,22 +549,22 @@ void TrainStopping(Message msg)
 /*
 
 
-0 - РїРѕРµР·Рґ РЅРµ РЅР°Р№РґРµРЅ
+0 - поезд не найден
 
-1 - РїРѕРµР·Рґ РїРѕРґСЉРµР·Р¶Р°РµС‚ Рє СЃРІРµС‚РѕС„РѕСЂСѓ
-2 - РїРѕРµР·Рґ РїСЂРѕРµР·Р¶Р°РµС‚ РјРёРјРѕ СЃРІРµС‚РѕС„РѕСЂР°
-3 - РїРѕРµР·Рґ РїСЂРѕРµС…Р°Р» СЃРІРµС‚РѕС„РѕСЂ
+1 - поезд подъезжает к светофору
+2 - поезд проезжает мимо светофора
+3 - поезд проехал светофор
 
-4 - РїРѕРµР·Рґ РїРѕРґСЉРµР·Р¶Р°РµС‚ СЃ РѕР±СЂР°С‚РЅРѕР№ СЃС‚РѕСЂРѕРЅС‹
-5 - РїРѕРµР·Рґ РїСЂРѕРµР·Р¶Р°РµС‚ РјРёРјРѕ РІ РѕР±СЂР°С‚РЅРѕРј РЅР°РїСЂР°РІР»РµРЅРёРё РѕС‚ СЃРІРµС‚РѕС„РѕСЂР°
-6 - РїРѕРµР·Рґ РѕС‚СЉРµР·Р¶Р°РµС‚ РІ РѕР±СЂР°С‚РЅРѕРј РЅР°РїСЂР°РІР»РµРЅРёРё
+4 - поезд подъезжает с обратной стороны
+5 - поезд проезжает мимо в обратном направлении от светофора
+6 - поезд отъезжает в обратном направлении
 
 
 */
 
 
-int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// С‚СѓС‚ РёРґСѓС‚ РїРѕРёСЃРєРё РІРїРµСЂС‘Рґ-РЅР°Р·Р°Рґ РѕС‚ СЃРІРµС‚РѕС„РѕСЂРѕРІ!
-	{						// for_front - РїРѕРёСЃРє РіРѕР»РѕРІС‹/С…РІРѕСЃС‚Р° РїРѕРµР·РґР°
+int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут поиски вперёд-назад от светофоров!
+	{						// for_front - поиск головы/хвоста поезда
 	Vehicle veh1;
 	float vel_ty;
 	Vehicle[] veh_arr;
@@ -586,7 +586,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// С‚СѓС‚ Рё
 
 
 
-	if(MO and GSTS.GetDistance()<(str_distance*multiplicator) and (MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  )  ) 		// С‡Р°СЃС‚СЊ РїРѕРµР·РґР° Р·Р° СЃРІРµС‚РѕС„РѕСЂРѕРј
+	if(MO and GSTS.GetDistance()<(str_distance*multiplicator) and (MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  )  ) 		// часть поезда за светофором
 		{
 		behind = true;
 
@@ -611,7 +611,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// С‚СѓС‚ Рё
 		}
 
 
-	if(MO and GSTS.GetDistance()<(str_distance*multiplicator) and (MO.isclass(Vehicle)  and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ) )		// С‡Р°СЃС‚СЊ РїРѕРµР·РґР° РїРµСЂРµРґ СЃРІРµС‚РѕС„РѕСЂРѕРј
+	if(MO and GSTS.GetDistance()<(str_distance*multiplicator) and (MO.isclass(Vehicle)  and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ) )		// часть поезда перед светофором
 		{
 		before = true;
 
@@ -628,7 +628,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// С‚СѓС‚ Рё
 		}
 
 
-	if(!behind and !before)			//РїРѕРµР·Рґ РЅРµ РЅР°Р№РґРµРЅ
+	if(!behind and !before)			//поезд не найден
 		return 0;
 
 
@@ -659,7 +659,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// С‚СѓС‚ Рё
 
 
 
-thread void CheckTrainList()			// РїСЂРѕРІРµСЂРєР° РїРѕРµР·РґРѕРІ, РїРѕРґСЉРµР·Р¶Р°СЋС‰РёС… Рє СЃРІРµС‚РѕС„РѕСЂР°Рј
+thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 	{
 	while(!MP_NotServer)
 		{
@@ -682,13 +682,13 @@ thread void CheckTrainList()			// РїСЂРѕРІРµСЂРєР° РїРѕРµР·РґРѕРІ, РїРѕРґСЉРµР·Р
 					int state = TC.state[j];
 /*
 
-1 - РїРѕРµР·Рґ РїРѕРґСЉРµР·Р¶Р°РµС‚ Рє СЃРІРµС‚РѕС„РѕСЂСѓ
-2 - РїРѕРµР·Рґ РїСЂРѕРµР·Р¶Р°РµС‚ РјРёРјРѕ СЃРІРµС‚РѕС„РѕСЂР°
-3 - РїРѕРµР·Рґ РїСЂРѕРµС…Р°Р» СЃРІРµС‚РѕС„РѕСЂ
+1 - поезд подъезжает к светофору
+2 - поезд проезжает мимо светофора
+3 - поезд проехал светофор
 
-4 - РїРѕРµР·Рґ РїРѕРґСЉРµР·Р¶Р°РµС‚ СЃ РѕР±СЂР°С‚РЅРѕР№ СЃС‚РѕСЂРѕРЅС‹
-5 - РїРѕРµР·Рґ РїСЂРѕРµР·Р¶Р°РµС‚ РјРёРјРѕ РІ РѕР±СЂР°С‚РЅРѕРј РЅР°РїСЂР°РІР»РµРЅРёРё РѕС‚ СЃРІРµС‚РѕС„РѕСЂР°
-6 - РїРѕРµР·Рґ РѕС‚СЉРµР·Р¶Р°РµС‚ РІ РѕР±СЂР°С‚РЅРѕРј РЅР°РїСЂР°РІР»РµРЅРёРё
+4 - поезд подъезжает с обратной стороны
+5 - поезд проезжает мимо в обратном направлении от светофора
+6 - поезд отъезжает в обратном направлении
 
 
 */
@@ -1130,7 +1130,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		{
 		IsInited=true;
 
-		// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ
+		// инициализация
 
 		Signals = new BinarySortedArraySl();
 		Signals.UdgradeArraySize(20);
@@ -1188,7 +1188,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			stringParam[i] = tabl_str[i];
 		}
 
-	else if(function=="add_station")		// Р·Р°РїСЂРѕСЃ РЅР° РґРѕР±Р°РІР»РµРЅРёРµ СЃС‚Р°РЅС†РёРё
+	else if(function=="add_station")		// запрос на добавление станции
 		{
 
 		if(Stations.AddElement(stringParam[0]) < 0)
@@ -1197,14 +1197,14 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 
 
-		if((Stations.N+20) > Stations.SE.size())			// СЂР°СЃС€РёСЂСЏРµРј РјР°СЃСЃРёРІ
+		if((Stations.N+20) > Stations.SE.size())			// расширяем массив
 			Stations.UdgradeArraySize(2*Stations.SE.size());
 
 
 		return "true";
 		}
 
-	else if(function=="delete_station")		// Р·Р°РїСЂРѕСЃ РЅР° СѓРґР°Р»РµРЅРёРµ СЃС‚Р°РЅС†РёРё
+	else if(function=="delete_station")		// запрос на удаление станции
 		{
 		string stationnamedel = ""+stringParam[0];
 		Stations.DeleteElement(stationnamedel);
@@ -1228,7 +1228,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		}
 
 
-	if(function=="station_exists")		// Р·Р°РїСЂРѕСЃ РЅР° РЅР°Р»РёС‡РёРµ СЃС‚Р°РЅС†РёРё
+	if(function=="station_exists")		// запрос на наличие станции
 		{
 		int number= Stations.Find( stringParam[0],false);
 		if(number>=0)
@@ -1238,7 +1238,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		return "false";
 
 		}
-	else if(function=="station_list")		// Р·Р°РїСЂРѕСЃ РЅР° СЃРїРёСЃРѕРє СЃС‚Р°РЅС†РёР№
+	else if(function=="station_list")		// запрос на список станций
 		{
 		int i;
 
@@ -1249,32 +1249,32 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		}
 
 
-	else if(function=="station_count")		// Р·Р°РїСЂРѕСЃ РЅР° СЃРїРёСЃРѕРє СЃС‚Р°РЅС†РёР№
+	else if(function=="station_count")		// запрос на список станций
 		{
 		return Stations.N+"";
 		}
 
 
-	else if(function=="station_by_id")		// Р·Р°РїСЂРѕСЃ РЅР° СЃРїРёСЃРѕРє СЃС‚Р°РЅС†РёР№
+	else if(function=="station_by_id")		// запрос на список станций
 		{
 		return Stations.SE[( Str.ToInt(stringParam[0]) )];
 		}
 
 
-	else if(function=="station_edited_set")		// Р·Р°РґР°РЅРёРµ СЂРµРґР°РєС‚РёСЂСѓРµРјРѕР№ СЃС‚Р°РЅС†РёРё
+	else if(function=="station_edited_set")		// задание редактируемой станции
 		{
 		last_edited_station = stringParam[0];
 
 		return "";
 		}
 
-	else if(function=="station_edited_find")		// Р·Р°РґР°РЅРёРµ СЂРµРґР°РєС‚РёСЂСѓРµРјРѕР№ СЃС‚Р°РЅС†РёРё
+	else if(function=="station_edited_find")		// задание редактируемой станции
 		{
 		return last_edited_station;
 		}
 
 
-	else if(function=="add_signal")		// РјРµС…Р°РЅРёР·Рј РґРѕР±Р°РІР»РµРЅРёСЏ СЃРёРіРЅР°Р»Р°
+	else if(function=="add_signal")		// механизм добавления сигнала
 		{
 		zxSignal curr_signal = cast<zxSignal>objectParam[0];
 
@@ -1287,7 +1287,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		All_added=false;
 
-		string name = stringParam[0]+"";				//РїСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ СЃРІРµС‚РѕС„РѕСЂР° РІ Р±Р°Р·Рµ, РґРѕР±Р°РІР»СЏРµРј РµРіРѕ
+		string name = stringParam[0]+"";				//проверяем наличие светофора в базе, добавляем его
 		int number= Signals.Find(name,false);
 		if(number>=0)
 			{
@@ -1313,7 +1313,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.OwnId = -1;
 
 
-		if((Signals.N+20) > Signals.DBSE.size())			// СЂР°СЃС€РёСЂСЏРµРј РјР°СЃСЃРёРІ
+		if((Signals.N+20) > Signals.DBSE.size())			// расширяем массив
 			Signals.UdgradeArraySize(2*Signals.DBSE.size());
 
 
@@ -1328,7 +1328,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		}
 
 
-	else if(function=="find_next_signal")		// РїРѕРёСЃРє СЃРёРіРЅР°Р»Р° СЃ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕР№ РїСЂРѕРІРµСЂРєРѕР№ РЅР°Р»РёС‡РёСЏ РїРѕРµР·РґРѕРІ Рё РјР°СЂРєРµСЂРѕРІ
+	else if(function=="find_next_signal")		// поиск сигнала с одновременной проверкой наличия поездов и маркеров
 		{
 		zxSignal sig1=cast<zxSignal>objectParam[0];
 
@@ -1368,7 +1368,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				if(!temp_signal.barrier_closed)
 					{
 
-					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (temp_signal.Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and (temp_signal.MainState == zxIndication.STATE_B)  )		// РµСЃР»Рё РµСЃС‚СЊ РјР°СЂС€СЂСѓС‚РЅС‹Р№ СЃ СЃРёРЅРёРј
+					if(GSTS.GetFacingRelativeToSearchDirection() == dirToFind and (temp_signal.Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT)) and (temp_signal.MainState == zxIndication.STATE_B)  )		// если есть маршрутный с синим
 						{
 						if(marker & zxMarker.MRHALFBL)
 							marker = marker ^ zxMarker.MRHALFBL;
@@ -1489,7 +1489,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 							return "";
 							}
 
-						blue_signal=true;							// С‚Рѕ Р¶-Р¶-Р¶ РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј
+						blue_signal=true;							// то ж-ж-ж не используем
 						}
 
 					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and temp_signal.shunt_open and (temp_signal.MainState == zxIndication.STATE_R or temp_signal.MainState == zxIndication.STATE_B) and ((stringParam[0])[1]!='+'))
@@ -1850,19 +1850,19 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 
 
-	else if(function=="add_protect")		// Р·Р°РїСЂРѕСЃ РЅР° РґРѕР±Р°РІР»РµРЅРёРµ РіСЂСѓРїРїС‹ Р·Р°РіСЂР°РґРёС‚РµР»СЊРЅС‹С…
+	else if(function=="add_protect")		// запрос на добавление группы заградительных
 		{
 
 		if(ProtectGroups.AddElement(stringParam[0]) < 0)
 			return "false";
 			
-		if((ProtectGroups.N+20) > ProtectGroups.SE.size())			// СЂР°СЃС€РёСЂСЏРµРј РјР°СЃСЃРёРІ
+		if((ProtectGroups.N+20) > ProtectGroups.SE.size())			// расширяем массив
 			ProtectGroups.UdgradeArraySize(2*ProtectGroups.SE.size());
 
 		return "true";
 		}
 
-	else if(function=="delete_protect")		// Р·Р°РїСЂРѕСЃ РЅР° СѓРґР°Р»РµРЅРёРµ РіСЂСѓРїРї
+	else if(function=="delete_protect")		// запрос на удаление групп
 		{
 		zxSignal sig1=cast<zxSignal>objectParam[0];
 
@@ -1894,7 +1894,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		}
 
 
-	else if(function=="protect_list")		// Р·Р°РїСЂРѕСЃ РЅР° СЃРїРёСЃРѕРє РіСЂСѓРїРї
+	else if(function=="protect_list")		// запрос на список групп
 		{
 		int i;
 		int size1=ProtectGroups.N;
@@ -1905,7 +1905,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		return "";
 		}
 
-	else if(function=="protect_count")		// Р·Р°РїСЂРѕСЃ РЅР° РєРѕР»РёС‡РµСЃС‚РІРѕ РіСЂСѓРїРї
+	else if(function=="protect_count")		// запрос на количество групп
 		{
 		return ProtectGroups.N+"";
 		}

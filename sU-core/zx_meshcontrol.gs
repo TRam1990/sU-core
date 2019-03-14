@@ -11,7 +11,7 @@ public float dt_on = 0.2;
 public float dt_off = 0.5;
 
 
-public define string lens = "RGGYYYWWBL";	// РєСЂР°СЃРЅС‹Р№ Р·РµР»С‘РЅС‹Р№ Р¶С‘Р»С‚С‹Р№ Р±РµР»С‹Р№ СЃРёРЅРёР№ Р·РµР»С‘РЅР°СЏ_РїРѕР»РѕСЃР°
+public define string lens = "RGGYYYWWBL";	// красный зелёный жёлтый белый синий зелёная_полоса
 
 
 public bool[] kozirki = new bool[10];

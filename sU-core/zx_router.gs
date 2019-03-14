@@ -1,4 +1,5 @@
 include "zx_specs.gs"
+include "zx_symbol_trans.gs"
 
 
 
@@ -24,7 +25,7 @@ class zxRouter isclass GSObject
 
 
 	public int timeToWait=50;
-	public bool ctrlDir=false;		// true - РїРѕРёСЃРє СЃРІРµС‚РѕС„РѕСЂР° РІРїРµСЂРµРґРё, false - РїРѕР·Р°РґРё
+	public bool ctrlDir=false;		// true - поиск светофора впереди, false - позади
 
 	public bool permUPD=false;
 	public bool WasOpen=false;
@@ -82,11 +83,11 @@ public string GetRules(void)
 			s=s+"F:m13,m14,m15,m22,m24,m32,m34,m42,m44,m55,m53,m54,m64,m74,m26,m36,m46;";
 			s=s+"H:m12,m25,m23,m35,m33,m44,m55,m53,m65,m63,m72,m16,m76;";
 			s=s+"C:m12,m22,m32,m42,m52,m65,m62,m63,m64,m16,m26,m36,m46,m56,m66,m76;";
-			s=s+"Q:m12,m22,m32,m45,m43,m44,m16,m26,m36,m46,m56,m66,m76;";		//Р§
-			s=s+"X:m12,m22,m32,m42,m44,m52,m54,m62,m64,m75,m72,m73,m74,m16,m26,m36,m46,m56,m66,m76;"; //РЁ
-			s=s+"e:m12,m13,m14,m15,m45,m43,m44,m75,m72,m73,m74,m26,m36,m46,m56,m66;"; //Р­
-			s=s+"Y:m12,m15,m22,m24,m32,m34,m42,m43,m44,m52,m54,m62,m64,m75,m72,m26,m36,m46,m56,m66;"; //Р®
-			s=s+"Z:m13,m14,m15,m22,m32,m45,m43,m44,m53,m62,m72,m16,m26,m36,m46,m56,m66,m76;"; //РЇ
+			s=s+"Q:m12,m22,m32,m45,m43,m44,m16,m26,m36,m46,m56,m66,m76;";		//Ч
+			s=s+"X:m12,m22,m32,m42,m44,m52,m54,m62,m64,m75,m72,m73,m74,m16,m26,m36,m46,m56,m66,m76;"; //Ш
+			s=s+"e:m12,m13,m14,m15,m45,m43,m44,m75,m72,m73,m74,m26,m36,m46,m56,m66;"; //Э
+			s=s+"Y:m12,m15,m22,m24,m32,m34,m42,m43,m44,m52,m54,m62,m64,m75,m72,m26,m36,m46,m56,m66;"; //Ю
+			s=s+"Z:m13,m14,m15,m22,m32,m45,m43,m44,m53,m62,m72,m16,m26,m36,m46,m56,m66,m76;"; //Я
 
 			s=s+"a:m13,m14,m15,m24,m34,m44,m54,m64,m75,m73,m74;";
 			s=s+"b:m12,m13,m14,m15,m25,m23,m35,m33,m45,m43,m55,m53,m65,m63,m75,m72,m73,m74,m16,m76;";
@@ -143,10 +144,10 @@ public string GetRules(void)
 			s=s+"F:mb13,mb25,mb21,mb22,mb23,mb24,mb35,mb31,mb33,mb45,mb41,mb43,mb55,mb51,mb52,mb53,mb54,mb63,mb73;";
 			s=s+"H:mb11,mb15,mb22,mb24,mb32,mb33,mb34,mb43,mb52,mb53,mb54,mb65,mb62,mb64,mb75,mb71;";
 			s=s+"C:mb11,mb14,mb21,mb24,mb31,mb34,mb41,mb44,mb51,mb54,mb65,mb61,mb62,mb63,mb64,mb75;";
-			s=s+"Q:mb11,mb15,mb25,mb21,mb35,mb31,mb45,mb42,mb43,mb44,mb55,mb65,mb75;"; //Р§
-			s=s+"X:mb11,mb15,mb25,mb21,mb35,mb31,mb45,mb41,mb43,mb55,mb51,mb53,mb65,mb61,mb63,mb75,mb71,mb72,mb73,mb74;"; //РЁ
-			s=s+"e:mb11,mb12,mb13,mb14,mb25,mb35,mb45,mb42,mb43,mb44,mb55,mb65,mb71,mb72,mb73,mb74;"; //Р­
-			s=s+"Y:mb11,mb14,mb25,mb21,mb23,mb35,mb31,mb33,mb45,mb41,mb42,mb43,mb55,mb51,mb53,mb65,mb61,mb63,mb71,mb74;"; //Р®
+			s=s+"Q:mb11,mb15,mb25,mb21,mb35,mb31,mb45,mb42,mb43,mb44,mb55,mb65,mb75;"; //Ч
+			s=s+"X:mb11,mb15,mb25,mb21,mb35,mb31,mb45,mb41,mb43,mb55,mb51,mb53,mb65,mb61,mb63,mb75,mb71,mb72,mb73,mb74;"; //Ш
+			s=s+"e:mb11,mb12,mb13,mb14,mb25,mb35,mb45,mb42,mb43,mb44,mb55,mb65,mb71,mb72,mb73,mb74;"; //Э
+			s=s+"Y:mb11,mb14,mb25,mb21,mb23,mb35,mb31,mb33,mb45,mb41,mb42,mb43,mb55,mb51,mb53,mb65,mb61,mb63,mb71,mb74;"; //Ю
 			s=s+"Z:mb12,mb13,mb14,mb15,mb25,mb21,mb35,mb31,mb45,mb42,mb43,mb44,mb55,mb52,mb65,mb61,mb75,mb71;";
 
 			s=s+"l:mb21,mb32,mb43,mb54,mb65;";
@@ -173,7 +174,7 @@ public string GetRules2(void)
 	{
 		string s="";
 		if(typeMatrix=="19"){
-			s=s+"1:m11,m21,m31,m41,m51,m61,m71;"; //Р”Р»СЏ Р»РµРІРѕРіРѕ СЂСЏРґР°
+			s=s+"1:m11,m21,m31,m41,m51,m61,m71;"; //Для левого ряда
 		}else
 		if(typeMatrix=="99"){
 			s=s+"1:ma13,ma22,ma23,ma33,ma43,ma53,ma63,ma72,ma73,ma74;";
@@ -208,10 +209,10 @@ public string GetRules2(void)
 			s=s+"F:ma13,ma25,ma21,ma22,ma23,ma24,ma35,ma31,ma33,ma45,ma41,ma43,ma55,ma51,ma52,ma53,ma54,ma63,ma73;";
 			s=s+"H:ma11,ma15,ma22,ma24,ma32,ma33,ma34,ma43,ma52,ma53,ma54,ma65,ma62,ma64,ma75,ma71;";
 			s=s+"C:ma11,ma14,ma21,ma24,ma31,ma34,ma41,ma44,ma51,ma54,ma65,ma61,ma62,ma63,ma64,ma75;";
-			s=s+"Q:ma11,ma15,ma25,ma21,ma35,ma31,ma45,ma42,ma43,ma44,ma55,ma65,ma75;"; //Р§
-			s=s+"X:ma11,ma15,ma25,ma21,ma35,ma31,ma45,ma41,ma43,ma55,ma51,ma53,ma65,ma61,ma63,ma75,ma71,ma72,ma73,ma74;"; //РЁ
-			s=s+"e:ma11,ma12,ma13,ma14,ma25,ma35,ma45,ma42,ma43,ma44,ma55,ma65,ma71,ma72,ma73,ma74;"; //Р­
-			s=s+"Y:ma11,ma14,ma25,ma21,ma23,ma35,ma31,ma33,ma45,ma41,ma42,ma43,ma55,ma51,ma53,ma65,ma61,ma63,ma71,ma74;"; //Р®
+			s=s+"Q:ma11,ma15,ma25,ma21,ma35,ma31,ma45,ma42,ma43,ma44,ma55,ma65,ma75;"; //Ч
+			s=s+"X:ma11,ma15,ma25,ma21,ma35,ma31,ma45,ma41,ma43,ma55,ma51,ma53,ma65,ma61,ma63,ma75,ma71,ma72,ma73,ma74;"; //Ш
+			s=s+"e:ma11,ma12,ma13,ma14,ma25,ma35,ma45,ma42,ma43,ma44,ma55,ma65,ma71,ma72,ma73,ma74;"; //Э
+			s=s+"Y:ma11,ma14,ma25,ma21,ma23,ma35,ma31,ma33,ma45,ma41,ma42,ma43,ma55,ma51,ma53,ma65,ma61,ma63,ma71,ma74;"; //Ю
 			s=s+"Z:ma12,ma13,ma14,ma15,ma25,ma21,ma35,ma31,ma45,ma42,ma43,ma44,ma55,ma52,ma65,ma61,ma75,ma71;";
 		}
 		return s;
@@ -279,7 +280,7 @@ public void OnLightsRouterSign(string code)
 
 			Asset lightRouterSign=a_source.FindAsset(textureName);
 
-			string[] tok1=Str.Tokens(rulesLightsRouterSign,";"); // С‡РёСЃР»Рѕ РѕС‚РѕР±СЂР°Р¶Р°РµРјС‹С… Р·РЅР°РєРѕРІ РЅР° СѓРєР°Р·Р°С‚РµР»Рµ
+			string[] tok1=Str.Tokens(rulesLightsRouterSign,";"); // число отображаемых знаков на указателе
 			int i=0;
 			for(;i<tok1.size();i++)
 				{
@@ -716,143 +717,6 @@ public Soup GetProperties(void)
 
 
 
-/*
-
-	22 47 48 50
-
-CP1251	A  Р©  Р­  РЇ
-
-UTF-8	Р С’ Р В© Р В­ Р Р‡
-
-	Р В° РЎвЂ° РЎРЊ РЎРЏ
-
-*/
-
-
-
-int GetCirillic(string s)
-	{
-	if(s>="Рђ" and s<="Р©")
-		{
-		return (22 + s[1] - 'ђ');
-		}
-
-	if(s>="Р­" and s<="РЇ")
-		{
-		return (48 + s[1] - '­');
-		}
-
-	if(s>="Р°" and s<="С‰")
-		{
-		if(s[0]=='Р')	
-			return (22 + s[1] - '°');
-		else
-			{
-			return (86 + s[1] - '°');
-			}
-		}
-
-	if(s>="СЌ" and s<="СЏ")
-		{
-		return (48 + s[1] - 'Ќ');
-		}
-
-
-	return -1;
-
-	}
-
-int GetArabic(int i, string s)
-	{
-	if(s[i]>='0' and s[i]<='9')
-		return (s[i] - '0');
-	return -1;
-	}
-
-void GetRome(int i, string s, int[] result)
-	{
-	int s_size = s.size();
-
-
-	if(s[i]=='I')
-		{
-		if( (i+1) < s_size )
-			{
-			if(s[i+1]=='I')
-				{
-				if((i+2) < s_size and s[i+2]=='I')
-					{
-					result[0] = 12;
-					result[1] = 2;
-					}
-				else
-					{
-					result[0] = 11;
-					result[1] = 1;
-					}
-				}
-			else if(s[i+1]=='V')
-				{
-				result[0] = 13;
-				result[1] = 1;
-				}
-			else if(s[i+1]=='X')
-				{
-				result[0] = 18;
-				result[1] = 1;
-				}
-			else
-				{
-				result[0] = 10;
-				result[1] = 0;
-				}
-			}
-		else
-			{
-			result[0] = 10;
-			result[1] = 0;
-			}
-		}
-	else if(s[i]=='V')
-		{
-		if( (i+1) < s_size and s[i+1]=='I')
-			{
-			
-			if((i+2) < s_size and s[i+2]=='I')
-				{	
-				if((i+3) < s_size and s[i+3]=='I')
-					{
-					result[0] = 17;
-					result[1] = 3;
-					}
-				else
-					{
-					result[0] = 16;
-					result[1] = 2;
-					}
-				}
-			else
-				{
-				result[0] = 15;
-				result[1] = 1;
-				}
-			}
-		else
-			{
-			result[0] = 14;
-			result[1] = 0;
-			}
-
-		}
-	else if(s[i]=='X')
-		{
-		result[0] = 19;
-		result[1] = 0;
-		}
-	else
-		result[0] = -1;
-	}
-
 
 public void ShowName(bool reset)
 {
@@ -877,19 +741,19 @@ public void ShowName(bool reset)
 	while(i<sv_name.size() and j<7)
 		{
 
-		tabl[j]=GetArabic(i, sv_name);
+		tabl[j]=zxSymbolTranslator.GetArabic(i, sv_name);
 	
 		if(tabl[j]<0)
 			{
 			if(i<sv_name.size()-1)
 				{
 				string part=sv_name[i,i+2];
-				tabl[j]=GetCirillic(part);
+				tabl[j]=zxSymbolTranslator.GetCirillic(part);
 				}
 
 			if(tabl[j] < 0)
 				{
-				GetRome(i, sv_name, temp);
+				zxSymbolTranslator.GetRome(i, sv_name, temp);
 
 				if(temp[0] >= 0)
 					{
@@ -980,7 +844,7 @@ public void ShowName(bool reset)
 			
 
 /*
-СЂСЏРґС‹ С‚Р°Р±РёС‡РµРє
+ряды табичек
 
 
 01234

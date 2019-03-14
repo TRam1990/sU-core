@@ -1,11 +1,12 @@
 include "zx_specs.gs"
 include "zx_meshcontrol.gs"
 include "zx_router.gs"
+include "zx_symbol_trans.gs"
 
 
 
 
-class zxSignal_main isclass zxSignal			// С‚Рѕ, С‡С‚Рѕ РЅРµ РІР°Р¶РЅРѕ РґР»СЏ СЃРІСЏР·Рё СЃ Р±СѓРґРєРѕР№
+class zxSignal_main isclass zxSignal			// то, что не важно для связи с будкой
 {
 Library  mainLib;
 GSObject[] GSO;
@@ -353,8 +354,8 @@ void SetBUArrow(bool state)
 
 
 
-public void UpdateState(int reason, int priority)  	// РѕР±РЅРѕРІР»РµРЅРёРµ СЃРѕСЃС‚РѕСЏРЅРёСЏ СЃРІРµС‚РѕС„РѕСЂР°, РѕСЃРЅРѕРІРЅРѕР№ РєСѓСЃРѕРє СЃРёРіРЅР°Р»СЊРЅРѕРіРѕ РґРІРёР¶РєР°
-	{				// reason : 0 - РєРѕРјР°РЅРґР° РёР·РјРµРЅРµРЅРёСЏ СЃРѕСЃС‚РѕСЏРЅРёСЏ 1 - РЅР°РµР·Рґ РїРѕРµР·РґР° РІ РЅР°РїСЂР°РІР»РµРЅРёРё 2 - СЃСЉРµР·Рґ РїРѕРµР·РґР° РІ РЅР°РїСЂР°РІР»РµРЅРёРё 3 - РЅР°РµР·Рґ РїРѕРµР·РґР° РїСЂРѕС‚РёРІ 4 - СЃСЉРµР·Рґ РїРѕРµР·РґР° РїСЂРѕС‚РёРІ 5 - РїРѕРєРёРґР°РЅРёРµ Р·РѕРЅС‹ СЃРІРµС‚РѕС„РѕСЂР° РїРѕРµР·РґРѕРј
+public void UpdateState(int reason, int priority)  	// обновление состояния светофора, основной кусок сигнального движка
+	{				// reason : 0 - команда изменения состояния 1 - наезд поезда в направлении 2 - съезд поезда в направлении 3 - наезд поезда против 4 - съезд поезда против 5 - покидание зоны светофора поездом
  	inherited(reason,priority);
 
 	if(!Inited or MP_NotServer)
@@ -494,7 +495,7 @@ public void UpdateState(int reason, int priority)  	// РѕР±РЅРѕРІР»РµРЅРёРµ СЃРѕ
 		if(train_open and shunt_open)
 			Interface.Exception("train didn't checked:"+train_open+" "+shunt_open);
 
-		if(train_open and (Type & ST_ROUTER))			// Р·Р°РїСѓСЃРєР°РµРј РјР°СЂС€СЂСѓС‚РЅС‹Р№ (СЃ СЃРёРЅРёРј)
+		if(train_open and (Type & ST_ROUTER))			// запускаем маршрутный (с синим)
 			{
 
 			string[] track_params = new string[2];
@@ -502,7 +503,7 @@ public void UpdateState(int reason, int priority)  	// РѕР±РЅРѕРІР»РµРЅРёРµ СЃРѕ
 			mainLib.LibraryCall("find_prev_signal",track_params,GSO);
 
 			if((track_params[0])[0]=='+')
-				{					// РµСЃР»Рё РїРµСЂРµРґ СЃРІРµС‚РѕС„РѕСЂРѕРј РµСЃС‚СЊ РїРѕРµР·Рґ, РѕС‚РєСЂС‹РІР°РµРј РІ РѕР±С‹С‡РЅРѕРј РїРѕСЂСЏРґРєРµ
+				{					// если перед светофором есть поезд, открываем в обычном порядке
 				CheckMySignal(false);
 				CheckPrevSignals(false);
 				}
@@ -542,7 +543,7 @@ public void UpdateState(int reason, int priority)  	// РѕР±РЅРѕРІР»РµРЅРёРµ СЃРѕ
 
 				}
 			else
-				CheckPrevSignals(false);		// РїРѕРёСЃРє СЃР»РµРґСѓСЋС‰РµРіРѕ СЃРІРµС‚РѕС„РѕСЂР°
+				CheckPrevSignals(false);		// поиск следующего светофора
 			}
 
 		float new_limit = 0;
@@ -623,7 +624,7 @@ public void UnlinkedUpdate(int mainstate)
 		if(ex_sgn[zxIndication.STATE_R] or ex_sgn[zxIndication.STATE_Y])
 			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, false, false, false, mainstate);
 		else if(ex_sgn[zxIndication.STATE_G])
-			{		// СЏРІР»СЏРµС‚СЃСЏ РїРѕРІС‚РѕСЂРёС‚РµР»СЊРЅС‹Рј, С‚.Рє. РёРјРµРµС‚ С‚РѕР»СЊРєРѕ Р·РµР»С‘РЅСѓСЋ Р»РёРЅР·Сѓ
+			{		// является повторительным, т.к. имеет только зелёную линзу
 			if(mainstate == 0 or mainstate == zxIndication.STATE_R  or mainstate == zxIndication.STATE_Rx  or mainstate == zxIndication.STATE_RWb or mainstate == zxIndication.STATE_W  or mainstate == zxIndication.STATE_WW)
 				MainState = 0;
 			else
@@ -682,146 +683,20 @@ public void SetLinkedMU(Trackside MU2)
 	}
 
 
-
-/*
-
-	22 47 48 50
-
-CP1251	A  Р©  Р­  РЇ
-
-UTF-8	Р С’ Р В© Р В­ Р Р‡
-
-	Р В° РЎвЂ° РЎРЊ РЎРЏ
-
-*/
-
-
-
-int GetCirillic(string s)
+int GetCirillic(string s)		// для совместимости
 	{
-	if(s>="Рђ" and s<="Р©")
-		{
-		return (22 + s[1] - 'ђ');
-		}
-
-	if(s>="Р­" and s<="РЇ")
-		{
-		return (48 + s[1] - '­');
-		}
-
-	if(s>="Р°" and s<="С‰")
-		{
-		if(s[0]=='Р')
-			return (22 + s[1] - '°');
-		else
-			{
-			return (86 + s[1] - '°');
-			}
-		}
-
-	if(s>="СЌ" and s<="СЏ")
-		{
-		return (48 + s[1] - 'Ќ');
-		}
-
-
-	return -1;
-
+	return zxSymbolTranslator.GetCirillic(s);
 	}
 
 int GetArabic(int i, string s)
 	{
-	if(s[i]>='0' and s[i]<='9')
-		return (s[i] - '0');
-	return -1;
+	return zxSymbolTranslator.GetArabic(i, s);
 	}
 
 void GetRome(int i, string s, int[] result)
 	{
-	int s_size = s.size();
-
-
-	if(s[i]=='I')
-		{
-		if( (i+1) < s_size )
-			{
-			if(s[i+1]=='I')
-				{
-				if((i+2) < s_size and s[i+2]=='I')
-					{
-					result[0] = 12;
-					result[1] = 2;
-					}
-				else
-					{
-					result[0] = 11;
-					result[1] = 1;
-					}
-				}
-			else if(s[i+1]=='V')
-				{
-				result[0] = 13;
-				result[1] = 1;
-				}
-			else if(s[i+1]=='X')
-				{
-				result[0] = 18;
-				result[1] = 1;
-				}
-			else
-				{
-				result[0] = 10;
-				result[1] = 0;
-				}
-			}
-		else
-			{
-			result[0] = 10;
-			result[1] = 0;
-			}
-		}
-	else if(s[i]=='V')
-		{
-		if( (i+1) < s_size and s[i+1]=='I')
-			{
-
-			if((i+2) < s_size and s[i+2]=='I')
-				{
-				if((i+3) < s_size and s[i+3]=='I')
-					{
-					result[0] = 17;
-					result[1] = 3;
-					}
-				else
-					{
-					result[0] = 16;
-					result[1] = 2;
-					}
-				}
-			else
-				{
-				result[0] = 15;
-				result[1] = 1;
-				}
-			}
-		else
-			{
-			result[0] = 14;
-			result[1] = 0;
-			}
-
-		}
-	else if(s[i]=='X')
-		{
-		result[0] = 19;
-		result[1] = 0;
-		}
-	else
-		result[0] = -1;
+	zxSymbolTranslator.GetRome(i, s, result);
 	}
-
-
-
 
 
 
@@ -850,19 +725,19 @@ public void ShowName(bool reset)
 	while(i<sv_name.size() and j<7)
 		{
 
-		tabl[j]=GetArabic(i, sv_name);
+		tabl[j]=zxSymbolTranslator.GetArabic(i, sv_name);
 
 		if(tabl[j]<0)
 			{
 			if(i<sv_name.size()-1)
 				{
 				string part=sv_name[i,i+2];
-				tabl[j]=GetCirillic(part);
+				tabl[j]=zxSymbolTranslator.GetCirillic(part);
 				}
 
 			if(tabl[j] < 0)
 				{
-				GetRome(i, sv_name, temp);
+				zxSymbolTranslator.GetRome(i, sv_name, temp);
 
 				if(temp[0] >= 0)
 					{
@@ -950,7 +825,7 @@ public void ShowName(bool reset)
 
 
 /*
-СЂСЏРґС‹ С‚Р°Р±РёС‡РµРє
+ряды табичек
 
 
 01234
@@ -1047,7 +922,7 @@ public void Deswitch_span()
 }
 
 
-public bool Switch_span(bool obligatory)		// РїРѕРІРµСЂРЅСѓС‚СЊ СЃРІРµС‚РѕС„РѕСЂ РІ СЃС‚РѕСЂРѕРЅСѓ СЌС‚РѕРіРѕ СЃРІРµС‚РѕС„РѕСЂР°
+public bool Switch_span(bool obligatory)		// повернуть светофор в сторону этого светофора
 {
 	if(MP_NotServer)
 		return true;
@@ -1144,7 +1019,7 @@ public bool Switch_span(bool obligatory)		// РїРѕРІРµСЂРЅСѓС‚СЊ СЃРІРµС‚РѕС„РѕСЂ
 
 
 
-public void Switch_span2()		// РїРѕРІРµСЂРЅСѓС‚СЊ СЃРІРµС‚РѕС„РѕСЂ РІ СЃС‚РѕСЂРѕРЅСѓ СЌС‚РѕРіРѕ СЃРІРµС‚РѕС„РѕСЂР°
+public void Switch_span2()		// повернуть светофор в сторону этого светофора
 {
 	Switch_span(true);
 }
@@ -1651,7 +1526,7 @@ public string GetDescriptionHTML(void)
 
 	s=s+"<br>";
 
-// СЂРѕР·Р¶РёРі
+// розжиг
 
 
 
@@ -1682,7 +1557,7 @@ public string GetDescriptionHTML(void)
 
 
 
-	if(Type & (ST_IN+ST_OUT+ST_ROUTER))	// СЃС‚Р°РЅС†РёРѕРЅРЅС‹Р№ СЃРІРµС‚РѕС„РѕСЂ
+	if(Type & (ST_IN+ST_OUT+ST_ROUTER))	// станционный светофор
 		{
 
 		s=s+hw.StartTable("border='1' width=90%");
@@ -1872,7 +1747,7 @@ public string GetDescriptionHTML(void)
 	s=s+hw.EndTable();
 
 
-	if(Type & ST_IN)	// РІС…РѕРґРЅРѕР№. РџР°РЅРµР»СЊ РїРµСЂРµРіРѕРЅР°.
+	if(Type & ST_IN)	// входной. Панель перегона.
 		{
 
 
@@ -2369,7 +2244,7 @@ public void SetPropertyValue(string id, string val)
 
 		Type = FindTypeByLens(ex_lins);
 
-		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  РіРµРЅРµСЂРёСЂСѓРµРј СЂРѕР·Р¶РёРі
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  генерируем розжиг
 		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
  		}
  }
@@ -2395,10 +2270,10 @@ public void LinkPropertyValue(string id)
 		train_open = false;
 		shunt_open = false;
 
-		string[] l_k_arr = GetLensKit();	// РµСЃР»Рё РЅР°Р±РѕСЂ Р»РёРЅР· РїРѕ-СѓРјРѕР»С‡Р°РЅРёСЋ
+		string[] l_k_arr = GetLensKit();	// если набор линз по-умолчанию
 
 		if(lens_kit_n >= l_k_arr.size())
-			lens_kit_n = 0;			// СЃРёР»СЊРЅРѕ Р±РѕР»СЊС€РѕР№
+			lens_kit_n = 0;			// сильно большой
 
 
 
@@ -2436,7 +2311,7 @@ public void LinkPropertyValue(string id)
 			ab4 = 0;
 
 
-		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  РіРµРЅРµСЂРёСЂСѓРµРј СЂРѕР·Р¶РёРі
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  генерируем розжиг
 
 		if(Type & ST_PROTECT)
 			{
@@ -2943,7 +2818,7 @@ public string GetContentViewDetails()
  		 		);
 		}
 
-	if( !(Type & ST_PERMOPENED) and ex_sgn[zxIndication.STATE_W])	// С‚РѕР»СЊРєРѕ РµСЃР»Рё РµСЃС‚СЊ РјР°РЅРµРІСЂРѕРІС‹Р№
+	if( !(Type & ST_PERMOPENED) and ex_sgn[zxIndication.STATE_W])	// только если есть маневровый
 		s2 = s2+ hw.MakeRow(
  	 			hw.MakeCell(STT.GetString("ability_to_shnt"),"bgcolor=#777777")+
  	 			hw.MakeCell(hw.MakeLink("live://ShuntMode^"+!shunt_open,GetImgShuntMode(shunt_open)),"bgcolor=#777777")
@@ -2959,7 +2834,7 @@ public string GetContentViewDetails()
 
 
 
-	if((Type & ST_IN) and span_soup and span_soup.GetNamedTagAsBool("Inited",false) )	// РІС…РѕРґРЅРѕР№. РџР°РЅРµР»СЊ РїРµСЂРµРіРѕРЅР°.
+	if((Type & ST_IN) and span_soup and span_soup.GetNamedTagAsBool("Inited",false) )	// входной. Панель перегона.
 		{
 
 		string[] bb_s = new string[4];
@@ -3202,11 +3077,11 @@ int FindTypeByLens(bool[] ex_lins)
 	int type1 = ST_UNTYPED;
 
 
-	if(ex_lins[0] and ex_lins[8] and (ex_lins[1] or ex_lins[3]))	// РјР°СЂС€СЂСѓС‚РЅС‹Р№ РѕР±Р»Р°РґР°РµС‚ Рё СЃРёРЅРёРј, Рё Р·РµР»С‘РЅС‹Рј(Р¶С‘Р»С‚С‹Рј)
+	if(ex_lins[0] and ex_lins[8] and (ex_lins[1] or ex_lins[3]))	// маршрутный обладает и синим, и зелёным(жёлтым)
 		type1 = type1 + ST_ROUTER;
 	else
 		{
-		if(!(ex_lins[0] and ex_lins[8]) and  !ex_lins[1] and !ex_lins[3] and !ex_lins[4]) // СЃРёРЅРµРєСЂР°СЃРЅС‹Рµ - РЅРµ РјР°РЅРµРІСЂРѕРІС‹Рµ Рё РѕСЃРЅРѕРІРЅС‹С… Р»РёРЅР· РЅРµС‚
+		if(!(ex_lins[0] and ex_lins[8]) and  !ex_lins[1] and !ex_lins[3] and !ex_lins[4]) // синекрасные - не маневровые и основных линз нет
 			type1 = type1 + ST_SHUNT;
 		}
 
@@ -3342,7 +3217,7 @@ public void SetProperties(Soup soup)
 	//inherited(soup);
 	stationName = soup.GetNamedTag("stationName");
 
-// РґРѕР±Р°РІР»СЏРµРј СЃС‚Р°РЅС†РёСЋ СЃРІРµС‚РѕС„РѕСЂР°
+// добавляем станцию светофора
 
 
 	if(stationName != "")
@@ -3371,13 +3246,13 @@ public void SetProperties(Soup soup)
 
 
 	lens_kit_n = soup.GetNamedTagAsInt("lens_kit_n",0);
-	if(lens_kit_n < 0)						// СЃРѕР±СЃС‚РІРµРЅРЅС‹Р№ РЅР°Р±РѕСЂ Р»РёРЅР·
+	if(lens_kit_n < 0)						// собственный набор линз
 		lens_kit = soup.GetNamedTag("lens_kit");
 	else
 		{
-		string[] l_k_arr=	GetLensKit();				// РµСЃР»Рё РЅР°Р±РѕСЂ Р»РёРЅР· РїРѕ-СѓРјРѕР»С‡Р°РЅРёСЋ Р±РµСЂС‘Рј РµРіРѕ
+		string[] l_k_arr=	GetLensKit();				// если набор линз по-умолчанию берём его
 		if(lens_kit_n < l_k_arr.size())
-			lens_kit = l_k_arr[lens_kit_n];			// РµСЃР»Рё РѕРЅ РІРѕРѕР±С‰Рµ РµСЃС‚СЊ?
+			lens_kit = l_k_arr[lens_kit_n];			// если он вообще есть?
 
 		if(ST.GetString("lensT"+lens_kit_n)!="")
 			Type = Str.ToInt( ST.GetString("lensT"+lens_kit_n) );
@@ -3411,7 +3286,7 @@ public void SetProperties(Soup soup)
 
 	string ex_sign_1 = soup.GetNamedTag("ExSignals_str");
 	if(ex_sign_1=="")
-		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			// РµСЃР»Рё СЂРѕР·Р¶РёРі РЅРµ СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅ, РіРµРЅРµСЂРёСЂСѓРµРј
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			// если розжиг не сгенерирован, генерируем
 	else
 		{
 		ex_sgn=StrToExSignals(ex_sign_1);
@@ -3648,9 +3523,9 @@ public Soup GetProperties(void)
 	if(!wrong_dir)
 		{
 		if(Type & (ST_UNLINKED|ST_PROTECT))
-			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[zxIndication.STATE_B].l.MainState   );	// РґР»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё СЃ z7
+			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[zxIndication.STATE_B].l.MainState   );	// для совместимости с z7
 		else
-			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[MainState].l.MainState   );	// РґР»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё СЃ z7
+			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[MainState].l.MainState   );	// для совместимости с z7
 		}
 	else
 		retSoup.SetNamedTag("privateStateEx", 1000   );

@@ -2,17 +2,17 @@ include "gs.gs"
 
 class BinarySortedStrings
 	{
-	public string[] SE=new string[0];												// РѕСЃРЅРѕРІРЅРѕР№ РјР°СЃСЃРёРІ СЌР»РµРјРµРЅС‚РѕРІ
+	public string[] SE=new string[0];												// основной массив элементов
 
-	public int N=0;																	// С‡РёСЃР»Рѕ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ
+	public int N=0;																	// число инициализированных элементов
 
 
-	public void UdgradeArraySize(int NewN )											// РјР°СЃС‚РµСЂ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕРіРѕ РІС‹РґРµР»РµРЅРёСЏ РјРµСЃС‚Р° РјР°СЃСЃРёРІСѓ
+	public void UdgradeArraySize(int NewN )											// мастер предварительного выделения места массиву
 		{
 		int i;
 		string[] SE2= new string[NewN];
 
-		for(i=0;i<N;i++)															// РїРµСЂРµСЃРѕС…СЂР°РЅСЏРµРј СЃС‚Р°СЂС‹Р№ РјР°СЃСЃРёРІ
+		for(i=0;i<N;i++)															// пересохраняем старый массив
 			{
 			SE2[i]=SE[i];
 			SE[i]=null;
@@ -45,7 +45,7 @@ class BinarySortedStrings
 		return false;
 		}
 
-	public int Find(string a, bool mode)											 // РїСЂРё mode = true СѓРєР°Р·С‹РІР°РµС‚ РјРµСЃС‚Рѕ, РіРґРµ РјРѕРі Р±С‹ РЅР°С…РѕРґРёС‚СЊСЃСЏ РЅРѕРІС‹Р№ СЌР»РµРјРµРЅС‚ 
+	public int Find(string a, bool mode)											 // при mode = true указывает место, где мог бы находиться новый элемент 
 		{
 		int i=0,f=0,b=N-1;
 		if(N>0)
@@ -72,14 +72,14 @@ class BinarySortedStrings
 			
 			while(b>(f+1))
 				{
-				i=f + (int)((b-f)/2);				// СЃРµСЂРµРґРёРЅР° РѕС‚СЂРµР·РєР°
+				i=f + (int)((b-f)/2);				// середина отрезка
 
 				if(SE[i]==a)
 					return i;
 
-				if( Comp_str_Fu(SE[f],a) and Comp_str_Fu(a,SE[i]))	// РЅР° РѕС‚СЂРµР·РєРµ РѕС‚ f РґРѕ i
+				if( Comp_str_Fu(SE[f],a) and Comp_str_Fu(a,SE[i]))	// на отрезке от f до i
 					b=i;
-				if( Comp_str_Fu(SE[i],a) and Comp_str_Fu(a,SE[b]))	// РЅР° РѕС‚СЂРµР·РєРµ РѕС‚ i РґРѕ b
+				if( Comp_str_Fu(SE[i],a) and Comp_str_Fu(a,SE[b]))	// на отрезке от i до b
 					f=i;
 				}
 
@@ -92,7 +92,7 @@ class BinarySortedStrings
 		
 		if(mode)
 			return i;
-		return -1;					// РЅРµ РЅР°Р№РґРµРЅ
+		return -1;					// не найден
 		}
 
 

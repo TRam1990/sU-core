@@ -3,20 +3,20 @@ include "xtrainz02a.gs"
 
 class BinarySortedArraySu
 	{
-	public BinarySortedElementS[] DBSE=new BinarySortedElementS[0];	// РѕСЃРЅРѕРІРЅРѕР№ РјР°СЃСЃРёРІ СЌР»РµРјРµРЅС‚РѕРІ
+	public BinarySortedElementS[] DBSE=new BinarySortedElementS[0];	// основной массив элементов
 
-	public int N=0;			// С‡РёСЃР»Рѕ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅРЅС‹С… СЌР»РµРјРµРЅС‚РѕРІ
+	public int N=0;			// число инициализированных элементов
 
 
 
-	public void UdgradeArraySize(int NewN )			// РјР°СЃС‚РµСЂ РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅРѕРіРѕ РІС‹РґРµР»РµРЅРёСЏ РјРµСЃС‚Р° РјР°СЃСЃРёРІСѓ
+	public void UdgradeArraySize(int NewN )			// мастер предварительного выделения места массиву
 		{
 		int i;
 		int old_size = DBSE.size();
 
 		BinarySortedElementS[] DBSE2= new BinarySortedElementS[NewN];
 
-		for(i=0;(i<old_size) and (i < NewN);i++)			// РїРµСЂРµСЃРѕС…СЂР°РЅСЏРµРј СЃС‚Р°СЂС‹Р№ РјР°СЃСЃРёРІ
+		for(i=0;(i<old_size) and (i < NewN);i++)			// пересохраняем старый массив
 			DBSE2[i]=DBSE[i];
 
 		DBSE[0, ] = null;
@@ -51,7 +51,7 @@ class BinarySortedArraySu
 		}
 
 
-	public int Find(string a, bool mode) // РїСЂРё mode = true СѓРєР°Р·С‹РІР°РµС‚ РјРµСЃС‚Рѕ, РіРґРµ РјРѕРі Р±С‹ РЅР°С…РѕРґРёС‚СЊСЃСЏ РЅРѕРІС‹Р№ СЌР»РµРјРµРЅС‚ 
+	public int Find(string a, bool mode) // при mode = true указывает место, где мог бы находиться новый элемент 
 		{
 		int i=0,f=0,b=N-1;
 		if(N>0)
@@ -78,14 +78,14 @@ class BinarySortedArraySu
 			
 			while(b>(f+1))
 				{
-				i=f + (int)((b-f)/2);				// СЃРµСЂРµРґРёРЅР° РѕС‚СЂРµР·РєР°
+				i=f + (int)((b-f)/2);				// середина отрезка
 
 				if(DBSE[i].a==a)
 					return i;
 
-				if( Comp_str_FL(DBSE[f].a,a) and Comp_str_FL(a,DBSE[i].a))	// РЅР° РѕС‚СЂРµР·РєРµ РѕС‚ f РґРѕ i
+				if( Comp_str_FL(DBSE[f].a,a) and Comp_str_FL(a,DBSE[i].a))	// на отрезке от f до i
 					b=i;
-				if( Comp_str_FL(DBSE[i].a,a) and Comp_str_FL(a,DBSE[b].a))	// РЅР° РѕС‚СЂРµР·РєРµ РѕС‚ i РґРѕ b
+				if( Comp_str_FL(DBSE[i].a,a) and Comp_str_FL(a,DBSE[b].a))	// на отрезке от i до b
 					f=i;
 				}
 
@@ -98,7 +98,7 @@ class BinarySortedArraySu
 		
 		if(mode)
 			return i;
-		return -1;					// РЅРµ РЅР°Р№РґРµРЅ
+		return -1;					// не найден
 		}
 
 
