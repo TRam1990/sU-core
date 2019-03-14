@@ -715,7 +715,20 @@ public Soup GetProperties(void)
 	}
 
 
+int GetCirillic(string s)		// הכÿ סמגלוסעטלמסעט
+	{
+	return zxSymbolTranslator.GetCirillic(s);
+	}
 
+int GetArabic(int i, string s)
+	{
+	return zxSymbolTranslator.GetArabic(i, s);
+	}
+
+void GetRome(int i, string s, int[] result)
+	{
+	zxSymbolTranslator.GetRome(i, s, result);
+	}
 
 
 public void ShowName(bool reset)
