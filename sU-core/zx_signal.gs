@@ -3182,8 +3182,8 @@ void GetDefaultSignalLimits()
 	speed_soup.SetNamedTag("p17",120);
 	speed_soup.SetNamedTag("c17",80);
 
-	speed_soup.SetNamedTag("p18",60);
-	speed_soup.SetNamedTag("c18",50);
+	speed_soup.SetNamedTag("p18",40);
+	speed_soup.SetNamedTag("c18",40);
 
 	speed_soup.SetNamedTag("p19",-1);
 	speed_soup.SetNamedTag("c19",-1);

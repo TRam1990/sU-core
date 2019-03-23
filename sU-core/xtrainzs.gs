@@ -2,28 +2,12 @@ include "gs.gs"
 
 class BinarySortedStrings
 	{
-	public string[] SE=new string[0];												// основной массив элементов
+	public string[] SE=new string[0];					// основной массив элементов
 
-	public int N=0;																	// число инициализированных элементов
+	public int N=0;								// число инициализированных элементов
 
+	bool el_exists=false;							// после вызова FindPlace() указывает, что элемент уже был добавлен
 
-	public void UdgradeArraySize(int NewN )											// мастер предварительного выделения места массиву
-		{
-		int i;
-		string[] SE2= new string[NewN];
-
-		for(i=0;i<N;i++)															// пересохраняем старый массив
-			{
-			SE2[i]=SE[i];
-			SE[i]=null;
-			}
-
-		SE[0, ]=null;
-
-		SE=SE2;
-
-		SE2=null;
-		}
 
 	bool Comp_str_Fu(string a,string b)
 		{
@@ -45,7 +29,11 @@ class BinarySortedStrings
 		return false;
 		}
 
-	public int Find(string a, bool mode)											 // при mode = true указывает место, где мог бы находиться новый элемент 
+
+
+
+
+	public int Find(string a)
 		{
 		int i=0,f=0,b=N-1;
 		if(N>0)
@@ -56,19 +44,10 @@ class BinarySortedStrings
 				return b;
 
 			if(Comp_str_Fu(a,SE[f]))
-				{
-				if(mode)
-					return 0;
-				else
-					return -1;
-				}
+				return -1;
+			
 			if(Comp_str_Fu(SE[b],a))
-				{
-				if(mode)
-					return N;
-				else
-					return -1;
-				}
+				return -1;
 			
 			while(b>(f+1))
 				{
@@ -83,36 +62,98 @@ class BinarySortedStrings
 					f=i;
 				}
 
-			if(SE[f+1]==a or (mode and Comp_str_Fu(SE[f],a) and Comp_str_Fu(a,SE[f+1])))
+			if(SE[f+1]==a)
+				return f+1;
+			}
+		return -1;					// не найден
+		}
+
+
+
+
+	public int FindPlace(string a)			 // указывает место, где мог бы находиться новый элемент 
+		{
+		int i=0,f=0,b=N-1;
+
+		el_exists=false;
+
+		if(N>0)
+			{
+			if(SE[f] == a)
+				{
+				el_exists = true;
+				return f;
+				}
+			if(SE[b] == a)
+				{
+				el_exists = true;
+				return b;
+				}
+
+			if(Comp_str_Fu(a,SE[f]))
+				return 0;
+				
+			if(Comp_str_Fu(SE[b],a))
+				return N;
+			
+			while(b>(f+1))
+				{
+				i=f + (int)((b-f)/2);				// середина отрезка
+
+				if(SE[i]==a)
+					{
+					el_exists = true;
+					return i;
+					}
+
+				if( Comp_str_Fu(SE[f],a) and Comp_str_Fu(a,SE[i]))	// на отрезке от f до i
+					b=i;
+				if( Comp_str_Fu(SE[i],a) and Comp_str_Fu(a,SE[b]))	// на отрезке от i до b
+					f=i;
+				}
+
+			if(SE[f+1]==a)
+				{
+				el_exists = true;
+				return f+1;
+				}
+
+			if(Comp_str_Fu(SE[f],a) and Comp_str_Fu(a,SE[f+1]))
 				return f+1;
 
-			if(mode and Comp_str_Fu(SE[f+1],a) and Comp_str_Fu(a,SE[f+2]))
+			if(Comp_str_Fu(SE[f+1],a) and Comp_str_Fu(a,SE[f+2]))
 				return f+2;
 			}
 		
+		return i;
+		}
+
+
+	public int Find(string a, bool mode) // при mode = true указывает место, где мог бы находиться новый элемент 
+		{
 		if(mode)
-			return i;
-		return -1;					// не найден
+			return FindPlace(a);
+
+		return Find(a);
 		}
 
 
 	
 	public int AddElement(string Name)
 		{
-				
-		if(SE.size()>0 and Find(Name,false)<0)
-			{
-			int t = Find(Name,true);
+		int t = FindPlace(Name);
 
-			if(t>=0 and t<=N)
+		if(t>=0 and t<=N)
+			{
+			if(!el_exists)
 				{
-				string[] s_tmp= new string[1];
-				s_tmp[0]=Name+"";
-				SE[t,t]=s_tmp;
+				SE[t,t]=new string[1];
+				SE[t]=Name+"";
 				N++;
-				return t;
 				}
-			}	
+			return t;
+			}
+	
 		return -1;		
 		}
 

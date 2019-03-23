@@ -832,8 +832,10 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// К-Бм - белая
 		else
 			result_kbm = 0;
 
-		possible_sgn[zxIndication.STATE_RWb] = true;
+		possible_sgn[zxIndication.STATE_RWb] = (result_kbm > 0);	// случай result_kbm == 0 не используется
 		}
+	else
+		possible_sgn[zxIndication.STATE_RWb] = false;
 
 	return result_kbm;
 	}

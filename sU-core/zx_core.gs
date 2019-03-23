@@ -2,10 +2,10 @@ include "Library.gs"
 include "Signal.gs"
 include "Trigger.gs"
 include "zx_specs.gs"
-include "xtrainz02su.gs"
-include "xtrainz02sl.gs"
+include "xtrainz03su.gs"
+include "xtrainz03sl.gs"
 include "xtrainzs.gs"
-include "xtrainz02intu.gs"
+include "xtrainz03intu.gs"
 include "multiplayersessionmanager.gs"
 
 
@@ -199,7 +199,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 	int number=entered_sign.OwnId;
 	if(number<0)							// база светофоров ещё непроиндексирована, но уже построена
-		number=Signals.Find(entered_sign.GetName(),false);
+		number=Signals.Find(entered_sign.GetName());
 
 	Train curr_train=msg.src;
 
@@ -226,7 +226,7 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 			}
 		}
 
-	int train_nmb=train_arr.Find(train_id,false);
+	int train_nmb=train_arr.Find(train_id);
 
 	if(train_nmb<0)
 		{
@@ -254,10 +254,6 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[0]=number;
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state=new int[1];
 		(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[0]=state1;
-
-
-		if((train_arr.N+20) > train_arr.DBSE.size())
-			train_arr.UdgradeArraySize(2*(train_arr.N+20));
 
 
 		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetId());
@@ -312,7 +308,7 @@ void RemoveTrain(Message msg)
 		return;
 		}
 	int train_id = curr_train.GetId();
-	int train_nmb=train_arr.Find(train_id,false);
+	int train_nmb=train_arr.Find(train_id);
 
 	if(train_nmb>=0)	// поезд, стоящий на светофоре, ещё не удалён
 		{
@@ -347,7 +343,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // ожид
 
 	int number=entered_sign.OwnId;
 	if(number<0)							// база светофоров ещё непроиндексирована
-		number=Signals.Find(entered_sign.GetName(),false);
+		number=Signals.Find(entered_sign.GetName());
 
 	if(!curr_train)  // поезд потерян
 		{
@@ -364,7 +360,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // ожид
 			if(!tr1)
 				{
 				int train_id1 = entered_sign.TC_id[i];
-				int train_nmb=train_arr.Find( train_id1 ,false);
+				int train_nmb=train_arr.Find( train_id1);
 
 
 				entered_sign.RemoveTrainId(train_id1);
@@ -381,7 +377,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // ожид
 		}
 
 	int train_id =curr_train.GetId();
-	int train_nmb=train_arr.Find(train_id,false);
+	int train_nmb=train_arr.Find(train_id);
 
 	if(train_nmb>=0)
 		{
@@ -514,7 +510,7 @@ void TrainStarting(Message msg)
 		return;
 		}
 	int train_id = curr_train.GetId();
-	int train_nmb=train_arr.Find(train_id,false);
+	int train_nmb=train_arr.Find(train_id);
 
 	if(train_nmb>=0)
 		{
@@ -537,7 +533,7 @@ void TrainStopping(Message msg)
 		return;
 		}
 	int train_id = curr_train.GetId();
-	int train_nmb=train_arr.Find(train_id, false);
+	int train_nmb=train_arr.Find(train_id);
 
 	if(train_nmb>=0)
 		{
@@ -867,7 +863,7 @@ void SetChangeSoup(Soup sp)
 
 	for(i = 0; i < N; i++)
 		{
-		int num = Signals.Find( sp.GetNamedTag("id"+i) ,false);
+		int num = Signals.Find( sp.GetNamedTag("id"+i) );
 
 
 		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLim( sp.GetNamedTagAsFloat("limit"+i, -1) );
@@ -973,7 +969,7 @@ void MultiplayerClientHandler1(Message msg)
 
 	if(type == "sU_SetSettings")
 		{
-		int num = Signals.Find( sp.GetNamedTag("id") ,false);
+		int num = Signals.Find( sp.GetNamedTag("id") );
 
 
 		float speed_limit = sp.GetNamedTagAsFloat("limit", -1);
@@ -1006,7 +1002,7 @@ void MultiplayerClientHandler1(Message msg)
 
 	else if(type == "sU_SetSpeed")
 		{
-		int num = Signals.Find( sp.GetNamedTag("id") ,false);
+		int num = Signals.Find( sp.GetNamedTag("id") );
 		
 		(cast<zxSignalLink>(Signals.DBSE[num].Object)).sign.SetSpeedLim( sp.GetNamedTagAsFloat("limit", -1) );
 
@@ -1133,13 +1129,8 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		// инициализация
 
 		Signals = new BinarySortedArraySl();
-		Signals.UdgradeArraySize(20);
-
 		train_arr = new BinarySortedArrayIntu();
-		train_arr.UdgradeArraySize(20);
-
 		Stations = new BinarySortedStrings();
-		Stations.UdgradeArraySize(20);
 
 		blink_sig = new zxSignal[0];
 
@@ -1147,7 +1138,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		zxExtra = new zxExtraLink[0];
 
 		ProtectGroups = new BinarySortedStrings();
-		ProtectGroups.UdgradeArraySize(10); 
 
 		SignalInitiation();
 		AddHandler(me, "Object", "Enter", "TrainCatcher");
@@ -1173,7 +1163,8 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		KUID mplibKUID = me.GetAsset().LookupKUIDTable("mp_library");
 		mp_lib = cast<MultiplayerSessionManager>World.GetLibrary(mplibKUID);
-		Sniff(mp_lib, "MultiplayerSession", "", true);
+		if(mp_lib)
+			Sniff(mp_lib, "MultiplayerSession", "", true);
 
 		AddHandler(me, "MultiplayerSession", "", "MultiplayerSessionHandler");
 
@@ -1195,11 +1186,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			{
 			return "false";
 			}
-
-
-		if((Stations.N+20) > Stations.SE.size())			// расширяем массив
-			Stations.UdgradeArraySize(2*Stations.SE.size());
-
 
 		return "true";
 		}
@@ -1230,7 +1216,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 	if(function=="station_exists")		// запрос на наличие станции
 		{
-		int number= Stations.Find( stringParam[0],false);
+		int number= Stations.Find( stringParam[0] );
 		if(number>=0)
 			{
 			return "true";
@@ -1288,17 +1274,15 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		All_added=false;
 
 		string name = stringParam[0]+"";				//проверяем наличие светофора в базе, добавляем его
-		int number= Signals.Find(name,false);
+		int number= Signals.Find(name);
 		if(number>=0)
 			{
 			Interface.Log("Signal "+name+" has none-unique name");
 			}
 		else
 			{
-			zxSignalLink[] sign_link= new zxSignalLink[1];
-			sign_link[0]= new zxSignalLink();
-
-			number= Signals.AddElement(name,cast<GSObject>sign_link[0]);
+			zxSignalLink sign_link= new zxSignalLink();
+			number= Signals.AddElement(name,cast<GSObject>sign_link);
 			}
 
 		if(number<0)
@@ -1308,14 +1292,8 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 
 
-
 		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign = cast<zxSignal>objectParam[0];
 		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.OwnId = -1;
-
-
-		if((Signals.N+20) > Signals.DBSE.size())			// расширяем массив
-			Signals.UdgradeArraySize(2*Signals.DBSE.size());
-
 
 
 		Sniff(curr_signal, "Object", "Enter", true);
@@ -1834,7 +1812,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		if(old_pos < 0)
 			{
-			blink_sig[old_size,old_size+1] = new zxSignal[1];
+			blink_sig[old_size,old_size] = new zxSignal[1];
 			blink_sig[old_size]= sig1;
 			}
 
@@ -1856,9 +1834,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		if(ProtectGroups.AddElement(stringParam[0]) < 0)
 			return "false";
 			
-		if((ProtectGroups.N+20) > ProtectGroups.SE.size())			// расширяем массив
-			ProtectGroups.UdgradeArraySize(2*ProtectGroups.SE.size());
-
 		return "true";
 		}
 
@@ -1979,7 +1954,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 		else
 			{
-			int number= ProtectGroups.Find( stringParam[0],false);
+			int number= ProtectGroups.Find( stringParam[0]);
 			if(number<0)
 				{
 				LibraryCall("add_protect", stringParam, null);
