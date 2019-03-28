@@ -46,24 +46,46 @@ bool objectRunningDriver = false;
 Soup temp_speed_sp;
 string[] tabl_str;
 
-zxExtraLink[] zxExtra;
+zxExtraLinkBase[] zxExtra;
 
 
 int SearchForTrain(zxSignal sig1, int train_id, int multiplicator);
 void SendMessagesToClients(Soup data, string type);
 void SendMessageToServer(Soup data, string type);
 
-void UpdateSignState(zxSignal zxSign, int state, int priority)
+void UpdateSignState(zxSignal zxSign, int reason, int priority)
 	{
-	zxSign.UpdateState(state,priority);
+	zxSign.UpdateState(reason,priority);
 
 	if(zxExtra.size() > 0)
 		{
 		int i;
 		for(i=0;i<zxExtra.size();i++)
-			zxExtra[i].UpdateSignalState(zxSign, state, priority);
+			zxExtra[i].UpdateSignalState(zxSign, reason, priority);
 		}
 
+	}
+
+public void AddExtraLink(zxExtraLinkBase new_link)
+	{
+	int old_size = zxExtra.size();
+	zxExtra[old_size,old_size] = new zxExtraLinkBase[1];
+	zxExtra[old_size] = new_link;
+	}
+
+public bool RemoveExtraLink(zxExtraLinkBase new_link)
+	{
+	int i = 0;
+	while(i < zxExtra.size())
+		{
+		if(zxExtra[i] == new_link)
+			{
+			zxExtra[i,i+1] = null;
+			return true;
+			}
+		i++;
+		}
+	return false;
 	}
 
 
@@ -1135,7 +1157,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		blink_sig = new zxSignal[0];
 
 
-		zxExtra = new zxExtraLink[0];
+		zxExtra = new zxExtraLinkBase[0];
 
 		ProtectGroups = new BinarySortedStrings();
 
@@ -1821,11 +1843,17 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 	else if(function=="add_extra_obj")
 		{
 		int old_size = zxExtra.size();
-		zxExtra[old_size,old_size+1] = new zxExtraLink[1];
-		zxExtra[old_size]= cast<zxExtraLink>objectParam[0];
+		zxExtra[old_size,old_size] = new zxExtraLinkBase[1];
+		zxExtra[old_size] = cast<zxExtraLinkBase>(cast<zxExtraLink>objectParam[0]);
 		}
 
 
+	else if(function=="add_extra_obj_base")
+		{
+		int old_size = zxExtra.size();
+		zxExtra[old_size,old_size] = new zxExtraLinkBase[1];
+		zxExtra[old_size] = (cast<zxExtraLinkContainer>objectParam[0]).extra_link;
+		}
 
 
 	else if(function=="add_protect")		// запрос на добавление группы заградительных

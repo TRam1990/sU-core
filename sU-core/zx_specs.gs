@@ -448,13 +448,25 @@ public int trmrk_mod;
 
 
 
-
-class zxExtraLink isclass GSObject
+class zxExtraLinkBase
 {
 	public void UpdateSignalState(zxSignal zxsign, int NewState, int priority)
 		{
 		}
 };
+
+
+
+class zxExtraLink isclass GSObject, zxExtraLinkBase
+{
+};
+
+
+class zxExtraLinkContainer isclass GSObject
+{
+	public zxExtraLinkBase extra_link;
+};
+
 
 
 
