@@ -252,10 +252,9 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 	if(train_nmb<0)
 		{
-		TrainContainer[] ts4=new TrainContainer[1];
-		ts4[0]= new TrainContainer();
+		TrainContainer ts4= new TrainContainer();
 
-		train_nmb= train_arr.AddElement(train_id,cast<GSObject>ts4[0]);
+		train_nmb= train_arr.AddElement(train_id,cast<GSObject>ts4);
 		if(train_nmb<0)
 			{
 			Interface.Exception("Can't add train "+train_id);
@@ -300,8 +299,8 @@ void TrainCatcher(Message msg) // ожидание наезда поезда на сигнал, ловля Object
 
 		if(!exist)		// но не на этот
 			{
-			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1,size1+1]=new int[1];
-			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1,size1+1]=new int[1];
+			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1,size1]=new int[1];
+			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1,size1]=new int[1];
 
 			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).signal[size1]=number;
 			(cast<TrainContainer>(train_arr.DBSE[train_nmb].Object)).state[size1]=state1;
@@ -1133,11 +1132,7 @@ void MultiplayerSessionHandler(Message msg)
 			ServerInitBase();
 			AddHandler(me,"sU_signals", "mult_server" ,"MultiplayerServerHandler1");
 			}
-
-			
-
 		}
-	
 	}
 
 
