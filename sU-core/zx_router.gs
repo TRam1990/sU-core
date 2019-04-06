@@ -360,7 +360,7 @@ public bool FindSignalState(zxSignal temp)
 
 	int OwnState=temp.MainState;
 
-	if(OwnState == 0 or OwnState == zxIndication.STATE_R or OwnState == zxIndication.STATE_Rx or OwnState == zxIndication.STATE_B)
+	if(OwnState == 0 or OwnState == zxIndication.STATE_R or OwnState == zxIndication.STATE_Rx or OwnState == zxIndication.STATE_RWb or OwnState == zxIndication.STATE_B)
 		return false;
 
 	return true;

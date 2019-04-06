@@ -468,9 +468,11 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		}
 	else if(reason==5)
 		{
-		if(shunt_open)
+		if(shunt_open or prigl_open)
 			{
-			shunt_open=false;
+			shunt_open = false;
+			prigl_open = false;
+			
 			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
 
 
@@ -3708,14 +3710,14 @@ public void Init(Asset asset)
 	}
 
 
-public void Init(void)
+public void Init()
 	{
 	//Asset asset = GetAsset();
 
 
 	}
 
-public Soup DetermineUpdatedState(void)
+public Soup DetermineUpdatedState()
 	{
 	return NullSoup;
 	}
