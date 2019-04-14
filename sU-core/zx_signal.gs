@@ -53,6 +53,8 @@ bool station_edited = false;
 
 bool pre_protected = false;
 
+bool prigl_enabled = false;	// влияет только на наличие совмещённого пригласительного с маневровым
+
 float pause_bef_red = 3.5;
 
 
@@ -1555,6 +1557,25 @@ public string GetDescriptionHTML(void)
 	s=s+hw.EndTable();
 
 
+
+	if(ex_sgn[zxIndication.STATE_R] and ex_sgn[zxIndication.STATE_W])		// только у светофоров с красным и белым немигающим
+		{
+		s=s+hw.StartTable("border='1' width=90%");
+
+		s=s+hw.StartRow();	
+		s=s+hw.StartCell("bgcolor='#666666' align='left'");
+
+		s=s+hw.CheckBox("live://property/prigl_enabled", prigl_enabled);
+	 	s=s+" "+hw.MakeLink("live://property/prigl_enabled", STT.GetString("prigl_enabled"));
+
+		s=s+hw.EndCell();
+		s=s+hw.EndRow();
+
+		s=s+hw.EndTable();
+		}
+
+
+
 	s=s+"<br>";
 
 
@@ -1727,8 +1748,6 @@ public string GetDescriptionHTML(void)
 
 		s=s+hw.EndCell();
 		s=s+hw.EndRow();
-
-
 
 		s=s+hw.EndTable();
 
@@ -2246,7 +2265,7 @@ public void SetPropertyValue(string id, string val)
 
 		Type = FindTypeByLens(ex_lins);
 
-		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  генерируем розжиг
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);			//  генерируем розжиг
 		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
  		}
  }
@@ -2313,7 +2332,7 @@ public void LinkPropertyValue(string id)
 			ab4 = 0;
 
 
-		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			//  генерируем розжиг
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);			//  генерируем розжиг
 
 		if(Type & ST_PROTECT)
 			{
@@ -2324,11 +2343,11 @@ public void LinkPropertyValue(string id)
 				}
 			else
 				{
-				int[] pos_lins = new int[10];
-				bool[] ex_lins = new bool[10];
+				pos_lins = new int[10];
+				ex_lins = new bool[10];
 
 				CreateLinsArr(lens_kit, ex_lins, pos_lins);
-				kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);
+				kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);
 
 				if(ex_sgn[zxIndication.STATE_R])
 					{
@@ -2402,6 +2421,45 @@ public void LinkPropertyValue(string id)
 			kor_BU_1 = false;
 
 		MakeBUArrow();
+		}
+
+	else if(id=="prigl_enabled")
+		{
+		prigl_enabled = !prigl_enabled;
+
+		int[] pos_lins = new int[10];
+		bool[] ex_lins = new bool[10];
+
+		CreateLinsArr(lens_kit, ex_lins, pos_lins);
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);
+
+		if(Type & ST_PROTECT)
+			{
+			if(ex_sgn[zxIndication.STATE_R])
+				{
+				ex_sgn[zxIndication.STATE_R] = false;
+				pre_protected = false;
+				}
+			else
+				{
+				pos_lins = new int[10];
+				ex_lins = new bool[10];
+
+				CreateLinsArr(lens_kit, ex_lins, pos_lins);
+				kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);
+
+				if(ex_sgn[zxIndication.STATE_R])
+					{
+					ex_sgn[zxIndication.STATE_R] = false;
+					pre_protected = false;
+					}
+				else if(ex_sgn[zxIndication.STATE_Y])
+					{
+					ex_sgn[zxIndication.STATE_Y] = false;
+					pre_protected = true;
+					}		
+				}
+			}
 		}
 
 	else if(id=="yellow_code")
@@ -2552,7 +2610,7 @@ public void LinkPropertyValue(string id)
 					bool[] ex_lins = new bool[10];
 
 					CreateLinsArr(lens_kit, ex_lins, pos_lins);
-					kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);
+					kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);
 					}
 				else
 					{
@@ -2820,18 +2878,22 @@ public string GetContentViewDetails()
  		 		);
 		}
 
-	if( !(Type & ST_PERMOPENED) and ex_sgn[zxIndication.STATE_W])	// только если есть маневровый
-		s2 = s2+ hw.MakeRow(
- 	 			hw.MakeCell(STT.GetString("ability_to_shnt"),"bgcolor=#777777")+
- 	 			hw.MakeCell(hw.MakeLink("live://ShuntMode^"+!shunt_open,GetImgShuntMode(shunt_open)),"bgcolor=#777777")
- 	 		);
+	if( !(Type & ST_PERMOPENED) )
+		{
+
+		if(ex_sgn[zxIndication.STATE_W])	// только если есть маневровый
+			s2 = s2+ hw.MakeRow(
+ 	 				hw.MakeCell(STT.GetString("ability_to_shnt"),"bgcolor=#777777")+
+ 	 				hw.MakeCell(hw.MakeLink("live://ShuntMode^"+!shunt_open,GetImgShuntMode(shunt_open)),"bgcolor=#777777")
+ 	 			);
 
 
-	if( (Type & (ST_IN | ST_OUT | ST_ROUTER)) and !(Type & ST_SHUNT) )
-		s2 = s2+ hw.MakeRow(
- 	 			hw.MakeCell(STT.GetString("ability_to_prigl"),"bgcolor=#777777")+
- 	 			hw.MakeCell(hw.MakeLink("live://PriglMode^"+!prigl_open,GetImgPriglMode(prigl_open)),"bgcolor=#777777")
- 	 		);
+		if(ex_sgn[zxIndication.STATE_RWb] )	// только если есть пригласительный
+			s2 = s2+ hw.MakeRow(
+ 	 				hw.MakeCell(STT.GetString("ability_to_prigl"),"bgcolor=#777777")+
+ 	 				hw.MakeCell(hw.MakeLink("live://PriglMode^"+!prigl_open,GetImgPriglMode(prigl_open)),"bgcolor=#777777")
+	 	 		);
+		}
 
 
 
@@ -3286,9 +3348,12 @@ public void SetProperties(Soup soup)
 
 	OldMainState = -1;
 
+	prigl_enabled = soup.GetNamedTagAsBool("prigl_enabled",false);
+
+
 	string ex_sign_1 = soup.GetNamedTag("ExSignals_str");
 	if(ex_sign_1=="")
-		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);			// если розжиг не сгенерирован, генерируем
+		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);			// если розжиг не сгенерирован, генерируем
 	else
 		{
 		ex_sgn=StrToExSignals(ex_sign_1);
@@ -3333,7 +3398,7 @@ public void SetProperties(Soup soup)
 			bool[] ex_lins = new bool[10];
 
 			CreateLinsArr(lens_kit, ex_lins, pos_lins);
-			kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins);
+			kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);
 
 			if(ex_sgn[zxIndication.STATE_R])
 				{
@@ -3558,7 +3623,7 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("kor_BU_1",kor_BU_1);
 	retSoup.SetNamedTag("kor_BU_2",kor_BU_2);
 	retSoup.SetNamedTag("yellow_code",yellow_code);
-
+	retSoup.SetNamedTag("prigl_enabled", prigl_enabled);
 
 	retSoup.SetNamedTag("pause_bef_red",pause_bef_red);
 
@@ -3713,8 +3778,6 @@ public void Init(Asset asset)
 public void Init()
 	{
 	//Asset asset = GetAsset();
-
-
 	}
 
 public Soup DetermineUpdatedState()

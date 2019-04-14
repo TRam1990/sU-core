@@ -66,6 +66,7 @@ string-table
   als75                                 "АЛС-75"
   alsen                                 "АЛС-ЕН"
   yellow_code                           "код жёлтого для ЖЗ и Жм"
+  prigl_enabled                         "пригласительный сигнал"
   pause_bef_red                         "Задержка включения красного "
   untyped_flag                          "типовой светофор"
   in_flag                               "входной"
@@ -97,7 +98,7 @@ string-table
 extensions
 {
 }
-kuid                                    <kuid2:400260:100120:38>
+kuid                                    <kuid2:400260:100120:39>
 
 kuid-table
 {

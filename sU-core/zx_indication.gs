@@ -15,11 +15,11 @@ public define int STATE_YY		= 4;
 public define int STATE_YYL		= 5;
 public define int STATE_Y		= 6;
 public define int STATE_YbY		= 7;
-public define int STATE_YbYL	= 8;
+public define int STATE_YbYL		= 8;
 public define int STATE_GY		= 9;
 public define int STATE_Gb		= 10;
 public define int STATE_Yb		= 11;
-public define int STATE_GbYL	= 12;
+public define int STATE_GbYL		= 12;
 public define int STATE_YYY		= 13;
 public define int STATE_G		= 14;
 public define int STATE_GG		= 15;
@@ -30,9 +30,9 @@ public define int STATE_B		= 19;
 public define int STATE_W		= 20;
 public define int STATE_WW		= 21;
 public define int STATE_YYW		= 22;
-public define int STATE_YbYW	= 23;
-public define int STATE_YYWL	= 24;
-public define int STATE_GbYWL	= 25;
+public define int STATE_YbYW		= 23;
+public define int STATE_YYWL		= 24;
+public define int STATE_GbYWL		= 25;
 
 public void Init()
 	{
@@ -294,7 +294,6 @@ public void InitIndif(bool[] used_lens, bool[] blink_lens)
 	used_lens[1]=true;
 	
 	blink_lens[1]=true;
-
 	}
 
 };
@@ -802,7 +801,7 @@ public void Init()
 	}
 
 
-public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// К-Бм - белая линза - 0 - отсутствует, 1 - "немигающая", 2 - мигающая
+public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens, bool prigl_enabled)		// К-Бм - белая линза - 0 - отсутствует, 1 - "немигающая", 2 - мигающая
 	{
 	int i;
 	bool[] Temp_st= new bool[10];
@@ -825,12 +824,17 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// К-Бм - белая
 
 	if(ex_lens[0])
 		{
-		if(ex_lens[7])
-			result_kbm = 2;
-		else if(ex_lens[6])
-			result_kbm = 1;
-		else
+		if(!prigl_enabled and ex_lens[6])
 			result_kbm = 0;
+		else
+			{
+			if(ex_lens[7])
+				result_kbm = 2;
+			else if(ex_lens[6])
+				result_kbm = 1;
+			else
+				result_kbm = 0;
+			}
 
 		possible_sgn[zxIndication.STATE_RWb] = (result_kbm > 0);	// случай result_kbm == 0 не используется
 		}
@@ -839,6 +843,13 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)		// К-Бм - белая
 
 	return result_kbm;
 	}
+
+
+public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)	
+	{
+	return FindPossibleSgn(possible_sgn, ex_lens, true);
+	}
+
 
 
 public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool is_prigl, bool sub_closed, int NextState)
@@ -1218,21 +1229,7 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		}
 
 
-
-
-
-	if(ab4 and (NextState == zxIndication.STATE_Y  or ((NextState == zxIndication.STATE_Gb or NextState == zxIndication.STATE_Yb) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or NextState == zxIndication.STATE_GG or NextState ==  zxIndication.STATE_YW) and !(trmrk_flag & zxMarker.MREND4AB) and ((trmrk_flag & NoState) == 0))
-			// 4-значная АБ
-
-		{
-		if(possible_sig[zxIndication.STATE_GY])		// жёлтый зелёный
-			return zxIndication.STATE_GY;
-
-		if(possible_sig[zxIndication.STATE_G])		// зелёный
-			return zxIndication.STATE_G;
-
-		return 0;
-		}
+	bool sig_GY_on = (ab4 and (NextState == zxIndication.STATE_Y  or ((NextState == zxIndication.STATE_Gb or NextState == zxIndication.STATE_Yb) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or NextState == zxIndication.STATE_GG or NextState ==  zxIndication.STATE_YW) and !(trmrk_flag & zxMarker.MREND4AB));
 
 
 
@@ -1265,6 +1262,9 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		if(possible_sig[zxIndication.STATE_GW])		// зелёный + белый	
 			return zxIndication.STATE_GW;
 
+		if(sig_GY_on and possible_sig[zxIndication.STATE_GY])	// жёлтый зелёный
+			return zxIndication.STATE_GY;
+
 		if(possible_sig[zxIndication.STATE_G])		 
 			return zxIndication.STATE_G;		// зелёный
 
@@ -1284,6 +1284,8 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		if(possible_sig[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
 			return zxIndication.STATE_YbY;
 
+		if(sig_GY_on and possible_sig[zxIndication.STATE_GY])	// жёлтый зелёный
+			return zxIndication.STATE_GY;
 
 		if(possible_sig[zxIndication.STATE_G])		 
 			return zxIndication.STATE_G;		// зелёный
@@ -1305,9 +1307,11 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		if(possible_sig[zxIndication.STATE_GbYL])		// зелёный миг. - жёлтый - полоса
 			return zxIndication.STATE_GbYL;
 
-
 		if(possible_sig[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
 			return zxIndication.STATE_YbY;
+
+		if(sig_GY_on and possible_sig[zxIndication.STATE_GY])	// жёлтый зелёный
+			return zxIndication.STATE_GY;
 
 		if(possible_sig[zxIndication.STATE_G])		 
 			return zxIndication.STATE_G;		// зелёный
@@ -1317,6 +1321,9 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 	else
 		{
+		if(sig_GY_on and possible_sig[zxIndication.STATE_GY])	// жёлтый зелёный
+			return zxIndication.STATE_GY;
+
 		if(possible_sig[zxIndication.STATE_G])		 
 			return zxIndication.STATE_G;		// зелёный
 
