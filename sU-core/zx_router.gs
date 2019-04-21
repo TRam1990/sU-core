@@ -30,6 +30,8 @@ class zxRouter isclass GSObject
 	public bool permUPD=false;
 	public bool WasOpen=false;
 
+	public float BasicMeshOffset = -0.48;
+
 
 
 	/*
@@ -1127,20 +1129,31 @@ public string GetPropertyType(string id)
 
 public void SetPropertyValue(string id, float val)
 {
+	bool position_change = false;
+
+
 	if(id == "displace")
 		{
 		displacement=val;
-		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+		position_change = true;
 		}
 	else if(id == "vert_displ")
 		{
 		vert_displ=val;
-		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+		position_change = true;
 		}
 	else if(id == "along_displ")
 		{
 		along_displ=val;
+		position_change = true;
+		}
+
+	if(position_change)
+		{
 		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+
+		RouterO.MainMesh.SetMeshTranslation("default", 0, 0, RouterO.BasicMeshOffset);	
+		RouterO.Table.SetMeshTranslation("default", 0, 0, RouterO.BasicMeshOffset );	
 		}
 }
 
@@ -1201,6 +1214,9 @@ public void LinkPropertyValue(string id)
 			{
  			displacement=Str.ToFloat(str_a[1]);
 			SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+
+			RouterO.MainMesh.SetMeshTranslation("default", 0, 0, RouterO.BasicMeshOffset);
+			RouterO.Table.SetMeshTranslation("default", 0, 0, RouterO.BasicMeshOffset );
 			}
 		}
 

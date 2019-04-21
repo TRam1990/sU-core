@@ -1918,24 +1918,49 @@ public string GetPropertyType(string id)
 
 public void SetPropertyValue(string id, float val)
 {
+	bool position_change = false;
+
 	if(id == "displace")
 		{
 		displacement=val;
-		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+		position_change = true;
 		}
 	else if(id == "vert_displ")
 		{
 		vert_displ=val;
-		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+		position_change = true;
 		}
 	else if(id == "along_displ")
 		{
 		along_displ=val;
-		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+		position_change = true;
 		}
 	else if(id == "pause_bef_red")
 		{
 		pause_bef_red = val;
+		}
+
+	if(position_change)
+		{
+		SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+
+
+		if(MU)
+			{
+			string mu_head_displ = ST.GetString("mu_head_displ");
+			if(mu_head_displ != "")
+				{
+				float dz = Str.ToFloat(TrainUtil.GetUpTo(mu_head_displ,","));
+
+				MU.MainMesh.SetMeshTranslation("default", 0, 0, dz );
+				MU.Table.SetMeshTranslation("default", 0, 0, dz );
+				}
+			else
+				{
+				MU.MainMesh.SetMeshTranslation("default", 0, 0, MU.BasicMeshOffset);
+				MU.Table.SetMeshTranslation("default", 0, 0, MU.BasicMeshOffset);
+				}
+			}
 		}
 }
 
@@ -1997,7 +2022,6 @@ void SetNewGolPosition(bool enable)
 
 			float dz = Str.ToFloat(temp[0]);
 
-
 			MU.MainMesh.SetMeshTranslation("default", 0, 0, dz );
 			MU.Table.SetMeshTranslation("default", 0, 0, dz );
 
@@ -2007,6 +2031,12 @@ void SetNewGolPosition(bool enable)
 				SetMeshTranslation("kreplenie"+i2, 0, 0, Str.ToFloat(temp[i]) );
 				}
 			}
+		else
+			{
+			MU.MainMesh.SetMeshTranslation("default", 0, 0, MU.BasicMeshOffset);
+			MU.Table.SetMeshTranslation("default", 0, 0, MU.BasicMeshOffset);
+			}
+
 		}
 	else
 		{
@@ -2627,6 +2657,23 @@ public void LinkPropertyValue(string id)
 			{
  			displacement=Str.ToFloat(str_a[1]);
 			SetMeshTranslation("default", displacement-def_displ, along_displ, vert_displ);
+
+			if(MU)
+				{
+				string mu_head_displ = ST.GetString("mu_head_displ");
+				if(mu_head_displ != "")
+					{
+					float dz = Str.ToFloat(TrainUtil.GetUpTo(mu_head_displ,","));
+
+					MU.MainMesh.SetMeshTranslation("default", 0, 0, dz );
+					MU.Table.SetMeshTranslation("default", 0, 0, dz );
+					}
+				else
+					{
+					MU.MainMesh.SetMeshTranslation("default", 0, 0, MU.BasicMeshOffset);
+					MU.Table.SetMeshTranslation("default", 0, 0, MU.BasicMeshOffset);
+					}
+				}
 			}
 		else if(str_a[0]=="code_freq")
 			{

@@ -499,6 +499,18 @@ public Soup GetProperties(void)
 	}
 
 
+thread void ReUpdateSignals()
+	{
+	int i;
+	for(i=0;i<Signals.N;i++)
+		{
+		(cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.UpdateState(0, -1);
+
+		if(i % 50)
+			Sleep(0.1);
+		}
+	}
+
 
 thread void SignalInitiation()			// запуск светофоров
 	{
@@ -515,7 +527,12 @@ thread void SignalInitiation()			// запуск светофоров
 		(cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.OwnId = i;
 		}
 
+	if(TrainzScript.GetTrainzBuild() >= 98695)
+		ReUpdateSignals();
+
 	}
+
+
 
 void TrainStarting(Message msg)
 	{
