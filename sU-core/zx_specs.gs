@@ -1,7 +1,8 @@
 include "Signal.gs"
+include "alsn_provider.gs"
+include "Trigger.gs"
 include "TrackMark.gs"
 include "Browser.gs"
-include "alsn_provider.gs"
 include "zx_indication.gs"
 
 
@@ -11,95 +12,42 @@ class TrainContainer isclass GSObject
 
 	public int[] signal;		// внутренний идентификатор светофора
 	public int[] state;  		// 0 - подошедший к светофору, 1 - проехавший головой светофор, 2 - заехавший за светофор
-
 	public bool HighSpeed;
 
+
+	public int[] speed_object;
+
 };
 
 
-
-
-class zxSpeedBoard isclass Trackside
-{
-	public float MainSpeed;		// скорость предыдущего светофора
-	public float ExtraSpeed;	// скорость последующего светофора
-
-
-
-
-	public bool SetNewSpeed(float speed, bool extra)
-		{
-		if(speed == 0.0f)
-			{
-			if(ExtraSpeed > MainSpeed)
-				SetSpeedLimit( ExtraSpeed );
-			else
-				SetSpeedLimit( MainSpeed );
-
-			return false;
-			}
-			
-		if(extra)
-			ExtraSpeed=speed;
-		else
-			MainSpeed=speed;
-
-		if(ExtraSpeed > MainSpeed)
-			{
-			SetSpeedLimit( ExtraSpeed );
-			if(extra)
-				return true;
-			}
-		else
-			{
-			SetSpeedLimit( MainSpeed );
-			if(!extra)
-				return true;
-			}
-		return false;
-		}
-};
-
-
-class zxSpeedLimit isclass Trackside
+class zxSpeedObject isclass Trigger
 {
 	public float max_speed_pass;	// установленное ограничение пассажирским
 	public float max_speed_cargo;	// установленное ограничение грузовым
 
+	public int OwnId;		// идентификатор, каждый раз новый
+};
+
+
+
+class zxSpeedBoard isclass zxSpeedObject
+{
+	public float prev_speed_pass;		// задаются при открытии предыдущего светофора
+	public float prev_speed_cargo;
+
+
+	public float next_speed_pass;		// задаются присоединённым светофором
+	public float next_speed_cargo;
+};
+
+
+class zxSpeedLimit isclass zxSpeedObject
+{
+
 	public bool is_limit_start = false;	// является началом/окончанием ограничения
 
-	public void SetLimitFor(float speed, bool pass)
-		{
-		if(speed == 0.0f)
-			{
-			if(pass)
-				SetSpeedLimit( max_speed_pass );
-			else
-				SetSpeedLimit( max_speed_cargo );
-			return;
-			}
+	// если является окончанием, то max_speed_pass/max_speed_cargo задаётся из предыдущего светофора
 
-		if(!is_limit_start)
-			{
-			SetSpeedLimit( speed );
-			return;
-			}	
-			
-		if(pass)
-			{
-			if(speed > max_speed_pass)
-				SetSpeedLimit( max_speed_pass );
-			else
-				SetSpeedLimit( speed );
-			}
-		else
-			{
-			if(speed > max_speed_cargo)
-				SetSpeedLimit( max_speed_cargo );
-			else
-				SetSpeedLimit( speed );
-			}
-		}
 };
 
 
@@ -136,6 +84,13 @@ class zxSignal isclass Signal, ALSN_Provider
 
 	public float max_speed_pass = 0;	// установленное ограничение пассажирским ( 0 - нет ограничений)
 	public float max_speed_cargo = 0;	// установленное ограничение грузовым ( 0 - нет ограничений)
+
+
+	public bool out_speed_set = false;	// ограничение, устанавливаемое внешними объектами
+	public float out_speed_pass = 0;	
+	public float out_speed_cargo = 0;	
+
+
 
 	public bool MP_NotServer = false;	// не является сервером в мультиплеерной игре (отключение логики)
 	public bool IsServer = false;
@@ -180,7 +135,8 @@ class zxSignal isclass Signal, ALSN_Provider
 		{
 		int i;
 		bool exist=false;
-		for(i=0;i<TC_id.size();i++)
+		int old_id_size = TC_id.size();
+		for(i=0;i<old_id_size;i++)
 			{
 			if(TC_id[i]==id)
 				exist=true;
@@ -188,9 +144,8 @@ class zxSignal isclass Signal, ALSN_Provider
 		if(exist)
 			return;
 
-
-		TC_id[TC_id.size(),TC_id.size()+1]=new int[1];
-		TC_id[TC_id.size()-1]=id;
+		TC_id[old_id_size,old_id_size]=new int[1];
+		TC_id[old_id_size]=id;
 		}
 
 
@@ -206,7 +161,6 @@ class zxSignal isclass Signal, ALSN_Provider
 			}
 		if(n<0)
 			return;
-
 
 		TC_id[n,n+1]=null;
 		}
@@ -245,69 +199,69 @@ class zxSignal isclass Signal, ALSN_Provider
 		return Switch_span(false);
 		}
 
-	public float GetCurrSpeedLim(float SpeedLim, int prior)
+
+	public void SetMainStateSpeedLim()
 		{
-		if(SpeedLim <= 0)
-			return SpeedLim;
-			
-		if(prior==1)
+		if((Type & ST_UNLINKED) or 
+		   (MainState == zxIndication.STATE_B) or 
+                   (barrier_closed and Type & ST_PROTECT))	// принципиально не могут получать показания
 			{
-			if(max_speed_pass > 0 and max_speed_pass < SpeedLim )
-				return max_speed_pass;
+			max_speed_pass = 0;
+			max_speed_cargo = 0;
+			return;
 			}
-		else
-			{
-			if(max_speed_cargo > 0 and max_speed_cargo < SpeedLim)
-				return max_speed_cargo;
-			}
-
-		return SpeedLim;
-		}
-
-
-	public float GetSpeedLim(int prior)
-		{
-		if(MainState == zxIndication.STATE_B)
-			return -1.0;
-
-
-		string s=MainState;
-
-		if(prior==1)
-			s="p"+s;
-		else
-			s="c"+s;
 
 		if(!speed_soup)
 			{
 			Interface.Exception("Error with signal "+GetName());
 			}
 
-		return (speed_soup.GetNamedTagAsInt(s)/3.6);
+
+		string s=MainState;
+
+
+		float tmp_max_speed_pass = speed_soup.GetNamedTagAsInt("p"+s)/3.6;
+		float tmp_max_speed_cargo = speed_soup.GetNamedTagAsInt("c"+s)/3.6;
+
+		
+		if(tmp_max_speed_pass > 0)
+			max_speed_pass = tmp_max_speed_pass;
+
+		if(tmp_max_speed_cargo > 0)
+			max_speed_cargo = tmp_max_speed_cargo;
+
+
+		if(zxSP)
+			{
+			if(out_speed_set)
+				{
+				if(out_speed_pass < max_speed_pass)
+					zxSP.next_speed_pass = out_speed_pass;
+				else
+					zxSP.next_speed_pass = max_speed_pass;
+
+				if(out_speed_cargo < max_speed_cargo)
+					zxSP.next_speed_cargo = out_speed_cargo;
+				else
+					zxSP.next_speed_cargo = max_speed_cargo;
+				}
+			else
+				{
+				zxSP.next_speed_pass = max_speed_pass;
+				zxSP.next_speed_cargo = max_speed_cargo;
+				}
+
+			zxSP.max_speed_pass = zxSP.prev_speed_pass;
+			zxSP.max_speed_cargo = zxSP.prev_speed_cargo;
+
+			if(zxSP.max_speed_pass < zxSP.next_speed_pass)		// наибольшее из ограничений
+				zxSP.max_speed_pass = zxSP.next_speed_pass;
+
+			if(zxSP.max_speed_cargo < zxSP.next_speed_cargo)
+				zxSP.max_speed_cargo = zxSP.next_speed_cargo;
+			}
 		}
 
-
-	public bool SetSpeedLim(float speed_limit_new)
-		{
-		if(zxSP and speed_limit_new != zxSP.ExtraSpeed)
-			zxSP.SetNewSpeed(speed_limit_new, true);
-
-		if(speed_limit != speed_limit_new)
-			speed_limit = speed_limit_new;
-		else
-			return false;	
-
-		if(speed_limit > 0)
-			{
-			SetSpeedLimit( speed_limit );
-			}
-		else
-			{
-			SetSpeedLimit( -1 );
-			}
-
-		return true;
-		}
 
 	public bool IsObligatory()
 		{
@@ -338,7 +292,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 		MapObject MO = GSTS.SearchNext();
 
-		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !(((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)   or ((cast<zxSignal>MO).MainState == zxIndication.STATE_B) ) ) )
+		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !(((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or ((cast<zxSignal>MO).MainState == zxIndication.STATE_B) ) ) )
 			MO = GSTS.SearchNext();
 
 		if(!MO or !MO.isclass(Vehicle))
@@ -359,6 +313,54 @@ class zxSignal isclass Signal, ALSN_Provider
 		return 2;
 		}
 
+
+
+
+	public bool ApplyNewSpeedLimit(int prority)
+		{
+		float result_speed;
+
+		float tmp_speed_pass = max_speed_pass;
+		float tmp_speed_cargo = max_speed_cargo;
+
+		if(out_speed_set)
+			{		// поиск минимальной скорости
+
+			if(out_speed_pass < max_speed_pass)
+				tmp_speed_pass = out_speed_pass;
+
+			if(out_speed_cargo < max_speed_cargo)
+				tmp_speed_cargo = out_speed_cargo;
+
+			}
+
+		if(tmp_speed_pass == tmp_speed_cargo)	// наибольший не важен
+			result_speed = tmp_speed_cargo;
+		else
+			{
+			if(prority < 1)
+				prority = FindTrainPrior(false);
+				
+			if(prority == 1)
+				result_speed = tmp_speed_pass;
+			else
+				result_speed = tmp_speed_cargo;
+			}
+
+		if(result_speed != GetSpeedLimit())
+			{
+			if(result_speed > 0)
+				speed_limit = result_speed;
+			SetSpeedLimit( result_speed );
+			return true;
+			}
+		return false;
+		}
+
+
+
+
+
 	public void SetzxSpeedBoard(MapObject newSP)
 		{
 		}
@@ -369,6 +371,8 @@ class zxSignal isclass Signal, ALSN_Provider
 
 
 };
+
+
 
 
 class zxSignal_Cache isclass GSObject
@@ -383,7 +387,6 @@ class zxMarker isclass Trackside
 
 
 /*
-
 
 0 прямой путь
 1 отклонение      - доп
@@ -405,7 +408,6 @@ public int trmrk_mod;
 
 
 /*
-
 
 0 прямой путь
 1 отклонение

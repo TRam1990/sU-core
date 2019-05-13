@@ -91,6 +91,9 @@ void SetBUArrow(bool state);
 
 define float DegToRad = 0.01745;
 
+bool ever_inited = false;
+bool default_init = true;
+
 
 int BlinkLensCount()
 	{
@@ -215,6 +218,11 @@ bool SetOwnSignalState(bool set_auto_state)
 				SetSignalState(GREEN, "");
 			}
 
+		// задание номинальных скоростей светофора
+
+		SetMainStateSpeedLim();
+
+
 		OldMainState = MainState;
 		return true;
 		}
@@ -231,9 +239,6 @@ public void SetSignal(bool set_auto_state)
 			NewSignal(set_lens,0,pause_bef_red);
 		else
 			NewSignal(set_lens,0,0.7);
-
-		if(IsServer)
-			mainLib.LibraryCall("mult_settings",null,GSO);
 		}
 	}
 
@@ -267,9 +272,17 @@ public void CheckPrevSignals(bool no_train)
 		{
 		Cur_prev.MainState = Other_MainState;
 		Cur_prev.CheckPrevSignals(false);
-		int prior1 = Cur_prev.FindTrainPrior(false);
-		Cur_prev.SetSpeedLim( Cur_prev.GetCurrSpeedLim(  Cur_prev.GetSpeedLim( prior1 ), prior1 ) );
+
 		Cur_prev.SetSignal(true);
+		Cur_prev.ApplyNewSpeedLimit(-1);
+
+		if(IsServer)
+			{
+			GSObject[] GSO2=new GSObject[1];
+			GSO2[0] = cast<GSObject>Cur_prev;
+			mainLib.LibraryCall("mult_settings",null,GSO2);
+			GSO2[0,] = null;
+			}
 		}
 
 	}
@@ -384,6 +397,9 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 			SetSignal(false);
 
+			if(IsServer)
+				mainLib.LibraryCall("mult_settings",null,GSO);
+
 			if(!protect_influence)
 				return;
 
@@ -409,6 +425,9 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 			
 			SetSignal(false);
+
+			if(IsServer)
+				mainLib.LibraryCall("mult_settings",null,GSO);
 			}
 		}
 
@@ -431,6 +450,9 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				SetSignalState(RED, "");
 				SetSignal(false);
 				CheckPrevSignals(false);
+
+				if(IsServer)
+					mainLib.LibraryCall("mult_settings",null,GSO);
 				}
 			if(reason==0)
 				{
@@ -440,6 +462,9 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 					SetSignalState(RED, "");
 					CheckPrevSignals(false);
 					SetSignal(false);
+
+					if(IsServer)
+						mainLib.LibraryCall("mult_settings",null,GSO);
 					}
 				else
 					{
@@ -477,19 +502,11 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			
 			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
 
-
-			float new_speed_limit = 0;
-
-			if(MainState != zxIndication.STATE_B)
-				{
-				if(priority < 0)
-					priority = FindTrainPrior(false);
-
-				new_speed_limit = GetCurrSpeedLim( GetSpeedLim(priority), priority );
-				}
-
-			SetSpeedLim(new_speed_limit);
 			SetSignal(true);
+			ApplyNewSpeedLimit(-1);
+
+			if(IsServer)
+				mainLib.LibraryCall("mult_settings",null,GSO);
 			}
 		}
 
@@ -550,20 +567,12 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				CheckPrevSignals(false);		// поиск следующего светофора
 			}
 
-		float new_limit = 0;
 
-		if(MainState != zxIndication.STATE_B)
-			{
-			if(priority < 0)
-				priority = FindTrainPrior(false);
+		SetSignal(true);
+		ApplyNewSpeedLimit(-1);	
 
-			new_limit = GetCurrSpeedLim( GetSpeedLim( priority ), priority );
-			}
-
-		SetSpeedLim( new_limit );
-
-
-		SetSignal(true);	
+		if(IsServer)
+			mainLib.LibraryCall("mult_settings",null,GSO);
 		}
 
 	else if(reason==1 and train_open)
@@ -576,7 +585,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 		type_ToFind[0]=priority;
 		type_ToFind[1]="-";
-		mainLib.LibraryCall("new_speed",type_ToFind,GSO);
+		mainLib.LibraryCall("new_speed",type_ToFind,GSO);	// раньше, чем SetSignal()
 
 		if(!(Type & ST_PERMOPENED))
 			train_open = false;
@@ -584,6 +593,10 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		CheckMySignal(true);
 
 		SetSignal(true);
+
+		if(IsServer)
+			mainLib.LibraryCall("mult_settings",null,GSO);
+
 
 		mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
 		}
@@ -606,7 +619,11 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			{
 			CheckMySignal(false);
 
-			SetSignal(true);	
+			SetSignal(true);
+
+			if(IsServer)
+				mainLib.LibraryCall("mult_settings",null,GSO);
+	
 			}
 		}
 	}
@@ -639,6 +656,10 @@ public void UnlinkedUpdate(int mainstate)
 			MainState = 0;
 
 		SetSignal(false);
+
+		if(IsServer)
+			mainLib.LibraryCall("mult_settings",null,GSO);
+
 		}
 	else if(Type & (ST_IN+ST_OUT))
 		{
@@ -647,12 +668,18 @@ public void UnlinkedUpdate(int mainstate)
 			MainState = mainstate;
 			SetSignalState(GREEN, "");
 			SetSignal(false);
+
+			if(IsServer)
+				mainLib.LibraryCall("mult_settings",null,GSO);
 			}
 		}
 	else
 		{
 		MainState = mainstate;
 		SetSignal(false);
+
+		if(IsServer)
+			mainLib.LibraryCall("mult_settings",null,GSO);
 		}
 	}
 
@@ -897,13 +924,24 @@ public void Deswitch_span()
 
 	int n = span_soup.GetNamedTagAsInt("Extra_sign",0);
 	int i;
+
+	GSObject[] GSO2=new GSObject[1];
+
 	for(i=0;i<n;i++)
 		{
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
 		zxs.MainState = zxIndication.STATE_Rx;
 		zxs.wrong_dir = true;
 		zxs.SetSignal(true);
+
+		if(IsServer)
+			{
+			GSO2[0] = cast<GSObject>zxs;
+			mainLib.LibraryCall("mult_settings",null,GSO2);
+			}
 		}
+
+	GSO2[0,] = null; 
 
 	wrong_dir = true;
 
@@ -3242,9 +3280,6 @@ void GetDefaultSignalLimits()
 	speed_soup.SetNamedTag("p1",0);
 	speed_soup.SetNamedTag("c1",0);
 
-	speed_soup.SetNamedTag("p1",0);
-	speed_soup.SetNamedTag("c1",0);
-
 	speed_soup.SetNamedTag("p2",0);
 	speed_soup.SetNamedTag("c2",0);
 
@@ -3296,8 +3331,8 @@ void GetDefaultSignalLimits()
 	speed_soup.SetNamedTag("p18",40);
 	speed_soup.SetNamedTag("c18",40);
 
-	speed_soup.SetNamedTag("p19",-1);
-	speed_soup.SetNamedTag("c19",-1);
+	speed_soup.SetNamedTag("p19",0);
+	speed_soup.SetNamedTag("c19",0);
 
 	speed_soup.SetNamedTag("p20",25);
 	speed_soup.SetNamedTag("c20",25);
@@ -3311,10 +3346,10 @@ void GetDefaultSignalLimits()
 	speed_soup.SetNamedTag("p23",40);
 	speed_soup.SetNamedTag("c23",40);
 
-	speed_soup.SetNamedTag("p24",60);
-	speed_soup.SetNamedTag("c24",50);
+	speed_soup.SetNamedTag("p24",80);
+	speed_soup.SetNamedTag("c24",80);
 
-	speed_soup.SetNamedTag("p25",120);
+	speed_soup.SetNamedTag("p25",80);
 	speed_soup.SetNamedTag("c25",80);
 
 	speed_soup.SetNamedTag("Inited",true);
@@ -3326,6 +3361,13 @@ void GetDefaultSignalLimits()
 public void SetProperties(Soup soup)
 	{
 	//inherited(soup);
+	if(!ever_inited)
+		{
+		default_init = false;
+		Init(GetAsset());
+		default_init = true;
+		}
+
 	stationName = soup.GetNamedTag("stationName");
 
 // добавляем станцию светофора
@@ -3617,12 +3659,21 @@ public void SetProperties(Soup soup)
 	else
 		UpdateState(0,-1);
 
-
+		
+	SetMainStateSpeedLim();		// задание номинальных скоростей светофора
 	}
 
 
 public Soup GetProperties(void)
 	{
+	if(!ever_inited)
+		{
+		default_init = false;
+		Init(GetAsset());
+		default_init = true;
+		}
+
+
 	Soup retSoup = Constructors.NewSoup();
 	retSoup.SetNamedTag("train_open",train_open);
 	retSoup.SetNamedTag("shunt_open",shunt_open);
@@ -3766,7 +3817,14 @@ void OffMU(Message msg)
 
 public void Init(Asset asset)
 	{
-	inherited(asset);
+	if(default_init)
+		inherited(asset);
+
+	if(ever_inited)
+		return;
+
+	ever_inited = true;
+
 	GSO=new GSObject[1];
 	GSO[0] = cast<GSObject>me;
 	string[] return_str = new string[1];

@@ -8,6 +8,9 @@ StringTable ST;
 
 string Sig_name;
 
+Library  mainLib;
+GSObject[] GSO;
+
 
 
 public string GetPropertyType(string id)
@@ -68,22 +71,38 @@ void  LinkPropertyValue (string id)
 public void  SetProperties (Soup soup)
 {
 	inherited(soup);
-	MainSpeed=soup.GetNamedTagAsFloat("MainSpeed",22.22);
+/*	MainSpeed=soup.GetNamedTagAsFloat("MainSpeed",22.22);
 	ExtraSpeed=soup.GetNamedTagAsFloat("ExtraSpeed",22.22);
+*/
+
+
+	prev_speed_pass=soup.GetNamedTagAsFloat("prev_speed_pass",22.22);
+	prev_speed_cargo=soup.GetNamedTagAsFloat("prev_speed_cargo",22.22);
+
+
+	next_speed_pass=soup.GetNamedTagAsFloat("next_speed_pass",22.22);
+	next_speed_cargo=soup.GetNamedTagAsFloat("next_speed_cargo",22.22);
 
 
 	Sig_name=soup.GetNamedTag("Sig_name");
 
 
-	SetNewSpeed(ExtraSpeed, true);
+	SetSpeedLimit( next_speed_cargo );
+
+	//SetNewSpeed(ExtraSpeed, true);
 
 }
 
 public Soup  GetProperties (void)
 {
 	Soup ret=inherited();
-	ret.SetNamedTag("MainSpeed",MainSpeed);
+/*	ret.SetNamedTag("MainSpeed",MainSpeed);
 	ret.SetNamedTag("ExtraSpeed",ExtraSpeed);
+*/
+	ret.SetNamedTag("prev_speed_pass",prev_speed_pass);
+	ret.SetNamedTag("prev_speed_cargo",prev_speed_cargo);
+	ret.SetNamedTag("next_speed_pass",next_speed_pass);
+	ret.SetNamedTag("next_speed_cargo",next_speed_cargo);
 
 	ret.SetNamedTag("Sig_name",Sig_name);
 	return ret;	
@@ -96,6 +115,13 @@ public void Init(Asset asset)
 	inherited(asset);
 	ST=asset.GetStringTable();
 
+	GSO=new GSObject[1];
+	GSO[0] = cast<GSObject>me;
+	string[] return_str = new string[1];
+	return_str[0] = GetName();
+	KUID utilLibKUID = asset.LookupKUIDTable("main_lib");
+        mainLib = World.GetLibrary(utilLibKUID);
+	mainLib.LibraryCall("add_speed_object",return_str,GSO);
 }
 
 

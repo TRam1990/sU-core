@@ -10,6 +10,10 @@ int signal_number = 0;
 Soup signal_soup;
 
 
+Library  mainLib;
+GSObject[] GSO;
+
+
 
 public string GetPropertyType(string id)
 {
@@ -165,12 +169,15 @@ thread void InitSignals()
 			
 			if(temp)
 				{
-				temp.max_speed_pass = max_speed_pass;
-				temp.max_speed_cargo = max_speed_cargo;
+				temp.out_speed_pass = max_speed_pass;
+				temp.out_speed_cargo = max_speed_cargo;
+				temp.out_speed_set = true;
 
 				priority = temp.FindTrainPrior(false);
 
-				temp.SetSpeedLim( temp.GetCurrSpeedLim( temp.GetSpeedLim(priority), priority ) );
+				temp.ApplyNewSpeedLimit(-1);
+
+				//temp.SetSpeedLim( temp.GetCurrSpeedLim( temp.GetSpeedLim(priority), priority ) );
 				}
 			else	
 				inited = false;
@@ -245,6 +252,14 @@ public void Init(Asset asset)
 	ST=asset.GetStringTable();
 	
 	signal_soup = Constructors.NewSoup();
+
+	GSO=new GSObject[1];
+	GSO[0] = cast<GSObject>me;
+	string[] return_str = new string[1];
+	return_str[0] = GetName();
+	KUID utilLibKUID = asset.LookupKUIDTable("main_lib");
+        mainLib = World.GetLibrary(utilLibKUID);
+	mainLib.LibraryCall("add_speed_object",return_str,GSO);
 
 }
 
