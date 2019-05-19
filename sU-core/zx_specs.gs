@@ -32,12 +32,19 @@ class zxSpeedObject isclass Trigger
 
 class zxSpeedBoard isclass zxSpeedObject
 {
+	public int last_prior = 2;
+
+
 	public float prev_speed_pass;		// задаются при открытии предыдущего светофора
 	public float prev_speed_cargo;
 
 
 	public float next_speed_pass;		// задаются присоединённым светофором
 	public float next_speed_cargo;
+
+	public void UpdateSpeedboard(bool set_limit)
+		{
+		}
 };
 
 
@@ -233,32 +240,14 @@ class zxSignal isclass Signal, ALSN_Provider
 
 		if(zxSP)
 			{
-			if(out_speed_set)
+			if((tmp_max_speed_pass != zxSP.next_speed_pass) or
+			   (tmp_max_speed_cargo != zxSP.next_speed_cargo))
 				{
-				if(out_speed_pass < max_speed_pass)
-					zxSP.next_speed_pass = out_speed_pass;
-				else
-					zxSP.next_speed_pass = max_speed_pass;
+				zxSP.next_speed_pass = tmp_max_speed_pass;
+				zxSP.next_speed_cargo = tmp_max_speed_cargo;
 
-				if(out_speed_cargo < max_speed_cargo)
-					zxSP.next_speed_cargo = out_speed_cargo;
-				else
-					zxSP.next_speed_cargo = max_speed_cargo;
+				zxSP.UpdateSpeedboard(true);
 				}
-			else
-				{
-				zxSP.next_speed_pass = max_speed_pass;
-				zxSP.next_speed_cargo = max_speed_cargo;
-				}
-
-			zxSP.max_speed_pass = zxSP.prev_speed_pass;
-			zxSP.max_speed_cargo = zxSP.prev_speed_cargo;
-
-			if(zxSP.max_speed_pass < zxSP.next_speed_pass)		// наибольшее из ограничений
-				zxSP.max_speed_pass = zxSP.next_speed_pass;
-
-			if(zxSP.max_speed_cargo < zxSP.next_speed_cargo)
-				zxSP.max_speed_cargo = zxSP.next_speed_cargo;
 			}
 		}
 

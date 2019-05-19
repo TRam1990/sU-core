@@ -575,7 +575,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			mainLib.LibraryCall("mult_settings",null,GSO);
 		}
 
-	else if(reason==1 and train_open)
+	else if(reason==1 and (train_open or shunt_open or prigl_open))
 		{
 		string[] type_ToFind = new string[2];
 
@@ -585,20 +585,26 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 		type_ToFind[0]=priority;
 		type_ToFind[1]="-";
-		mainLib.LibraryCall("new_speed",type_ToFind,GSO);	// раньше, чем SetSignal()
 
-		if(!(Type & ST_PERMOPENED))
-			train_open = false;
-
-		CheckMySignal(true);
-
-		SetSignal(true);
-
-		if(IsServer)
-			mainLib.LibraryCall("mult_settings",null,GSO);
+		if((MainState != 0) and (MainState != zxIndication.STATE_B) and !(Type & zxSignal.ST_UNLINKED))
+			mainLib.LibraryCall("new_speed",type_ToFind,GSO);	// раньше, чем SetSignal()
 
 
-		mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
+		if(train_open)
+			{
+			if(!(Type & ST_PERMOPENED))
+				train_open = false;
+
+			CheckMySignal(true);
+	
+			SetSignal(true);
+
+			if(IsServer)
+				mainLib.LibraryCall("mult_settings",null,GSO);
+
+
+			mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
+			}
 		}
 
 	else if(reason==2)

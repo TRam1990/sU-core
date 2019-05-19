@@ -231,25 +231,29 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 				{
 				zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
 				
-				if(sig.max_speed_pass > 0)
+				if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B) and (sig.MainState != 0))
 					{
-					if(!any_speed)
+
+					if(sig.max_speed_pass > 0)
 						{
-						max_speed=sig.max_speed_pass;
-						any_speed=true;
+						if(!any_speed)
+							{
+							max_speed=sig.max_speed_pass;
+							any_speed=true;
+							}
+						else if(max_speed>sig.max_speed_pass)
+							max_speed=sig.max_speed_pass;
 						}
-					else if(max_speed>sig.max_speed_pass)
-						max_speed=sig.max_speed_pass;
-					}
-				else if(sig.speed_limit > 0)
-					{
-					if(!any_speed)
+					else if(sig.speed_limit > 0)
 						{
-						max_speed=sig.speed_limit;
-						any_speed=true;
+						if(!any_speed)
+							{
+							max_speed=sig.speed_limit;
+							any_speed=true;
+							}
+						else if(max_speed>sig.speed_limit)
+							max_speed=sig.speed_limit;
 						}
-					else if(max_speed>sig.speed_limit)
-						max_speed=sig.speed_limit;
 					}
 				}
 			}
@@ -296,25 +300,30 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 			if(train_con.state[i]>=2 and train_con.state[i]<=3)
 				{
 				zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
-				if(sig.max_speed_cargo > 0)
+
+				if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B) and (sig.MainState != 0))
 					{
-					if(!any_speed)
+
+					if(sig.max_speed_cargo > 0)
 						{
-						max_speed=sig.max_speed_cargo;
-						any_speed=true;
+						if(!any_speed)
+							{
+							max_speed=sig.max_speed_cargo;
+							any_speed=true;
+							}
+						else if(max_speed>sig.max_speed_cargo)
+							max_speed=sig.max_speed_cargo;
 						}
-					else if(max_speed>sig.max_speed_cargo)
-						max_speed=sig.max_speed_cargo;
-					}
-				else if(sig.speed_limit > 0)
-					{
-					if(!any_speed)
+					else if(sig.speed_limit > 0)
 						{
-						max_speed=sig.speed_limit;
-						any_speed=true;
+						if(!any_speed)
+							{
+							max_speed=sig.speed_limit;
+							any_speed=true;
+							}
+						else if(max_speed>sig.speed_limit)
+							max_speed=sig.speed_limit;
 						}
-					else if(max_speed>sig.speed_limit)
-						max_speed=sig.speed_limit;
 					}
 				}
 			}
@@ -365,6 +374,10 @@ void TrainCatcher(zxSignal entered_sign, Train curr_train)
 		number=Signals.Find(entered_sign.GetName());
 
 
+	if(entered_sign.GetName() != Signals.DBSE[number].a)
+		Interface.Exception("signal map name changed from "+Signals.DBSE[number].a+" to "+entered_sign.GetName());
+
+
 	if(!curr_train )  // поезд потерян
 		{
 		Interface.Exception("A train contains a bad vehicle!");
@@ -386,11 +399,8 @@ void TrainCatcher(zxSignal entered_sign, Train curr_train)
 		{
 		state1 = SearchForTrain(entered_sign, train_id, 2 );
 		high_speed = true;		
-		if(state1 == 0)
-			{
-			Interface.Print("Unable to find a train at "+ entered_sign.privateName + "@" + entered_sign.stationName);
-			return;	
-			}
+		if(state1 == 0)		// поезд найти не удалось
+			return;
 		}
 
 	int train_nmb=train_arr.Find(train_id);
@@ -535,18 +545,16 @@ void RemoveTrain(Message msg)
 
 
 
-void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // ожидание съезда поезда с сигнала, ловля Object,Leave
+void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int sign_numb, bool recheck) // ожидание съезда поезда с сигнала, ловля Object,Leave
 	{
-	int number=entered_sign.OwnId;
-	if(number<0)							// база светофоров ещё непроиндексирована
-		number=Signals.Find(entered_sign.GetName());
-
-	if(!curr_train)  // поезд потерян
+	if(!curr_train or (train_nmb < 0))  // поезд потерян
 		{
-		Interface.Print("A train was deletted or contains a bad vehicle!");
+		Interface.Print("A train "+ train_nmb + " was deletted or contains a bad vehicle!");
 
 		int n = entered_sign.TC_id.size();
 		int i=0;
+
+		bool any_removed = false;
 
 		while(i<n)						// сборщик мусора
 			{
@@ -557,78 +565,95 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, bool recheck) // ожид
 				int train_id1 = entered_sign.TC_id[i];
 				int train_nmb=train_arr.Find( train_id1);
 
-
-				entered_sign.RemoveTrainId(train_id1);
 				UpdateSignState(entered_sign,5,-1);
 
+				entered_sign.RemoveTrainId(train_id1);
+				
 				train_arr.DeleteElementByNmb(train_nmb);
+
+				any_removed = true;
 				}
 			else
 				i++;
 			}
 
+		if(!any_removed and (train_nmb >= 0) and (sign_numb >= 0))
+			{
+			TrainContainer train_con = cast<TrainContainer>(train_arr.DBSE[train_nmb].Object);
+
+			train_con.signal[sign_numb,sign_numb+1]=null;
+			train_con.state[sign_numb,sign_numb+1]=null;
+
+			UpdateSignState( entered_sign,5,-1);
+
+
+			if(train_con.signal.size()==0 and train_con.speed_object.size()==0)
+				train_arr.DeleteElementByNmb(train_nmb);
+			}
+
+
 		return;
 		}
 
 
-	int train_id =curr_train.GetId();
-	int train_nmb=train_arr.Find(train_id);
+	int train_id = train_arr.DBSE[train_nmb].a;
+	TrainContainer train_con = cast<TrainContainer>(train_arr.DBSE[train_nmb].Object);
 
-	if(train_nmb>=0)
+	if(sign_numb < 0)
 		{
-		TrainContainer train_con = cast<TrainContainer>(train_arr.DBSE[train_nmb].Object);
+		int number=entered_sign.OwnId;
+		if(number<0)							// база светофоров ещё непроиндексирована
+			number=Signals.Find(entered_sign.GetName());
 
 		int i = 0;
-		int num1 = -1;
 		int size1 = train_con.signal.size();
-		while(num1<0 and i<size1)
+		while(sign_numb<0 and i<size1)
 			{
 			if(train_con.signal[i] == number)
-				num1 = i;
+				sign_numb = i;
 			i++;
 			}
+		}
 
-		if(num1>=0)		// поезд действительно наехал на этот светофор
-			{
+	if(sign_numb>=0)		// поезд действительно наехал на этот светофор
+		{
 					// проверка того, что поезд только с одной стороны от светофора
 
-			int train_position = 0;
+		int train_position = 0;
 
-			if(recheck)
+		if(recheck)
+			{
+			int q = 1;
+			if(train_con.HighSpeed)
+				q = 2;
+
+			train_position = SearchForTrain(entered_sign, train_id, q );
+			}
+
+		if(!recheck or (train_position == 0 and train_con.state[sign_numb] == 0 ) )
+			{
+			train_con.signal[sign_numb,sign_numb+1]=null;
+			train_con.state[sign_numb,sign_numb+1]=null;
+
+
+			entered_sign.RemoveTrainId(train_id);
+
+			UpdateSignState( entered_sign,5,-1);
+
+			if(train_con.signal.size()==0 and train_con.speed_object.size()==0)
 				{
-				int q = 1;
-				if(train_con.HighSpeed)
-					q = 2;
+				train_arr.DeleteElementByNmb(train_nmb);
 
-				train_position = SearchForTrain(entered_sign, curr_train.GetId(), q );
+				Sniff(curr_train, "Train", "StartedMoving", false);
+				Sniff(curr_train, "Train", "StoppedMoving", false);
+				Sniff(curr_train, "Train", "Cleanup", false);
 				}
-
-			if(!recheck or (train_position == 0 and train_con.state[num1] == 0 ) )
+			else
 				{
-				train_con.signal[num1,num1+1]=null;
-				train_con.state[num1,num1+1]=null;
-
-
-				(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.RemoveTrainId(curr_train.GetId());
-
-
-				UpdateSignState( (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign,5,-1);
-
-				if(train_con.signal.size()==0 and train_con.speed_object.size()==0)
-					{
-					train_arr.DeleteElementByNmb(train_nmb);
-
-					Sniff(curr_train, "Train", "StartedMoving", false);
-					Sniff(curr_train, "Train", "StoppedMoving", false);
-					Sniff(curr_train, "Train", "Cleanup", false);
-					}
-				else
-					{
-					int priority = 2;
-					if(curr_train.GetTrainPriorityNumber() == 1)
-						priority = 1;
-					LowerMaxLimits(train_con, priority);
-					}
+				int priority = 2;
+				if(curr_train.GetTrainPriorityNumber() == 1)
+					priority = 1;
+				LowerMaxLimits(train_con, priority);
 				}
 			}
 		}
@@ -649,7 +674,16 @@ void TrainCleaner(Message msg) // ожидание съезда поезда с сигнала, ловля Object
 		return;
 		}
 
-	TrainCleaner( entered_sign, cast<Train>(msg.src), true );
+	int train_nmb = -1;
+
+	Train train_obj = cast<Train>(msg.src);
+	if(train_obj)
+		{
+		int train_id = train_obj.GetId();
+		train_nmb = train_arr.Find(train_id);
+		}
+
+	TrainCleaner( entered_sign, train_obj, train_nmb, -1, true );
 	}
 
 
@@ -871,15 +905,32 @@ public Soup GetProperties(void)
 	}
 
 
-thread void ReUpdateSignals()
+void ReUpdateSignals()
 	{
 	int i;
 	for(i=0;i<Signals.N;i++)
 		{
-		(cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.UpdateState(0, -1);
+		zxSignal sign = (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign;
+		sign.UpdateState(0, -1);
+		sign.OwnId = i;
 
 		if(i % 50)
 			Sleep(0.1);
+		}
+
+	Sleep(5);
+
+	for(i=0;i<Signals.N;i++)
+		{
+		zxSignal sign = (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign;
+		sign.OwnId = i;
+
+		Sniff(sign, "Object", "Enter", true);
+		Sniff(sign, "Object", "Leave", true);
+		Sniff(sign, "CTRL", "", true);
+
+		if(sign.GetName() != Signals.DBSE[i].a)
+			Interface.Exception("signal map name changed from "+Signals.DBSE[i].a+" to "+sign.GetName());
 		}
 	}
 
@@ -890,12 +941,14 @@ thread void SignalInitiation()			// запуск светофоров
 	while(!All_added)
 		{
 		All_added = true;
-		Sleep(1);
+		Sleep(2);
 		}
 
 	int i;
 	for(i=0;i<Signals.N;i++)
+		{
 		(cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.OwnId = i;
+		}
 	
 
 	if(TrainzScript.GetTrainzBuild() >= 98695)
@@ -919,7 +972,15 @@ thread void SpeedObjInitiation()			// запуск объектов ограничений скорости
 	int i;
 	for(i=0;i<SpeedObjects.N;i++)
 		(cast<zxSpeedObject>(SpeedObjects.DBSE[i].Object)).OwnId = i;
-	
+
+
+	if(TrainzScript.GetTrainzBuild() >= 98695)
+		{
+		Sleep(10);
+
+		for(i=0;i<SpeedObjects.N;i++)
+			(cast<zxSpeedObject>(SpeedObjects.DBSE[i].Object)).OwnId = i;
+		}
 	}
 
 
@@ -993,14 +1054,24 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 	Vehicle[] veh_arr;
 
 	GSTrackSearch GSTS = sig1.BeginTrackSearch(true);
-
 	MapObject MO = GSTS.SearchNext();
 
-	while(MO and GSTS.GetDistance()<(str_distance*multiplicator) and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
-		{
-		MO = GSTS.SearchNext();
-		}
+	bool train_found = false;
 
+	while(MO and GSTS.GetDistance()<(str_distance*multiplicator) and !train_found)
+		{
+		if(MO.isclass(Vehicle))
+			{
+			int curr_train_id = (cast<Vehicle>MO).GetMyTrain().GetId();
+
+			if(curr_train_id == train_id)
+				train_found = true;
+			else
+				MO = GSTS.SearchNext();
+			}
+		else
+			MO = GSTS.SearchNext();
+		}
 
 	bool before = false;
 	bool behind = false;
@@ -1008,8 +1079,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 	bool vel_dir = false;
 
 
-
-	if(MO and GSTS.GetDistance()<(str_distance*multiplicator) and (MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  )  ) 		// часть поезда за светофором
+	if(train_found and GSTS.GetDistance()<(str_distance*multiplicator))
 		{
 		behind = true;
 
@@ -1021,30 +1091,40 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 
 		if(vel_ty < 0)
 			vel_dir = true;
-
 		}
 
 
 	GSTS = sig1.BeginTrackSearch(false);
 	MO = GSTS.SearchNext();
 
-	while(MO and GSTS.GetDistance()<(str_distance*multiplicator) and !(MO.isclass(Vehicle) and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ))
+	train_found = false;
+
+
+	while(MO and GSTS.GetDistance()<(str_distance*multiplicator)  and !train_found)
 		{
-		MO = GSTS.SearchNext();
+		if(MO.isclass(Vehicle))
+			{
+			int curr_train_id = (cast<Vehicle>MO).GetMyTrain().GetId();
+
+			if(curr_train_id == train_id)
+				train_found = true;
+			else
+				MO = GSTS.SearchNext();
+			}
+		else
+			MO = GSTS.SearchNext();
 		}
 
 
-	if(MO and GSTS.GetDistance()<(str_distance*multiplicator) and (MO.isclass(Vehicle)  and (cast<Vehicle>MO).GetMyTrain().GetId() ==  train_id  ) )		// часть поезда перед светофором
+	if(train_found and GSTS.GetDistance()<(str_distance*multiplicator))
 		{
 		before = true;
 
 		veh1= cast<Vehicle>MO;
 		vel_ty = veh1.GetVelocity();
 
-
 		if(!GSTS.GetFacingRelativeToSearchDirection())
 			vel_ty = -vel_ty;
-
 
 		if(vel_ty < 0)
 			vel_dir = true;
@@ -1083,9 +1163,13 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 
 thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 	{
+	int q = 0;
+
 	while(!MP_NotServer)
 		{
 		int i;
+		int sleep_counter = 0;
+
 		for(i=0;i<train_arr.N;i++)
 			{
 			TrainContainer TC= cast<TrainContainer>(train_arr.DBSE[i].Object);
@@ -1093,11 +1177,11 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 
 			if(!TC.IsStopped)
 				{
-
 				int j = 0;
 				bool any_not_found = false;
 
-				while(j<TC.signal.size())
+
+				while((j<TC.signal.size()) and (i<train_arr.N))
 					{
 					zxSignal sig1 = (cast<zxSignalLink>(Signals.DBSE[ (TC.signal[j]) ].Object)).sign;
 
@@ -1124,7 +1208,6 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 						any_not_found = true;
 						}
 
-					//Interface.Log("usual check "+sig1.privateName + "@" + sig1.stationName+ " state "+state+" new state "+new_state);
 
 
 
@@ -1178,34 +1261,32 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 						}
 
 					if(new_state == 0 and state == 0)
-						{
-						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject(train_arr.DBSE[i].a) ) ) , false );
-						}
+						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject(train_arr.DBSE[i].a) ) ), i, j, false );
 					else
 						{
 						TC.state[j]=new_state;
 						j++;
 						}
 
+					sleep_counter++;
+					if(sleep_counter > 3)
+						{
+						sleep_counter = 0;
+						Sleep(0.01);
+						}
+
+
 					}
-				if(TC.HighSpeed and !any_not_found)
+				if(TC.HighSpeed and !any_not_found and (i<train_arr.N))
 					(cast<TrainContainer>(train_arr.DBSE[i].Object)).HighSpeed = false;
 
 				}
-			if((i % 10) == 9)
-				Sleep(0.05);
+				
 			}
 		Sleep(0.5);
+
 		}
 	}
-
-
-
-
-
-
-
-
 
 
 
@@ -1729,8 +1810,8 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 		else
 			{
-			zxSignalLink sign_link= new zxSignalLink();
-			number= Signals.AddElement(name,cast<GSObject>sign_link);
+			zxSignalLink sign_link2= new zxSignalLink();
+			number= Signals.AddElement(name,cast<GSObject>sign_link2);
 			}
 
 		if(number<0)
@@ -2124,7 +2205,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			Interface.Exception("signal with error!");
 			return "";
 			}
-		if( (sig1.MainState == zxIndication.STATE_B) or (sig1.Type & zxSignal.ST_UNLINKED) )
+		if((sig1.MainState == 0) or (sig1.MainState == zxIndication.STATE_B) or (sig1.Type & zxSignal.ST_UNLINKED) )
 			{
 			//Interface.Exception("error with call NewSpeed");
 			return "";
@@ -2146,7 +2227,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 
 		int i = 0;
-		while(MO and !( MO.isclass(Vehicle) and stringParam[1] != "-") and !(i>1 and MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  (!((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)) and (!((cast<zxSignal>MO).MainState == zxIndication.STATE_B))  ) )
+		while(MO and !( MO.isclass(Vehicle) and stringParam[1] != "-") )
 			{
 
 			if(GSTS.GetFacingRelativeToSearchDirection() == true)
@@ -2161,10 +2242,11 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						return "";
 
 
-					if(  (sig2.Type & zxSignal.ST_UNLINKED) or (sig2.MainState == zxIndication.STATE_B))
+					if((sig2.MainState == zxIndication.STATE_B) or (sig2.MainState == 0) or (sig2.Type & zxSignal.ST_UNLINKED))
 						{
 						if(sig2.GetSpeedLimit() != last_set_speed)
 							{
+							sig2.speed_limit = last_set_speed;
 							sig2.SetSpeedLimit(last_set_speed);
 
 							if(MP_started)
@@ -2176,7 +2258,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						sig1 = sig2;
 
 
-						if( (sig1.MainState == 0) or (sig1.MainState == zxIndication.STATE_R) or (sig1.MainState == zxIndication.STATE_Rx))
+						if((sig1.MainState == zxIndication.STATE_R) or (sig1.MainState == zxIndication.STATE_Rx))
 							return "";
 
 						sig1.ApplyNewSpeedLimit(prior);
@@ -2206,16 +2288,9 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 					temp_speed_board.prev_speed_cargo = sig1.max_speed_cargo;
 
 
-					temp_speed_board.max_speed_pass = temp_speed_board.prev_speed_pass;
-					temp_speed_board.max_speed_cargo = temp_speed_board.prev_speed_cargo;
+					temp_speed_board.UpdateSpeedboard(false);
 
-					// наибольшее из ограничений
-
-					if(temp_speed_board.max_speed_pass < temp_speed_board.next_speed_pass)
-						temp_speed_board.max_speed_pass = temp_speed_board.next_speed_pass;
-
-					if(temp_speed_board.max_speed_cargo < temp_speed_board.next_speed_cargo)
-						temp_speed_board.max_speed_cargo = temp_speed_board.next_speed_cargo;
+					temp_speed_board.last_prior = prior;
 
 
 					float curr_limit = temp_speed_board.max_speed_cargo;
@@ -2274,7 +2349,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						SendLimitSpeed(MO.GetName(), curr_limit, prior == 1);
 
 					}
-
 				}
 
 
@@ -2293,6 +2367,98 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 
 		}
+	else if(function=="new_speedboard_speed")
+		{
+		if(MP_NotServer)
+			return "";
+
+		zxSpeedBoard speedboard = cast<zxSpeedBoard>objectParam[0];
+
+		int prior = speedboard.last_prior;		
+
+		float curr_limit = speedboard.max_speed_cargo;
+		if(prior == 1)
+			curr_limit = speedboard.max_speed_pass;
+
+
+		GSTrackSearch GSTS = speedboard.BeginTrackSearch(true);
+		MapObject MO = GSTS.SearchNext();
+
+
+
+		while(MO and !(MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  !((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) and ((cast<zxSignal>MO).MainState != zxIndication.STATE_B) and ((cast<zxSignal>MO).MainState != 0)  ) )
+			{
+
+			if(GSTS.GetFacingRelativeToSearchDirection() == true)
+				{		
+
+				if(MO.isclass(zxSignal))
+					{
+					zxSignal sig2 = cast<zxSignal>MO;
+
+					if( sig2.train_is_l)
+						return "";
+
+					if(  (sig2.Type & zxSignal.ST_UNLINKED) or (sig2.MainState == zxIndication.STATE_B) or (sig2.MainState == 0))
+						{
+						if(sig2.GetSpeedLimit() != curr_limit)
+							{
+							sig2.speed_limit = curr_limit;
+							sig2.SetSpeedLimit(curr_limit);
+
+							if(MP_started)
+								SendNewSignalSpeed(MO.GetName(), sig2.speed_limit);
+							}
+						}
+					else
+						return "";
+					}
+
+	
+				else if(MO.isclass(zxSpeedLimit))
+					{
+					zxSpeedLimit temp_speed_limit = cast<zxSpeedLimit>MO;
+
+					if(!temp_speed_limit.is_limit_start)
+						{				// окончание ограничения скорости
+						temp_speed_limit.max_speed_pass = speedboard.max_speed_pass;
+						temp_speed_limit.max_speed_cargo = speedboard.max_speed_cargo;
+						}
+					// в остальных случаях задаётся текущее ограничение
+
+
+
+					float curr_limit = temp_speed_limit.max_speed_cargo;
+					if(prior == 1)
+						curr_limit = temp_speed_limit.max_speed_pass;
+					
+
+					temp_speed_limit.SetSpeedLimit(curr_limit);
+
+					if(MP_started)
+						SendLimitSpeed(MO.GetName(), curr_limit, prior == 1);
+
+					}
+
+				}
+
+
+			if(MO.isclass(Trackside) and !MO.isclass(Junction) and GSTS.GetDistance()>3000 )
+				{
+				bool temp_dir=GSTS.GetFacingRelativeToSearchDirection();
+				GSTS = (cast<Trackside>MO).BeginTrackSearch(temp_dir);
+				}
+
+
+			zxMarker zxMrk= cast<zxMarker>MO;
+			if(!zxMrk or !(zxMrk.trmrk_flag & zxMarker.MRENDAB))
+				MO = GSTS.SearchNext();
+			else
+				return "";
+			}
+		}
+
+
 	else if(function=="blink_start")
 		{
 		zxSignal sig1=cast<zxSignal>objectParam[0];

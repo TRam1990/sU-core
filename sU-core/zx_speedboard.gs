@@ -12,6 +12,25 @@ Library  mainLib;
 GSObject[] GSO;
 
 
+public void UpdateSpeedboard(bool set_limit)
+{
+	max_speed_pass = prev_speed_pass;
+	max_speed_cargo = prev_speed_cargo;
+
+	if(max_speed_pass < next_speed_pass)		// наибольшее из ограничений
+		max_speed_pass = next_speed_pass;
+
+	if(max_speed_cargo < next_speed_cargo)
+		max_speed_cargo = next_speed_cargo;
+
+	if(set_limit)
+		mainLib.LibraryCall("new_speedboard_speed",null,GSO);
+}
+
+
+
+
+
 
 public string GetPropertyType(string id)
 {
@@ -71,10 +90,6 @@ void  LinkPropertyValue (string id)
 public void  SetProperties (Soup soup)
 {
 	inherited(soup);
-/*	MainSpeed=soup.GetNamedTagAsFloat("MainSpeed",22.22);
-	ExtraSpeed=soup.GetNamedTagAsFloat("ExtraSpeed",22.22);
-*/
-
 
 	prev_speed_pass=soup.GetNamedTagAsFloat("prev_speed_pass",22.22);
 	prev_speed_cargo=soup.GetNamedTagAsFloat("prev_speed_cargo",22.22);
@@ -96,9 +111,7 @@ public void  SetProperties (Soup soup)
 public Soup  GetProperties (void)
 {
 	Soup ret=inherited();
-/*	ret.SetNamedTag("MainSpeed",MainSpeed);
-	ret.SetNamedTag("ExtraSpeed",ExtraSpeed);
-*/
+
 	ret.SetNamedTag("prev_speed_pass",prev_speed_pass);
 	ret.SetNamedTag("prev_speed_cargo",prev_speed_cargo);
 	ret.SetNamedTag("next_speed_pass",next_speed_pass);
