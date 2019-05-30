@@ -42,9 +42,9 @@ class BinarySortedArrayIntu
 				if(DBSE[i].a==a)
 					return i;
 
-				if( (DBSE[f].a < a) and (a < DBSE[i].a) )	// на отрезке от f до i
+				if(a < DBSE[i].a)	// на отрезке от f до i
 					b=i;
-				if( (DBSE[i].a < a) and (a < DBSE[b].a) )	// на отрезке от i до b
+				else			// на отрезке от i до b
 					f=i;
 				}
 
@@ -90,9 +90,9 @@ class BinarySortedArrayIntu
 					return i;
 					}
 
-				if( (DBSE[f].a < a) and (a < DBSE[i].a) )	// на отрезке от f до i
+				if(a < DBSE[i].a)	// на отрезке от f до i
 					b=i;
-				if( (DBSE[i].a < a) and (a < DBSE[b].a) )	// на отрезке от i до b
+				else			// на отрезке от i до b
 					f=i;
 				}
 

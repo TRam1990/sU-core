@@ -2027,28 +2027,20 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				if(!temp_signal.barrier_closed)
 					{
 
-
-					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (temp_signal.Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT) ) and (temp_signal.MainState == zxIndication.STATE_B))
+					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind)
 						{
-						int old_m_st = sig1.MainState;
 
-						if((temp_signal.Type & zxSignal.ST_ROUTER) and old_m_st != 0 and old_m_st != zxIndication.STATE_R and old_m_st != zxIndication.STATE_Rx and old_m_st != zxIndication.STATE_RWb and old_m_st != zxIndication.STATE_W)
+						if((temp_signal.Type & (zxSignal.ST_ROUTER+zxSignal.ST_OUT) ) and (temp_signal.MainState == zxIndication.STATE_B))
+							blue_signal=true;							// то ж-ж-ж не используем
+						else
 							{
-							sig1.Cur_prev=cast<zxSignal>MO;
-							stringParam[1] = marker+"";
-							return "";
+							if(temp_signal.shunt_open and (temp_signal.MainState == zxIndication.STATE_R or temp_signal.MainState == zxIndication.STATE_B) and ((stringParam[0])[1]!='+'))
+								temp_signal.UpdateState(0, -1);
+
+							if(temp_signal.Type & zxSignal.ST_UNLINKED )
+								temp_signal.UnlinkedUpdate(old_main_state);
 							}
-
-						blue_signal=true;							// то ж-ж-ж не используем
 						}
-
-					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and temp_signal.shunt_open and (temp_signal.MainState == zxIndication.STATE_R or temp_signal.MainState == zxIndication.STATE_B) and ((stringParam[0])[1]!='+'))
-						temp_signal.UpdateState(0, -1);
-
-
-					if(GSTS.GetFacingRelativeToSearchDirection() != dirToFind and (temp_signal.Type & zxSignal.ST_UNLINKED) )
-						temp_signal.UnlinkedUpdate(old_main_state);
-	
 					}
 				else
 					{

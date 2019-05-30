@@ -295,12 +295,19 @@ void CheckMySignal(bool train_entered)
 	mainLib.LibraryCall("find_next_signal",track_params,GSO);
 	int next_state = 0;
 
+	bool next_is_router = false;
+
 	if(Cur_next)
 		{
 		if (Cur_next.wrong_dir)
 			next_state = zxIndication.STATE_Rx;
 		else
+			{
 			next_state = Cur_next.MainState;
+
+			if(Cur_next.Type & ST_ROUTER)
+				next_is_router = true;
+			}
 		}
 	else
 		{
@@ -308,8 +315,33 @@ void CheckMySignal(bool train_entered)
 		(track_params[0])[0]='+';
 		}
 
-	MainState = LC.FindSignalState(((track_params[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(track_params[1]), train_open, shunt_open, prigl_open, (track_params[0])[1]=='+', next_state);
+	MainState = LC.FindSignalState(((track_params[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(track_params[1]), train_open, shunt_open, prigl_open, (track_params[0])[1]=='+', next_state); 
+	
+	if(next_is_router)
+		{
+		if(Cur_next.train_open and train_open and 
+				(next_state != zxIndication.STATE_R) and 
+				(next_state != zxIndication.STATE_B) and 
+				(MainState != zxIndication.STATE_R) and 
+				(MainState != zxIndication.STATE_Rx) and 
+				(MainState != zxIndication.STATE_RWb) )
+			{
+			Cur_next.MainState = zxIndication.STATE_B;
+			Cur_next.SetSignal(true);
 
+			mainLib.LibraryCall("find_next_signal",track_params,GSO);		// повторный поиск следующего сигнала, т.к. разделительный более не влияет
+
+			if(Cur_next)
+				next_state = Cur_next.MainState;
+			else
+				{
+				next_state = zxIndication.STATE_R;
+				(track_params[0])[0]='+';
+				}
+
+			MainState = LC.FindSignalState(((track_params[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(track_params[1]), train_open, shunt_open, prigl_open, (track_params[0])[1]=='+', next_state); 
+			}
+		}
 	}
 
 
@@ -523,8 +555,16 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			
 			mainLib.LibraryCall("find_prev_signal",track_params,GSO);
 
-			if((track_params[0])[0]=='+')
-				{					// если перед светофором есть поезд, открываем в обычном порядке
+			bool next_is_open = false;
+
+			if(Cur_prev and Cur_prev.train_open
+					and (Cur_prev.MainState != zxIndication.STATE_R)
+					and (Cur_prev.MainState != zxIndication.STATE_Rx)
+					and (Cur_prev.MainState != zxIndication.STATE_RWb))
+				next_is_open = true;
+
+			if((track_params[0])[0]=='+' or !next_is_open)
+				{					// если перед светофором есть поезд или следующий закрыт, открываем в обычном порядке
 				CheckMySignal(false);
 				CheckPrevSignals(false);
 				}

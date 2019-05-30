@@ -60,9 +60,9 @@ class BinarySortedArraySu
 				if(DBSE[i].a==a)
 					return i;
 
-				if( Comp_str_FL(DBSE[f].a,a) and Comp_str_FL(a,DBSE[i].a))	// на отрезке от f до i
+				if( Comp_str_FL(a,DBSE[i].a))	// на отрезке от f до i
 					b=i;
-				if( Comp_str_FL(DBSE[i].a,a) and Comp_str_FL(a,DBSE[b].a))	// на отрезке от i до b
+				else				// на отрезке от i до b
 					f=i;
 				}
 
@@ -109,9 +109,9 @@ class BinarySortedArraySu
 					return i;
 					}
 
-				if( Comp_str_FL(DBSE[f].a,a) and Comp_str_FL(a,DBSE[i].a))	// на отрезке от f до i
+				if(Comp_str_FL(a,DBSE[i].a))	// на отрезке от f до i
 					b=i;
-				if( Comp_str_FL(DBSE[i].a,a) and Comp_str_FL(a,DBSE[b].a))	// на отрезке от i до b
+				else				// на отрезке от i до b
 					f=i;
 				}
 

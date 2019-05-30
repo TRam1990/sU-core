@@ -262,10 +262,12 @@ class zxSignal isclass Signal, ALSN_Provider
 
 
 		if(Type & ST_UNLINKED)
+			{
 			if(!train_open and !shunt_open and (Type & (ST_IN | ST_OUT)) )
 				return true;
 			else
 				return false;
+			}
 		return true;
 		}
 
