@@ -23,6 +23,17 @@ public string GetPropertyType(string id)
 	return "link";
 }
 
+void SetLimitCaption()
+{
+	if(!is_limit_start)
+		return;
+
+	string s="/";
+	s = (int)(max_speed_pass*3.6)+s+(int)(max_speed_cargo*3.6);
+	SetFXNameText("limit_caption",s);
+}
+
+
 public void SetPropertyValue(string id, int val)
 {
 
@@ -30,6 +41,8 @@ public void SetPropertyValue(string id, int val)
 		max_speed_pass = val/3.6;
 	else if(id=="max_speed_cargo")
 		max_speed_cargo = val/3.6;
+
+	SetLimitCaption();
 }
 
 
@@ -78,8 +91,15 @@ public string GetDescriptionHTML(void)
 	if(is_limit_start)
 		{
 		str=str+HTMLWindow.StartTable("border='1'");
-		str=str+MakeLinkRow("live://property/max_speed_pass",ST.GetString("max_speed_pass"), max_speed_pass*3.6);//HTMLWindow.MakeLink("live://property/max_speed_pass",ST.GetString("max_speed_pass")+(int)(max_speed_pass*3.6))+"<br>";
-		str=str+MakeLinkRow("live://property/max_speed_cargo",ST.GetString("max_speed_cargo"), max_speed_cargo*3.6);//HTMLWindow.MakeLink("live://property/max_speed_cargo",ST.GetString("max_speed_cargo")+(int)(max_speed_cargo*3.6))+"<br><br>";
+		str=str+MakeLinkRow("live://property/max_speed_pass",ST.GetString("max_speed_pass"), max_speed_pass*3.6);
+		str=str+MakeLinkRow("live://property/max_speed_cargo",ST.GetString("max_speed_cargo"), max_speed_cargo*3.6);
+		str=str+HTMLWindow.EndTable();
+
+		str=str+HTMLWindow.StartTable("border='1'");
+		str=str+HTMLWindow.StartRow();
+		str=str+HTMLWindow.MakeCell(HTMLWindow.MakeLink("live://property/speed_copy",ST.GetString("str_speed_copy")), "bgcolor='#888888'");
+		str=str+HTMLWindow.MakeCell(HTMLWindow.MakeLink("live://property/speed_paste",ST.GetString("str_speed_paste")), "bgcolor='#888888'");
+		str=str+HTMLWindow.EndRow();
 		str=str+HTMLWindow.EndTable()+"<br>";
 
 		str=str+HTMLWindow.MakeLink("live://property/init_limit",ST.GetString("init_limit"))+"<br><br>";
@@ -98,7 +118,6 @@ public string GetDescriptionHTML(void)
 	str=str+"<br></body></html>";
         return str;
 }
-
 
 
 
@@ -140,6 +159,8 @@ void  LinkPropertyValue (string id)
 		is_limit_start = true;
 		SetMeshVisible("begin",true,0.0);
 		SetMeshVisible("end",false,0.0);
+
+		SetLimitCaption();
 		}
 	else if(id=="limit_end")
 		{
@@ -147,6 +168,15 @@ void  LinkPropertyValue (string id)
 		signal_number = 0;
 		SetMeshVisible("begin",false,0.0);
 		SetMeshVisible("end",true,0.0);		
+		}
+	else if(id=="speed_copy")
+		{
+		mainLib.LibraryCall("limit_speed_copy",null,GSO);
+		}
+	else if(id=="speed_paste")
+		{
+		mainLib.LibraryCall("limit_speed_paste",null,GSO);
+		SetLimitCaption();
 		}
 		
 }
@@ -190,8 +220,8 @@ thread void InitSignals()
 public void  SetProperties (Soup soup)
 {
 	inherited(soup);
-	max_speed_pass=soup.GetNamedTagAsFloat("max_speed_pass",22.22);
-	max_speed_cargo=soup.GetNamedTagAsFloat("max_speed_cargo",22.22);
+	max_speed_pass=soup.GetNamedTagAsFloat("max_speed_pass",22.23);
+	max_speed_cargo=soup.GetNamedTagAsFloat("max_speed_cargo",22.23);
 
 
 	is_limit_start=soup.GetNamedTagAsBool("is_limit_start",false);
@@ -200,6 +230,7 @@ public void  SetProperties (Soup soup)
 	{
 		SetMeshVisible("begin",true,0.0);
 		SetMeshVisible("end",false,0.0);
+		SetLimitCaption();
 	}
 	else
 	{
@@ -216,7 +247,7 @@ public void  SetProperties (Soup soup)
 		InitSignals();
 		}
 
-	float old_lim = soup.GetNamedTagAsFloat("old_vel",22.22);
+	float old_lim = soup.GetNamedTagAsFloat("old_vel",22.23);
 
 	if(old_lim > 0)
 		SetSpeedLimit(old_lim);

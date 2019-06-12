@@ -46,6 +46,8 @@ zxSignal_Cache[] sig_cache;
 
 bool objectRunningDriver = false;
 Soup temp_speed_sp;
+float limit_speed_pass = 22.23;
+float limit_speed_cargo = 22.23;
 string[] tabl_str;
 
 zxExtraLinkBase[] zxExtra;
@@ -279,7 +281,11 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 				if(train_con.state[i]>=2 and train_con.state[i]<=3)
 					{
 					zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
-					sig.SetSpeedLimit(max_speed);
+
+					if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B))
+						sig.SetSpeedLimit(max_speed);
+					else if(sig.GetSpeedLimit() > max_speed)
+						sig.SetSpeedLimit(max_speed);	
 					}
 				}
 			for(i=0;i<train_con.speed_object.size();i++)
@@ -350,7 +356,10 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 					{
 					zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
 					
-					sig.SetSpeedLimit(max_speed);
+					if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B))
+						sig.SetSpeedLimit(max_speed);
+					else if(sig.GetSpeedLimit() > max_speed)
+						sig.SetSpeedLimit(max_speed);	
 					}
 				}
 			for(i=0;i<train_con.speed_object.size();i++)
@@ -951,7 +960,7 @@ thread void SignalInitiation()			// запуск светофоров
 		}
 	
 
-	if(TrainzScript.GetTrainzBuild() >= 98695)
+	if(TrainzScript.GetTrainzVersion() >= 4.0)
 		ReUpdateSignals();
 
 	}
@@ -2181,7 +2190,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		sig1.speed_soup.Copy(temp_speed_sp);
 
-
 		}
 	else if(function=="new_speed")
 		{
@@ -2450,6 +2458,36 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 		}
 
+
+
+	else if(function=="limit_speed_copy")
+		{
+		zxSpeedLimit speed_limit = cast<zxSpeedLimit>objectParam[0];
+
+		if(!speed_limit )
+			{
+			Interface.Exception("speed limit with error!");
+			return "";
+			}
+
+		limit_speed_pass = speed_limit.max_speed_pass;
+		limit_speed_cargo = speed_limit.max_speed_cargo;
+
+		}
+	else if(function=="limit_speed_paste")
+		{
+		zxSpeedLimit speed_limit = cast<zxSpeedLimit>objectParam[0];
+
+		if(!speed_limit )
+			{
+			Interface.Exception("speed limit with error!");
+			return "";
+			}
+
+		speed_limit.max_speed_pass = limit_speed_pass;
+		speed_limit.max_speed_cargo = limit_speed_cargo;
+
+		}
 
 	else if(function=="blink_start")
 		{
