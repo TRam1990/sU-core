@@ -24,9 +24,9 @@ int mrn_Mark;
 256 конец АБ
 512 нет 4-значной АБ
 1024 маркер направления
-
 2048 маркер зелёного на 4АБ перед Жмиг/Змиг
-4096 маркер конца контролируемого участка
+4096 маркер зелёного перед двумя жёлтыми (нет жёлтого мигающего)
+8192 маркер конца контролируемого участка
 
 */
 
@@ -221,7 +221,7 @@ public void  SetProperties (Soup soup)
 
 			if(trmrk_mod == 8)
 				trmrk_flag = trmrk_flag | MRENDAB;
-				
+
 			}
 
 		}
@@ -243,7 +243,7 @@ public void Init(Asset asset)
 	inherited(asset);
 	ST=asset.GetStringTable();
 
-	tok = new string[14];
+	tok = new string[15];
 
 	tok[0] = "MRFT";
 	tok[1] = "MRT";
@@ -258,7 +258,8 @@ public void Init(Asset asset)
 	tok[10] = "MREND4AB";
 	tok[11] = "MRN";
 	tok[12] = "MRGR4ABFL";
-	tok[13] = "MRENDCONTROL";
+	tok[13] = "MRNOYLBL";
+	tok[14] = "MRENDCONTROL";
 
 	mrn_Mark = 11;
 

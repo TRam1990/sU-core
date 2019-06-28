@@ -1010,7 +1010,7 @@ public void Deswitch_span()
 }
 
 
-public bool Switch_span(bool obligatory)		// повернуть светофор в сторону этого светофора
+public bool Switch_span(bool obligatory)		// повернуть перегон в сторону этого светофора
 {
 	if(MP_NotServer)
 		return true;
@@ -1093,6 +1093,8 @@ public bool Switch_span(bool obligatory)		// повернуть светофор в сторону этого 
 	wrong_dir=false;
 
 	UpdateState(0, -1);
+
+	mainLib.LibraryCall("span_dir_changed",null,GSO);
 
 
 	if(IsServer)
@@ -3071,6 +3073,8 @@ public string GetContentViewDetails()
  		)
  	,"width=100%");
 
+//	s1=s1+"<br>"+hw.MakeLink("live://log_databases","Log debug");
+
 
  	return s1;
 }
@@ -3091,6 +3095,11 @@ public void ChangeText(Message msg)
 			zxSignal zxs2 = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
 			zxs2.Switch_span(false);
 			}
+		if(tok2[0]=="log_databases")
+			{
+			mainLib.LibraryCall("log_databases",null,null);
+			}
+
 		PostMessage(me,"RefreshBrowser","",0.5);
 		}
 
@@ -3161,7 +3170,7 @@ public void ViewDetails(Message msg)
         int y=Math.Rand(0,20);
         mn.SetWindowRect(100+x,100+y,400+x,450+y);
         ShowBrowser();
- }
+}
 
 public void RefreshBrowser(Message msg)
 {
@@ -3220,9 +3229,6 @@ void CreateLinsArr(string s, bool[] ex_lins, int[] pos_lins)
 
 	for(i=0;i<10;i++)
 		{
-
-
-
 		if(s[i]=='-' or s[i]=='n')
 			ex_lins[i]=false;
 		else

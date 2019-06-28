@@ -413,7 +413,8 @@ public int trmrk_mod;
 512 нет 4-значной АБ
 1024 маркер направления
 2048 маркер зелёного на 4АБ перед Жмиг/Змиг
-4096 маркер конца контролируемого участка
+4096 маркер зелёного перед двумя жёлтыми (нет жёлтого мигающего)
+8192 маркер конца контролируемого участка
 
 */
 
@@ -430,7 +431,8 @@ public int trmrk_mod;
 	public define int MREND4AB	= 512;
 	public define int MRN		= 1024;
 	public define int MRGR4ABFL	= 2048;
-	public define int MRENDCONTROL	= 4096;
+	public define int MRNOYLBL	= 4096;
+	public define int MRENDCONTROL	= 8192;
 
 	public int trmrk_flag;
 
@@ -444,6 +446,10 @@ public int trmrk_mod;
 class zxExtraLinkBase
 {
 	public void UpdateSignalState(zxSignal zxsign, int NewState, int priority)
+		{
+		}
+
+	public void UpdateSignalSpanDirection(zxSignal zxsign)
 		{
 		}
 };

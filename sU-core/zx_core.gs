@@ -8,6 +8,7 @@ include "xtrainzs.gs"
 include "xtrainz03intu.gs"
 include "multiplayersessionmanager.gs"
 
+include "Interface.gs"
 
 include "zx_specs.gs"
 include "zx_mrk.gs"
@@ -202,20 +203,47 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 	}
 
 
-void LogTrainIdS(int number)
+void LogTrainIdS()
 	{
-	string log1="";
+	int i;
+	for(i=0; i<Signals.N; i++)
+		{
+		string log1="";
 
-	zxSignal sig_linked = (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign;
+		zxSignal sig_linked = (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign;
 
-	int n = sig_linked.TC_id.size();
+		int j;
+		for(j=0;j<sig_linked.TC_id.size();j++)
+			log1=log1+" "+sig_linked.TC_id[j];
+
+		Interface.Log("signal! "+sig_linked.GetName()+log1);
+		}
+	}
+
+
+void LogAllTrains()
+	{
 	int i;
 
-	for(i=0;i<n;i++)
-		log1=log1+" "+sig_linked.TC_id[i];
+	for(i=0; i<train_arr.N; i++)
+		{
+		string log1="train "+train_arr.DBSE[i].a;
+	
+		TrainContainer train_con = cast<TrainContainer>(train_arr.DBSE[i].Object);
 
-	Interface.Log("signal! "+sig_linked.GetName()+log1);
+
+		log1=log1+" "+train_con.HighSpeed+" "+train_con.signal.size()+" ";
+
+		int j;
+		for(j=0;j<train_con.signal.size();j++)
+			{
+			log1=log1+" "+ (cast<zxSignalLink>(Signals.DBSE[ train_con.signal[j] ]).Object).sign.GetName();
+			}
+
+		Interface.Log(log1);
+		}
 	}
+
 
 
 
@@ -418,7 +446,7 @@ void TrainCatcher(zxSignal entered_sign, Train curr_train)
 		{
 		TrainContainer train_con = new TrainContainer();
 
-		train_nmb= train_arr.AddElement(train_id,cast<GSObject>train_con);
+		train_nmb = train_arr.AddElement(train_id,cast<GSObject>train_con);
 		if(train_nmb<0)
 			{
 			Interface.Exception("Can't add train "+train_id);
@@ -647,6 +675,9 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int si
 
 			entered_sign.RemoveTrainId(train_id);
 
+
+		//	Interface.Print("train "+train_arr.DBSE[train_nmb].a+" left from "+entered_sign.GetName());
+
 			UpdateSignState( entered_sign,5,-1);
 
 			if(train_con.signal.size()==0 and train_con.speed_object.size()==0)
@@ -666,6 +697,8 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int si
 				}
 			}
 		}
+	else
+		Interface.Print("Signal not found for train "+train_arr.DBSE[train_nmb].a);
 	}
 
 
@@ -1710,93 +1743,13 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		BlinkProcessing();
 		}
 
+	
 	if(function=="name_str")
 		{
 		int i;
 		for(i=0;i<10;i++)
 			stringParam[i] = tabl_str[i];
 		}
-
-	else if(function=="add_station")		// запрос на добавление станции
-		{
-
-		if(Stations.AddElement(stringParam[0]) < 0)
-			{
-			return "false";
-			}
-
-		return "true";
-		}
-
-	else if(function=="delete_station")		// запрос на удаление станции
-		{
-		string stationnamedel = ""+stringParam[0];
-		Stations.DeleteElement(stationnamedel);
-
-		if(last_edited_station == stationnamedel)
-			last_edited_station = Stations.SE[0];
-
-
-		if(Stations.N>0);
-			{
-			string temp = Stations.SE[0];
-
-			int i;
-			for(i=0;i<Signals.N;i++)
-				{
-				if((cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.stationName == stationnamedel)
-					(cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.stationName = temp + "";
-
-				}
-			}
-		}
-
-
-	else if(function=="station_exists")		// запрос на наличие станции
-		{
-		int number= Stations.Find( stringParam[0] );
-		if(number>=0)
-			{
-			return "true";
-			}
-		return "false";
-
-		}
-	else if(function=="station_list")		// запрос на список станций
-		{
-		int i;
-
-		for(i=0;i<Stations.N;i++)
-			stringParam[i]=Stations.SE[i];
-
-		return "";
-		}
-
-
-	else if(function=="station_count")		// запрос на список станций
-		{
-		return Stations.N+"";
-		}
-
-
-	else if(function=="station_by_id")		// запрос на список станций
-		{
-		return Stations.SE[( Str.ToInt(stringParam[0]) )];
-		}
-
-
-	else if(function=="station_edited_set")		// задание редактируемой станции
-		{
-		last_edited_station = stringParam[0];
-
-		return "";
-		}
-
-	else if(function=="station_edited_find")		// задание редактируемой станции
-		{
-		return last_edited_station;
-		}
-
 
 	else if(function=="add_signal")		// механизм добавления сигнала
 		{
@@ -1844,7 +1797,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		return "true";
 
 		}
-
 
 
 	else if(function=="add_speed_object")		// механизм добавления сигнала
@@ -2131,8 +2083,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		return "false";
 		}
 
-
-
 	else if(function=="mult_settings")
 		{
 		zxSignal sig1=cast<zxSignal>objectParam[0];
@@ -2140,8 +2090,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		if(sig1)
 			SendNewSignalSettings(sig1.GetName(), sig1.MainState, sig1.speed_limit, sig1.GetSignalState(), sig1.train_open, sig1.shunt_open, sig1.wrong_dir, sig1.barrier_closed);
 		}
-
-
 
 	else if(function=="mult_speed")
 		{
@@ -2151,46 +2099,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			SendNewSignalSpeed(sig1.GetName(), sig1.speed_limit);
 		}
 
-
-
-
-	else if(function=="speed_copy")
-		{
-		zxSignal sig1=cast<zxSignal>objectParam[0];
-
-		if(!sig1 )
-			{
-			Interface.Exception("signal with error!");
-			return "";
-			}
-
-		if(!temp_speed_sp)
-			temp_speed_sp = Constructors.NewSoup();
-
-		temp_speed_sp.Copy(sig1.speed_soup);
-
-
-		}
-	else if(function=="speed_paste")
-		{
-		if(!temp_speed_sp)
-			return "";
-
-
-		zxSignal sig1=cast<zxSignal>objectParam[0];
-
-		if(!sig1 )
-			{
-			Interface.Exception("signal with error!");
-			return "";
-			}
-
-		if(sig1.speed_soup.IsLocked())
-			sig1.speed_soup = Constructors.NewSoup();
-
-		sig1.speed_soup.Copy(temp_speed_sp);
-
-		}
 	else if(function=="new_speed")
 		{
 
@@ -2458,6 +2366,155 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 		}
 
+	else if(function=="blink_start")
+		{
+		zxSignal sig1=cast<zxSignal>objectParam[0];
+
+		int old_size = blink_sig.size();
+		int i, old_pos = -1;
+
+		for(i = 0; (i < old_size) and (old_pos < 0); i++)
+			{
+			if(blink_sig[i] == sig1)
+				old_pos = i;
+			}
+
+		if(old_pos < 0)
+			{
+			blink_sig[old_size,old_size] = new zxSignal[1];
+			blink_sig[old_size]= sig1;
+			}
+
+		}
+
+	else if(function=="span_dir_changed")
+		{
+		zxSignal sig1=cast<zxSignal>objectParam[0];
+
+		if(zxExtra.size() > 0)
+			{
+			int i;
+			for(i=0;i<zxExtra.size();i++)
+				zxExtra[i].UpdateSignalSpanDirection(sig1);
+			}
+		}
+
+
+	else if(function=="speed_copy")
+		{
+		zxSignal sig1=cast<zxSignal>objectParam[0];
+
+		if(!sig1 )
+			{
+			Interface.Exception("signal with error!");
+			return "";
+			}
+
+		if(!temp_speed_sp)
+			temp_speed_sp = Constructors.NewSoup();
+
+		temp_speed_sp.Copy(sig1.speed_soup);
+
+
+		}
+	else if(function=="speed_paste")
+		{
+		if(!temp_speed_sp)
+			return "";
+
+
+		zxSignal sig1=cast<zxSignal>objectParam[0];
+
+		if(!sig1 )
+			{
+			Interface.Exception("signal with error!");
+			return "";
+			}
+
+		if(sig1.speed_soup.IsLocked())
+			sig1.speed_soup = Constructors.NewSoup();
+
+		sig1.speed_soup.Copy(temp_speed_sp);
+
+		}
+
+
+	else if(function=="add_station")		// запрос на добавление станции
+		{
+
+		if(Stations.AddElement(stringParam[0]) < 0)
+			{
+			return "false";
+			}
+
+		return "true";
+		}
+
+	else if(function=="delete_station")		// запрос на удаление станции
+		{
+		string stationnamedel = ""+stringParam[0];
+		Stations.DeleteElement(stationnamedel);
+
+		if(last_edited_station == stationnamedel)
+			last_edited_station = Stations.SE[0];
+
+
+		if(Stations.N>0);
+			{
+			string temp = Stations.SE[0];
+
+			int i;
+			for(i=0;i<Signals.N;i++)
+				{
+				if((cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.stationName == stationnamedel)
+					(cast<zxSignalLink>(Signals.DBSE[i].Object)).sign.stationName = temp + "";
+
+				}
+			}
+		}
+
+	else if(function=="station_exists")		// запрос на наличие станции
+		{
+		int number= Stations.Find( stringParam[0] );
+		if(number>=0)
+			{
+			return "true";
+			}
+		return "false";
+
+		}
+	else if(function=="station_list")		// запрос на список станций
+		{
+		int i;
+
+		for(i=0;i<Stations.N;i++)
+			stringParam[i]=Stations.SE[i];
+
+		return "";
+		}
+
+	else if(function=="station_count")		// запрос на список станций
+		{
+		return Stations.N+"";
+		}
+
+
+	else if(function=="station_by_id")		// запрос на список станций
+		{
+		return Stations.SE[( Str.ToInt(stringParam[0]) )];
+		}
+
+	else if(function=="station_edited_set")		// задание редактируемой станции
+		{
+		last_edited_station = stringParam[0];
+
+		return "";
+		}
+
+	else if(function=="station_edited_find")		// задание редактируемой станции
+		{
+		return last_edited_station;
+		}
 
 
 	else if(function=="limit_speed_copy")
@@ -2487,42 +2544,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		speed_limit.max_speed_pass = limit_speed_pass;
 		speed_limit.max_speed_cargo = limit_speed_cargo;
 
-		}
-
-	else if(function=="blink_start")
-		{
-		zxSignal sig1=cast<zxSignal>objectParam[0];
-
-		int old_size = blink_sig.size();
-		int i, old_pos = -1;
-
-		for(i = 0; (i < old_size) and (old_pos < 0); i++)
-			{
-			if(blink_sig[i] == sig1)
-				old_pos = i;
-			}
-
-		if(old_pos < 0)
-			{
-			blink_sig[old_size,old_size] = new zxSignal[1];
-			blink_sig[old_size]= sig1;
-			}
-
-		}
-
-	else if(function=="add_extra_obj")
-		{
-		int old_size = zxExtra.size();
-		zxExtra[old_size,old_size] = new zxExtraLinkBase[1];
-		zxExtra[old_size] = cast<zxExtraLinkBase>(cast<zxExtraLink>objectParam[0]);
-		}
-
-
-	else if(function=="add_extra_obj_base")
-		{
-		int old_size = zxExtra.size();
-		zxExtra[old_size,old_size] = new zxExtraLinkBase[1];
-		zxExtra[old_size] = (cast<zxExtraLinkContainer>objectParam[0]).extra_link;
 		}
 
 
@@ -2760,6 +2781,32 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 				}
 			}
 		}
+
+	else if(function=="add_extra_obj")
+		{
+		int old_size = zxExtra.size();
+		zxExtra[old_size,old_size] = new zxExtraLinkBase[1];
+		zxExtra[old_size] = cast<zxExtraLinkBase>(cast<zxExtraLink>objectParam[0]);
+		}
+
+
+	else if(function=="add_extra_obj_base")
+		{
+		int old_size = zxExtra.size();
+		zxExtra[old_size,old_size] = new zxExtraLinkBase[1];
+		zxExtra[old_size] = (cast<zxExtraLinkContainer>objectParam[0]).extra_link;
+		}
+
+	else if(function=="log_databases")
+		{
+		Interface.Log("signals");
+		LogTrainIdS();
+		Interface.Log("trains");
+		LogAllTrains();
+		}
+
+
+
 
 
 	return "";

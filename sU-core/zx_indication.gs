@@ -1122,6 +1122,9 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 			if(possible_sig[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
 				return zxIndication.STATE_YbY;
 
+			if((trmrk_flag & zxMarker.MRNOYLBL) and possible_sig[zxIndication.STATE_G])	// зелёный
+				return zxIndication.STATE_G;
+
 			if(possible_sig[zxIndication.STATE_Yb])		// жёлтый мигающий
 				return zxIndication.STATE_Yb;
 
@@ -1136,6 +1139,8 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 			if((trmrk_flag & zxMarker.MRT18) and possible_sig[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
 				return zxIndication.STATE_GbYWL;
 
+			if((trmrk_flag & zxMarker.MRNOYLBL) and possible_sig[zxIndication.STATE_GW])	// зелёный + белый
+				return zxIndication.STATE_GW;
 
 			if(possible_sig[zxIndication.STATE_YbW])		// жёлтый миг. + белый
 				return zxIndication.STATE_YbW;
@@ -1152,6 +1157,9 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 
 		else if((trmrk_flag & zxMarker.MRDAB) and possible_sig[zxIndication.STATE_GG])	// на неправильный путь с АБ
 			{
+			if((trmrk_flag & zxMarker.MRNOYLBL) and possible_sig[zxIndication.STATE_G])	// зелёный
+				return zxIndication.STATE_G;
+
 			if(possible_sig[zxIndication.STATE_Yb])		// жёлтый мигающий
 				return zxIndication.STATE_Yb;
 
@@ -1164,7 +1172,7 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 				return zxIndication.STATE_YbY;
 
 
-			if(possible_sig[zxIndication.STATE_G])		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
+			if((trmrk_flag & zxMarker.MRNOYLBL) and possible_sig[zxIndication.STATE_G])	// зелёный
 				return zxIndication.STATE_G;
 
 
@@ -1197,6 +1205,8 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 			}
 		else					// модификаций нет
 			{
+			if((trmrk_flag & zxMarker.MRNOYLBL) and possible_sig[zxIndication.STATE_G])	// зелёный
+				return zxIndication.STATE_G;
 
 			if(possible_sig[zxIndication.STATE_Yb])		// жёлтый мигающий
 				return zxIndication.STATE_Yb;
@@ -1219,6 +1229,9 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 	  (trmrk_flag & NoState)== 0)
 
 		{
+		if((trmrk_flag & zxMarker.MRNOYLBL) and possible_sig[zxIndication.STATE_G])	// зелёный
+			return zxIndication.STATE_G;
+
 		if(possible_sig[zxIndication.STATE_Gb])		// зелёный мигающий
 			return zxIndication.STATE_Gb;
 
@@ -1239,6 +1252,9 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 		{
 		if((trmrk_flag & zxMarker.MRT18) and possible_sig[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
 			return zxIndication.STATE_GbYWL;
+
+		if((trmrk_flag & zxMarker.MRNOYLBL) and possible_sig[zxIndication.STATE_GW])	// зелёный + белый
+			return zxIndication.STATE_GW;
 
 		if(possible_sig[zxIndication.STATE_YbW])		// жёлтый миг. + белый
 			return zxIndication.STATE_YbW;
