@@ -70,6 +70,7 @@ class zxSignal isclass Signal, ALSN_Provider
 	public define int ST_PERMOPENED	= 32;		// постоянно открытый в поездном, напр. проходной
 	public define int ST_SHUNT	= 64;		// неспособный работать в поездном порядке
 	public define int ST_PROTECT	= 128;		// заградительный
+	public define int ST_FLOAT_BLOCK	= 256;	// подвижные блок участки
 
 
 	public int OwnId;		// идентификатор, каждый раз новый

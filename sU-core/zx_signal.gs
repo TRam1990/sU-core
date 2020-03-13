@@ -265,7 +265,7 @@ public void CheckPrevSignals(bool no_train)
 	int MyState = MainState;
 	if (wrong_dir)
 		MyState = zxIndication.STATE_Rx;
-	int Other_MainState = LC.FindSignalState((track_params[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(track_params[1]), Cur_prev.train_open, Cur_prev.shunt_open, Cur_prev.prigl_open, (track_params[0])[1]=='+', MyState);
+	int Other_MainState = LC.FindSignalState(Cur_prev, (track_params[0])[0]=='+', Other_OldState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', MyState, Type & ST_FLOAT_BLOCK);
 
 
 	if( ((track_params[0])[0]!='+' or no_train) and Other_OldState != Other_MainState)
@@ -296,6 +296,7 @@ void CheckMySignal(bool train_entered)
 	int next_state = 0;
 
 	bool next_is_router = false;
+	bool next_is_float = false;
 
 	if(Cur_next)
 		{
@@ -308,6 +309,10 @@ void CheckMySignal(bool train_entered)
 			if(Cur_next.Type & ST_ROUTER)
 				next_is_router = true;
 			}
+		if (Cur_next.Type & ST_FLOAT_BLOCK)
+			{
+			next_is_float = true;
+			}
 		}
 	else
 		{
@@ -315,7 +320,7 @@ void CheckMySignal(bool train_entered)
 		(track_params[0])[0]='+';
 		}
 
-	MainState = LC.FindSignalState(((track_params[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(track_params[1]), train_open, shunt_open, prigl_open, (track_params[0])[1]=='+', next_state); 
+	MainState = LC.FindSignalState(me, ((track_params[0])[0]=='+') or train_entered, MainState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', next_state, next_is_float);
 	
 	if(next_is_router)
 		{
@@ -339,7 +344,7 @@ void CheckMySignal(bool train_entered)
 				(track_params[0])[0]='+';
 				}
 
-			MainState = LC.FindSignalState(((track_params[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(track_params[1]), train_open, shunt_open, prigl_open, (track_params[0])[1]=='+', next_state); 
+			MainState = LC.FindSignalState(me, ((track_params[0])[0]=='+') or train_entered, MainState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', next_state, Cur_next.Type & ST_FLOAT_BLOCK);
 			}
 		}
 	}
@@ -444,7 +449,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			SetSignalState(GREEN, "");
 
 			if(!(Type & ST_UNLINKED))
-				MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
+				MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false);
 			else
 				MainState = 0;
 
@@ -532,7 +537,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			shunt_open = false;
 			prigl_open = false;
 			
-			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
+			MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false);
 
 			SetSignal(true);
 			ApplyNewSpeedLimit(-1);
@@ -689,7 +694,7 @@ public void UnlinkedUpdate(int mainstate)
 
 
 		if(ex_sgn[zxIndication.STATE_R] or ex_sgn[zxIndication.STATE_Y])
-			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, false, false, false, mainstate);
+			MainState = LC.FindSignalState(me, false, 0, 0, false, mainstate, false);
 		else if(ex_sgn[zxIndication.STATE_G])
 			{		// является повторительным, т.к. имеет только зелёную линзу
 			if(mainstate == 0 or mainstate == zxIndication.STATE_R  or mainstate == zxIndication.STATE_Rx  or mainstate == zxIndication.STATE_RWb or mainstate == zxIndication.STATE_W  or mainstate == zxIndication.STATE_WW)
@@ -1850,6 +1855,7 @@ public string GetDescriptionHTML(void)
  	s=s+MakeCheckBoxRow("live://property/type/PERMOPENED",STT.GetString("PERMOPENED_flag"), Type & ST_PERMOPENED);
  	s=s+MakeCheckBoxRow("live://property/type/SHUNT",STT.GetString("SHUNT_flag"), Type & ST_SHUNT);
  	s=s+MakeCheckBoxRow("live://property/type/ZAGRAD",STT.GetString("ZAGRAD_flag"), Type & ST_PROTECT);
+ 	s=s+MakeCheckBoxRow("live://property/type/FLOAT",STT.GetString("FLOAT_flag"), Type & ST_FLOAT_BLOCK);
 
 	s=s+hw.EndTable();
 
@@ -2382,7 +2388,7 @@ public void SetPropertyValue(string id, string val)
 		Type = FindTypeByLens(ex_lins);
 
 		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);			//  генерируем розжиг
-		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
+		MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false);
  		}
  }
 
@@ -2478,7 +2484,7 @@ public void LinkPropertyValue(string id)
 				}
 			}
 
-		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
+		MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false);
 
 		}
 	else if(id=="abtype")
@@ -2736,6 +2742,14 @@ public void LinkPropertyValue(string id)
 					protect_soup = Constructors.NewSoup();
 
 					}
+				}
+
+			if(str_a[1]=="FLOAT")
+				{
+				if(Type & ST_FLOAT_BLOCK)
+					Type = Type - ST_FLOAT_BLOCK;
+				else
+					Type = Type + ST_FLOAT_BLOCK;
 				}
 
 			}
