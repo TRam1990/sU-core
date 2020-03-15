@@ -29,7 +29,7 @@ public BinarySortedStrings ProtectGroups;									//массив групп заградительных
 
 MultiplayerSessionManager mp_lib;
 
-public float str_distance = 40.0;
+public float str_distance = 60.0;
 
 string err;
 string last_edited_station = "";
@@ -437,7 +437,10 @@ void TrainCatcher(zxSignal entered_sign, Train curr_train)
 		state1 = SearchForTrain(entered_sign, train_id, 2 );
 		high_speed = true;		
 		if(state1 == 0)		// поезд найти не удалось
+			{
+			Interface.Exception("Can't find train started motion "+train_id);
 			return;
+			}
 		}
 
 	int train_nmb=train_arr.Find(train_id);
@@ -957,7 +960,7 @@ void ReUpdateSignals()
 		sign.OwnId = i;
 
 		if(i % 50)
-			Sleep(0.1);
+			Sleep(0.01);
 		}
 
 	Sleep(5);
@@ -965,14 +968,23 @@ void ReUpdateSignals()
 	for(i=0;i<Signals.N;i++)
 		{
 		zxSignal sign = (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign;
-		sign.OwnId = i;
 
-		Sniff(sign, "Object", "Enter", true);
-		Sniff(sign, "Object", "Leave", true);
-		Sniff(sign, "CTRL", "", true);
+		if(sign != null)
+			{
 
-		if(sign.GetName() != Signals.DBSE[i].a)
-			Interface.Exception("signal map name changed from "+Signals.DBSE[i].a+" to "+sign.GetName());
+			sign.OwnId = i;
+
+			Sniff(sign, "Object", "Enter", true);
+			Sniff(sign, "Object", "Leave", true);
+			Sniff(sign, "CTRL", "", true);
+	
+			if(sign.GetName() != Signals.DBSE[i].a)
+				Interface.Exception("signal map name changed from "+Signals.DBSE[i].a+" to "+sign.GetName());
+			}
+
+		if(i % 50)
+			Sleep(0.01);
+
 		}
 	}
 
@@ -1131,7 +1143,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 		if(GSTS.GetFacingRelativeToSearchDirection())
 			vel_ty = -vel_ty;
 
-		if(vel_ty < 0)
+		if(vel_ty < -0.00001)
 			vel_dir = true;
 		}
 
@@ -1168,7 +1180,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 		if(!GSTS.GetFacingRelativeToSearchDirection())
 			vel_ty = -vel_ty;
 
-		if(vel_ty < 0)
+		if(vel_ty < -0.00001)
 			vel_dir = true;
 		}
 
