@@ -265,12 +265,32 @@ public void CheckPrevSignals(bool no_train)
 	int MyState = MainState;
 	if (wrong_dir)
 		MyState = zxIndication.STATE_Rx;
-	int Other_MainState = LC.FindSignalState(Cur_prev, (track_params[0])[0]=='+', Other_OldState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', MyState, Type & ST_FLOAT_BLOCK);
+	int Other_MainState = LC.FindSignalState(Cur_prev, (track_params[0])[0]=='+', Other_OldState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', MyState, Type & ST_FLOAT_BLOCK, RCCount);
 
+	int newOtherRCCount = 0;
+	if ((track_params[0])[0] != '+') {
+		if (Cur_prev.Type & ST_FLOAT_BLOCK) {
+			newOtherRCCount = RCCount + 1;
+		}
+		else {
+			if ( Other_MainState == zxIndication.STATE_R or Other_MainState == zxIndication.STATE_RWb or ( (Other_MainState == zxIndication.STATE_W or Other_MainState == zxIndication.STATE_WW ) and Cur_prev.Type & (ST_IN+ST_OUT+ST_ROUTER) ) )
+				newOtherRCCount = distanceRY;
+			else if ( (Other_MainState >= zxIndication.STATE_YY and Other_MainState <= zxIndication.STATE_YbY) or Other_MainState == zxIndication.STATE_YYY or Other_MainState == zxIndication.STATE_YW or Other_MainState == zxIndication.STATE_YbW or Other_MainState == zxIndication.STATE_YYW or Other_MainState == zxIndication.STATE_YbYW)
+				newOtherRCCount = distanceY;
+			else if (cast<zxSignal_main>Cur_prev and (cast<zxSignal_main>Cur_prev).yellow_code and (Other_MainState == zxIndication.STATE_GY or Other_MainState == zxIndication.STATE_Yb) )
+				newOtherRCCount = distanceY;
+			else if (Other_MainState >= zxIndication.STATE_GY and Other_MainState != zxIndication.STATE_B)
+				newOtherRCCount = distanceG;
 
-	if( ((track_params[0])[0]!='+' or no_train) and Other_OldState != Other_MainState)
+			else if (Other_MainState == zxIndication.STATE_B)	
+				newOtherRCCount = distanceY;
+		}
+	}
+
+	if( ((track_params[0])[0]!='+' or no_train) and (Other_OldState != Other_MainState or ((Cur_prev.Type & ST_FLOAT_BLOCK) and Math.Max(Cur_prev.RCCount, newOtherRCCount) <= Cur_prev.distanceG)))
 		{
 		Cur_prev.MainState = Other_MainState;
+		Cur_prev.RCCount = newOtherRCCount;
 		Cur_prev.CheckPrevSignals(false);
 
 		Cur_prev.SetSignal(true);
@@ -297,6 +317,7 @@ void CheckMySignal(bool train_entered)
 
 	bool next_is_router = false;
 	bool next_is_float = false;
+	int nextRCCount = 0;
 
 	if(Cur_next)
 		{
@@ -305,6 +326,7 @@ void CheckMySignal(bool train_entered)
 		else
 			{
 			next_state = Cur_next.MainState;
+			nextRCCount = Cur_next.RCCount;
 
 			if(Cur_next.Type & ST_ROUTER)
 				next_is_router = true;
@@ -320,7 +342,7 @@ void CheckMySignal(bool train_entered)
 		(track_params[0])[0]='+';
 		}
 
-	MainState = LC.FindSignalState(me, ((track_params[0])[0]=='+') or train_entered, MainState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', next_state, next_is_float);
+	MainState = LC.FindSignalState(me, ((track_params[0])[0]=='+') or train_entered, MainState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', next_state, next_is_float, nextRCCount);
 	
 	if(next_is_router)
 		{
@@ -344,9 +366,31 @@ void CheckMySignal(bool train_entered)
 				(track_params[0])[0]='+';
 				}
 
-			MainState = LC.FindSignalState(me, ((track_params[0])[0]=='+') or train_entered, MainState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', next_state, Cur_next.Type & ST_FLOAT_BLOCK);
+			MainState = LC.FindSignalState(me, ((track_params[0])[0]=='+') or train_entered, MainState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', next_state, Cur_next.Type & ST_FLOAT_BLOCK, Cur_next.RCCount);
 			}
 		}
+
+	if (Type & ST_FLOAT_BLOCK) {
+		if (!Cur_next or ((track_params[0])[0]=='+') or train_entered) {
+			RCCount = 0;
+		}
+		else {
+			RCCount = Cur_next.RCCount + 1;
+		}
+	}
+	else {
+		if ( MainState == zxIndication.STATE_R or MainState == zxIndication.STATE_RWb or ( (MainState == zxIndication.STATE_W or MainState == zxIndication.STATE_WW ) and Type & (ST_IN+ST_OUT+ST_ROUTER) ) )
+			RCCount = distanceRY;
+		else if ( (MainState >= zxIndication.STATE_YY and MainState <= zxIndication.STATE_YbY) or MainState == zxIndication.STATE_YYY or MainState == zxIndication.STATE_YW or MainState == zxIndication.STATE_YbW or MainState == zxIndication.STATE_YYW or MainState == zxIndication.STATE_YbYW)
+			RCCount = distanceY;
+		else if (yellow_code and (MainState == zxIndication.STATE_GY or MainState == zxIndication.STATE_Yb) )
+			RCCount = distanceY;
+		else if (MainState >= zxIndication.STATE_GY and MainState != zxIndication.STATE_B)
+			RCCount = distanceG;
+
+		else if (MainState == zxIndication.STATE_B)	
+			RCCount = distanceY;
+	}
 	}
 
 
@@ -449,7 +493,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			SetSignalState(GREEN, "");
 
 			if(!(Type & ST_UNLINKED))
-				MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false);
+				MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false, 0);
 			else
 				MainState = 0;
 
@@ -537,7 +581,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			shunt_open = false;
 			prigl_open = false;
 			
-			MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false);
+			MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false, 0);
 
 			SetSignal(true);
 			ApplyNewSpeedLimit(-1);
@@ -694,7 +738,7 @@ public void UnlinkedUpdate(int mainstate)
 
 
 		if(ex_sgn[zxIndication.STATE_R] or ex_sgn[zxIndication.STATE_Y])
-			MainState = LC.FindSignalState(me, false, 0, 0, false, mainstate, false);
+			MainState = LC.FindSignalState(me, false, 0, 0, false, mainstate, false, 0);
 		else if(ex_sgn[zxIndication.STATE_G])
 			{		// является повторительным, т.к. имеет только зелёную линзу
 			if(mainstate == 0 or mainstate == zxIndication.STATE_R  or mainstate == zxIndication.STATE_Rx  or mainstate == zxIndication.STATE_RWb or mainstate == zxIndication.STATE_W  or mainstate == zxIndication.STATE_WW)
@@ -1212,6 +1256,18 @@ public int GetALSNCode(void)
 	if(barrier_closed and protect_influence)
 		return CODE_NONE;
 
+	if (Type & ST_FLOAT_BLOCK) {
+		if (RCCount < distanceRY) {
+			return CODE_NONE;
+		}
+		if (RCCount < distanceY) {
+			return CODE_REDYELLOW;
+		}
+		if (RCCount < distanceG) {
+			return CODE_YELLOW;
+		}
+		return CODE_GREEN;
+	}
 	if( MainState == zxIndication.STATE_R or MainState == zxIndication.STATE_RWb or ( (MainState == zxIndication.STATE_W or MainState == zxIndication.STATE_WW ) and Type&(ST_IN+ST_OUT+ST_ROUTER) ) )
 		return CODE_REDYELLOW;
 	else if( (MainState >= zxIndication.STATE_YY and MainState <= zxIndication.STATE_YbY) or MainState == zxIndication.STATE_YYY or MainState == zxIndication.STATE_YW or MainState == zxIndication.STATE_YbW or MainState == zxIndication.STATE_YYW or MainState == zxIndication.STATE_YbYW)
@@ -1317,6 +1373,70 @@ string TranslNames(string name)
 	return ret;
 	}
 
+public string GetCntFloatBlockTable(void) {
+	HTMLWindow hw = HTMLWindow;
+	string s = hw.StartTable("border='1' width='90%'");
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#00AA00'");
+	s = s + hw.StartTable("border='0' width='100%'");
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#444444'");
+	s = s + hw.StartTable("border='1' width='100%'");
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#999999'");
+	s = s + "code";
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#999999'");
+	s = s + "RC count";
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#999999'");
+	s = s + "distance";
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "RY";
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + hw.MakeLink("live://property/distanceRY", distanceRY);
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "?? m";
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "Y";
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + hw.MakeLink("live://property/distanceY", distanceY);
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "?? m";
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "G";
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + hw.MakeLink("live://property/distanceG", distanceG);
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "?? m";
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.EndTable();
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.EndTable();
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.EndTable();
+
+	return s;
+}
+
 
 public string GetCntSpeedTable(void)
 {
@@ -1351,7 +1471,7 @@ public string GetCntSpeedTable(void)
                         for(i=0;i<26;i++)
 				{
 
-                        	if(ex_sgn[i] and (i != 9 or ab4) and i != zxIndication.STATE_B)
+                        	if(ex_sgn[i] and (i != zxIndication.STATE_GY or ab4) and i != zxIndication.STATE_B)
 
 					{
 
@@ -1938,6 +2058,7 @@ public string GetDescriptionHTML(void)
 	if(Type & ST_PROTECT)
 		s=s+"<br>"+GetProtectTable();		
 
+	s = s + "<br>" + GetCntFloatBlockTable();
 
 	if(!( Type &  ST_UNLINKED))
 		s=s+"<br>"+GetCntSpeedTable();
@@ -1997,6 +2118,15 @@ public string GetPropertyType(string id)
 		{
 		s="float,0,10,0.1";
 		}
+	else if (id == "distanceRY") {
+		s = "int,0," + distanceY + ",1";
+	}
+	else if (id == "distanceY") {
+		s = "int," + distanceRY + "," + distanceG + ",1";
+	}
+	else if (id == "distanceG") {
+		s = "int," + distanceY + ",50,1";
+	}
 	else
 		{
 		string[] str_a = Str.Tokens(id+"","/");
@@ -2161,6 +2291,15 @@ public void SetPropertyValue(string id, int val)
 		}
 	else if(id=="twait")
 		MU.timeToWait=val;
+	else if (id == "distanceRY") {
+		distanceRY = val;
+	}
+	else if (id == "distanceY") {
+		distanceY = val;
+	}
+	else if (id == "distanceG") {
+		distanceG = val;
+	}
 	else
 		{
 		string[] str_a = Str.Tokens(id+"","/");
@@ -2388,7 +2527,7 @@ public void SetPropertyValue(string id, string val)
 		Type = FindTypeByLens(ex_lins);
 
 		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);			//  генерируем розжиг
-		MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false);
+		MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false, 0);
  		}
  }
 
@@ -2484,7 +2623,7 @@ public void LinkPropertyValue(string id)
 				}
 			}
 
-		MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false);
+		MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false, 0);
 
 		}
 	else if(id=="abtype")
@@ -2891,6 +3030,15 @@ public string GetPropertyValue(string id)
  		}
 	else if(id=="priority")
 		ret=def_path_priority;
+	else if (id == "distanceRY") {
+		ret = distanceRY;
+	}
+	else if (id == "distanceY") {
+		ret	= distanceY;
+	}
+	else if (id == "distanceG") {
+		ret = distanceG;
+	}
 	return ret;
 
 
@@ -3459,9 +3607,13 @@ public void SetProperties(Soup soup)
 
 	ShowName(false);
 	MainState = soup.GetNamedTagAsInt("MainState",0);
+	RCCount = soup.GetNamedTagAsInt("RCCount", 0);
 	Type = soup.GetNamedTagAsInt("GetSignalType()",-1);
 
 	ab4 = soup.GetNamedTagAsInt("ab4",-1);
+	distanceRY = soup.GetNamedTagAsInt("distanceRY", 2);
+	distanceY = soup.GetNamedTagAsInt("distanceY", 5);
+	distanceG = soup.GetNamedTagAsInt("distanceG", 8);
 
 
 	lens_kit_n = soup.GetNamedTagAsInt("lens_kit_n",0);
@@ -3750,6 +3902,7 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("stationName",stationName);
 	retSoup.SetNamedTag("privateName",privateName);
 	retSoup.SetNamedTag("MainState",MainState);
+	retSoup.SetNamedTag("RCCount", RCCount);
 
 	if(!wrong_dir)
 		{
@@ -3779,6 +3932,9 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("wrong_dir",wrong_dir);
 	retSoup.SetNamedTag("train_is_l",train_is_l);
 	retSoup.SetNamedTag("ab4",ab4);
+	retSoup.SetNamedTag("distanceRY", distanceRY);
+	retSoup.SetNamedTag("distanceY", distanceY);
+	retSoup.SetNamedTag("distanceG", distanceG);
 
 	retSoup.SetNamedTag("code_freq",code_freq);
 	retSoup.SetNamedTag("code_dev",code_dev);

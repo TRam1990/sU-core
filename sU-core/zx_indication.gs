@@ -852,7 +852,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 
 
 
-public int FindSignalState(zxSignal sign, bool any_train, int OldState, int trmrk_flag, bool sub_closed, int NextState, bool NextIsFloat)
+public int FindSignalState(zxSignal sign, bool any_train, int OldState, int trmrk_flag, bool sub_closed, int NextState, bool NextIsFloat, int NextRCCount)
 // определение типа сигнала по 
 	{
 	if(sign.prigl_open and sign.ex_sgn[zxIndication.STATE_RWb])	// только если есть есть только К-Бм
@@ -950,8 +950,54 @@ public int FindSignalState(zxSignal sign, bool any_train, int OldState, int trmr
 	if(OldState == zxIndication.STATE_Rx)	// открыт, но перегон перед ним направлен в обратную сторону
 		return zxIndication.STATE_Rx;
 
+	bool sig_GY_on = (sign.ab4 and (NextState == zxIndication.STATE_Y  or ((NextState == zxIndication.STATE_Gb or NextState == zxIndication.STATE_Yb) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or NextState == zxIndication.STATE_GG or NextState ==  zxIndication.STATE_YW) and !(trmrk_flag & zxMarker.MREND4AB));
+
 	if (NextIsFloat) {
-		trmrk_flag = trmrk_flag | zxMarker.MRALS;	//РУ-56-2018, п. 7.3
+		int RCCount = NextRCCount;
+		if (RCCount < sign.distanceY) {
+			if (sign.ex_sgn[zxIndication.STATE_R])	// красный
+				return zxIndication.STATE_R;
+
+			if (sign.ex_sgn[zxIndication.STATE_B])	// синий
+				return zxIndication.STATE_B;
+
+			return 0;
+		}
+		if (RCCount < sign.distanceG) {
+			if ((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YYW]) // жёлтый + жёлтый + белый
+				return zxIndication.STATE_YYW;
+
+			if((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_YYWL]) // жёлтый + жёлтый + белый + полоса
+				return zxIndication.STATE_YYWL;
+
+			if(sign.ex_sgn[zxIndication.STATE_YW])		// жёлтый + белый
+				return zxIndication.STATE_YW;
+
+			if(sign.ex_sgn[zxIndication.STATE_Y])		// жёлтый
+				return zxIndication.STATE_Y;
+
+			return 0;
+		}
+			
+		if((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YbYW])
+			return zxIndication.STATE_YbYW;
+
+		if((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
+			return zxIndication.STATE_GbYWL;
+
+		if(sign.ex_sgn[zxIndication.STATE_GW])		// зелёный + белый	
+			return zxIndication.STATE_GW;
+
+		if(sig_GY_on and sign.ex_sgn[zxIndication.STATE_GY])	// жёлтый зелёный
+			return zxIndication.STATE_GY;
+
+		if(sign.ex_sgn[zxIndication.STATE_G])		 
+			return zxIndication.STATE_G;		// зелёный
+
+		if(sign.ex_sgn[zxIndication.STATE_YW])		// жёлтый + белый	
+			return zxIndication.STATE_YW;
+
+		return 0;
 	}
 
 	if(trmrk_flag & zxMarker.MRENDAB)	// АБ нету
@@ -1244,8 +1290,6 @@ public int FindSignalState(zxSignal sign, bool any_train, int OldState, int trmr
 		}
 
 
-	bool sig_GY_on = (sign.ab4 and (NextState == zxIndication.STATE_Y  or ((NextState == zxIndication.STATE_Gb or NextState == zxIndication.STATE_Yb) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or NextState == zxIndication.STATE_GG or NextState ==  zxIndication.STATE_YW) and !(trmrk_flag & zxMarker.MREND4AB));
-
 
 
 // в остальных случаях зелёный (или модифицированный)
@@ -1360,8 +1404,7 @@ public int FindSignalState(zxSignal sign, bool any_train, int OldState, int trmr
 
 public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool sub_closed, int NextState)	//для совместимости
 	{
-//	return FindSignalState(any_train, OldState, possible_sig, ab4, trmrk_flag, is_opend, is_shunt, false, sub_closed, NextState);
-return 0;
+	return 0;
 	}
 
 };

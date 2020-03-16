@@ -86,6 +86,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 
 	public int MainState;		// состояние светофора
+	public int RCCount;		// количество свободных секций (для подвижных блок участков)
 	public int Type;		// тип светофора
 
 	public float speed_limit;	// ограничение светофора
@@ -106,6 +107,9 @@ class zxSignal isclass Signal, ALSN_Provider
 
 	public bool[] ex_sgn;		// допустимые показания
 	public int ab4;			// 4-значная АБ. -1 - не определено, 0 - нет, 1 - есть
+	public int distanceRY;	// количество свободных секций для кода КЖ на АЛСН
+	public int distanceY;	// количество свободных секций для кода Ж на АЛСН
+	public int distanceG;	// количество свободных секций для кода З на АЛСН
 
 	public zxSignal Cur_next;
 	public zxSignal Cur_prev;
