@@ -850,556 +850,468 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 	return FindPossibleSgn(possible_sgn, ex_lens, true);
 	}
 
-
-
-public int FindSignalState(zxSignal sign, bool any_train, int OldState, int trmrk_flag, bool sub_closed, int NextState, bool NextIsFloat, int NextRCCount)
-// определение типа сигнала по 
+	public bool applaySignalState(zxSignal sign, zxSignal nextSign, int trmrk_flag, bool sub_closed)
 	{
-	if(sign.prigl_open and sign.ex_sgn[zxIndication.STATE_RWb])	// только если есть есть только К-Бм
-		return zxIndication.STATE_RWb;
-
-
-
-	if(sub_closed)
-		{
-		if(sign.train_open and OldState == zxIndication.STATE_Rx)
-			return zxIndication.STATE_Rx;
-
-		if( sign.ex_sgn[zxIndication.STATE_R] )
-			return zxIndication.STATE_R;
-
-		if(sign.ex_sgn[zxIndication.STATE_B])
-			return zxIndication.STATE_B;
-
-		return 0;
-
-		}
-
-
-
-
-
-
-	if(sign.shunt_open)		// манёвры
-		{
-		if(sign.train_open)// красный, т.к. ошибка скрипта 
-			{
-			Interface.Exception("shunt + train signals ?");
-			return 0;
-
-			}		
-
-
-
-		if( sign.ex_sgn[zxIndication.STATE_WW] and !any_train) // если есть 2 белых, и путь свободен
-			return zxIndication.STATE_WW;
-		if( sign.ex_sgn[zxIndication.STATE_W] )		// есть 1 белый
-			return zxIndication.STATE_W;
-
-
-		if( sign.ex_sgn[zxIndication.STATE_RWb] )		// есть только К-Бм
-			return zxIndication.STATE_RWb;
-
-		if( sign.ex_sgn[zxIndication.STATE_R] )		// белых нет - красный
-			return zxIndication.STATE_R;
-
-		return 0;
-		}
-
-	if(!sign.train_open)		// светофор закрыт
-		{
-		if(OldState == zxIndication.STATE_R)
-			return zxIndication.STATE_R;
-		if(OldState == zxIndication.STATE_Rx)
-			return zxIndication.STATE_Rx;
-
-		if(sign.ex_sgn[zxIndication.STATE_R])	// красный , т.к. он более "закрытый", чем синий
-			return zxIndication.STATE_R;
-
-
-		if(sign.ex_sgn[zxIndication.STATE_B])	// синий
-			return zxIndication.STATE_B;
-
-		return 0;
-		}
-
-
-
-//    светофор (пред) открыт в поездном порядке
-
-
-	if(OldState == zxIndication.STATE_Rx)		// открытие обратного маршрута не позволяет развернуть перегон
-		return zxIndication.STATE_Rx;
-
-
-	if(any_train or NextState == zxIndication.STATE_Rx)		// впереди поезд или неправильный перегон
-		{
-		if(sign.ex_sgn[zxIndication.STATE_R])	// красный
-			return zxIndication.STATE_R;
-
-		if(sign.ex_sgn[zxIndication.STATE_B])	// синий
-			return zxIndication.STATE_B;
-
-		return 0;
-		}
-
-// поезда впереди нет
-
-
-
-	if(OldState == zxIndication.STATE_Rx)	// открыт, но перегон перед ним направлен в обратную сторону
-		return zxIndication.STATE_Rx;
-
-	bool sig_GY_on = (sign.ab4 and (NextState == zxIndication.STATE_Y  or ((NextState == zxIndication.STATE_Gb or NextState == zxIndication.STATE_Yb) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or NextState == zxIndication.STATE_GG or NextState ==  zxIndication.STATE_YW) and !(trmrk_flag & zxMarker.MREND4AB));
-
-	if (NextIsFloat) {
-		int RCCount = NextRCCount;
-		if (RCCount < sign.distanceY) {
-			if (sign.ex_sgn[zxIndication.STATE_R])	// красный
-				return zxIndication.STATE_R;
-
-			if (sign.ex_sgn[zxIndication.STATE_B])	// синий
-				return zxIndication.STATE_B;
-
-			return 0;
-		}
-		if (RCCount < sign.distanceG) {
-			if ((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YYW]) // жёлтый + жёлтый + белый
-				return zxIndication.STATE_YYW;
-
-			if((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_YYWL]) // жёлтый + жёлтый + белый + полоса
-				return zxIndication.STATE_YYWL;
-
-			if(sign.ex_sgn[zxIndication.STATE_YW])		// жёлтый + белый
-				return zxIndication.STATE_YW;
-
-			if(sign.ex_sgn[zxIndication.STATE_Y])		// жёлтый
-				return zxIndication.STATE_Y;
-
-			return 0;
-		}
-			
-		if((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YbYW])
-			return zxIndication.STATE_YbYW;
-
-		if((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
-			return zxIndication.STATE_GbYWL;
-
-		if(sign.ex_sgn[zxIndication.STATE_GW])		// зелёный + белый	
-			return zxIndication.STATE_GW;
-
-		if(sig_GY_on and sign.ex_sgn[zxIndication.STATE_GY])	// жёлтый зелёный
-			return zxIndication.STATE_GY;
-
-		if(sign.ex_sgn[zxIndication.STATE_G])		 
-			return zxIndication.STATE_G;		// зелёный
-
-		if(sign.ex_sgn[zxIndication.STATE_YW])		// жёлтый + белый	
-			return zxIndication.STATE_YW;
-
-		return 0;
-	}
-
-	if(trmrk_flag & zxMarker.MRENDAB)	// АБ нету
-		{
-		if( sign.ex_sgn[zxIndication.STATE_W] )	// отправление по белому
-			return zxIndication.STATE_W;
-
-		if(sign.ex_sgn[zxIndication.STATE_R])	// красный
-			return zxIndication.STATE_R;
-
-
-		if(sign.ex_sgn[zxIndication.STATE_B])	// синий
-			return zxIndication.STATE_B;
-
-		return 0;
-		}
-
-
-
-
-	if(trmrk_flag & zxMarker.MRPAB)		// если ПАБ то не зависит от следующего сигнала
-		{
-
-		if(trmrk_flag & zxMarker.MRT)
-			{
-			if(sign.ex_sgn[zxIndication.STATE_YY])		// жёлтый - жёлтый
-				return zxIndication.STATE_YY;
-			}
-
-			
-		if(sign.ex_sgn[zxIndication.STATE_GG])		// ПАБ ЗЗ
-			return zxIndication.STATE_GG;
-
-		if(sign.ex_sgn[zxIndication.STATE_G])		// ПАБ
-			return zxIndication.STATE_G;
-		
-		return 0;
-		}
-
-
-
-	if(NextState == zxIndication.STATE_R or NextState == zxIndication.STATE_RWb or NextState == zxIndication.STATE_YbW or NextState == zxIndication.STATE_W or NextState == zxIndication.STATE_WW or (trmrk_flag & zxMarker.MRNOPR))
-
-// следующий красный, три жёлтых, белый или Жм+Б, или путь без пропуска
-
-		{
-
-		if(trmrk_flag & zxMarker.MRHALFBL)
-			{
-			if(sign.ex_sgn[zxIndication.STATE_YYY])	// жёлтый - жёлтый - жёлтый
-				return zxIndication.STATE_YYY;
-
-			if(sign.ex_sgn[zxIndication.STATE_R])	// красный
-				return zxIndication.STATE_R;
-
-			return 0;
-			}
-
-
-		if(trmrk_flag & zxMarker.MRWW)	// неправильный путь
-			{
-			if((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YYWL]) // жёлтый + жёлтый + белый + полоса	
-				return zxIndication.STATE_YYWL;
-
-			if(sign.ex_sgn[zxIndication.STATE_YbW])		// жёлтый миг. + белый
-				return zxIndication.STATE_YbW;
-			
-			if(sign.ex_sgn[zxIndication.STATE_YY])		// жёлтый - жёлтый
-				return zxIndication.STATE_YY;
-
-			if(sign.ex_sgn[zxIndication.STATE_Y])		// жёлтый
-				return zxIndication.STATE_Y;
-
-			if(sign.ex_sgn[zxIndication.STATE_G])		// если жёлтых нет, значит ПАБ
-				return zxIndication.STATE_G;
-
-			return 0;
-
-			}
-		else if(trmrk_flag & zxMarker.MRALS)	// АЛС
-			{
-
-			if((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YYW]) // жёлтый + жёлтый + белый	
-				return zxIndication.STATE_YYW;
-
-			if((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_YYWL]) // жёлтый + жёлтый + белый + полоса	
-				return zxIndication.STATE_YYWL;
-
-			if(sign.ex_sgn[zxIndication.STATE_YW])		// жёлтый + белый	
-				return zxIndication.STATE_YW;
-
-			if(sign.ex_sgn[zxIndication.STATE_Y])		// жёлтый
-				return zxIndication.STATE_Y;
-
-			return 0;
-			}
-
-		else if((trmrk_flag & zxMarker.MRDAB) and (sign.ex_sgn[zxIndication.STATE_GG] or !sign.ex_sgn[zxIndication.STATE_Y]) and sign.ex_sgn[zxIndication.STATE_R])	// на неправильный путь с АБ 
-			{												// если есть 2 зелёных или нет жёлтого
-			return zxIndication.STATE_R;		// красный
-			}
-
-		else if(trmrk_flag & zxMarker.MRT)		// отклонение
-			{
-
-			if(sign.ex_sgn[zxIndication.STATE_YY])		// жёлтый - жёлтый
-				return zxIndication.STATE_YY;
-
-
-			if(sign.ex_sgn[zxIndication.STATE_Y])		// жёлтый
-				return zxIndication.STATE_Y;
-
-			if(sign.ex_sgn[zxIndication.STATE_G])		// если жёлтых нет, значит ПАБ
-				return zxIndication.STATE_G;
-
-			if(sign.ex_sgn[zxIndication.STATE_B])	// синий
-				return zxIndication.STATE_B;
-
-
-			return 0;
-
-			}
-
-		else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
-			{
-
-			if(sign.ex_sgn[zxIndication.STATE_YYL])		// жёлтый - жёлтый - полоса
-				return zxIndication.STATE_YYL;
-
-			if(sign.ex_sgn[zxIndication.STATE_YY])		// жёлтый - жёлтый
-				return zxIndication.STATE_YY;
-
-			if(sign.ex_sgn[zxIndication.STATE_Y])		// жёлтый
-				return zxIndication.STATE_Y;
-
-			return 0;
-			}
-
-		else 					// модификаций нет
-			{
-			if(sign.ex_sgn[zxIndication.STATE_Y])		// жёлтый
-				return zxIndication.STATE_Y;
-
-			if(sign.ex_sgn[zxIndication.STATE_G])		// если жёлтых нет, значит ПАБ
-				return zxIndication.STATE_G;
-
-			if(sign.ex_sgn[zxIndication.STATE_B])	// синий
-				return zxIndication.STATE_B;
-
-
-			return 0;
+		int oldMainState = sign.MainState;
+		int oldRCCount = sign.RCCount;
+		sign.RCCount = 0;
+		if (nextSign) {
+			sign.RCCount = nextSign.RCCount + 1;
+			if (nextSign.Type & zxSignal.ST_FLOAT_BLOCK) {
+				trmrk_flag = trmrk_flag | zxMarker.MRALS;
 			}
 		}
 
-
-
-
-
-	if(NextState == zxIndication.STATE_YY or NextState == zxIndication.STATE_YbY or NextState == zxIndication.STATE_YYY   or NextState == zxIndication.STATE_YYW   or NextState == zxIndication.STATE_YbYW)		// следующее отклонение
-		{
-
-		if(trmrk_flag & zxMarker.MRWW)
-			{
-			if((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
-				return zxIndication.STATE_GbYWL;
-
-			if(sign.ex_sgn[zxIndication.STATE_YbW])		// жёлтый миг. + белый
-				return zxIndication.STATE_YbW;
-			
-			if(sign.ex_sgn[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
-				return zxIndication.STATE_YbY;
-
-			if((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G])	// зелёный
-				return zxIndication.STATE_G;
-
-			if(sign.ex_sgn[zxIndication.STATE_Yb])		// жёлтый мигающий
-				return zxIndication.STATE_Yb;
-
-			return 0;
-
+		if (sign.prigl_open and sign.ex_sgn[zxIndication.STATE_RWb]) {
+			sign.MainState = zxIndication.STATE_RWb;
+		}
+		else if (sign.MainState == zxIndication.STATE_Rx) {
+		}
+		else if (sub_closed) {
+			if (sign.ex_sgn[zxIndication.STATE_R]) {
+				sign.MainState = zxIndication.STATE_R;
 			}
-		else if(trmrk_flag & zxMarker.MRALS)			// АЛС 
-			{
-			if((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YbYW])
-				return zxIndication.STATE_YbYW;
-
-			if((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
-				return zxIndication.STATE_GbYWL;
-
-			if((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_GW])	// зелёный + белый
-				return zxIndication.STATE_GW;
-
-			if(sign.ex_sgn[zxIndication.STATE_YbW])		// жёлтый миг. + белый
-				return zxIndication.STATE_YbW;
-
-
-			if(sign.ex_sgn[zxIndication.STATE_GW])		// зелёный + белый	
-				return zxIndication.STATE_GW;
-
-			if(sign.ex_sgn[zxIndication.STATE_Yb])		// жёлтый мигающий
-				return zxIndication.STATE_Yb;
-
-			return 0;
+			else if (sign.ex_sgn[zxIndication.STATE_B]) {
+				sign.MainState = zxIndication.STATE_B;
 			}
-
-		else if((trmrk_flag & zxMarker.MRDAB) and sign.ex_sgn[zxIndication.STATE_GG])	// на неправильный путь с АБ
-			{
-			if((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G])	// зелёный
-				return zxIndication.STATE_G;
-
-			if(sign.ex_sgn[zxIndication.STATE_Yb])		// жёлтый мигающий
-				return zxIndication.STATE_Yb;
-
-			return 0;
+			else {
+				sign.MainState = 0;
 			}
-		else if(trmrk_flag & zxMarker.MRT)		// отклонение
-			{
-
-			if(sign.ex_sgn[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
-				return zxIndication.STATE_YbY;
-
-
-			if((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G])	// зелёный
-				return zxIndication.STATE_G;
-
-
-			if(sign.ex_sgn[zxIndication.STATE_Yb])		// жёлтый мигающий
-				return zxIndication.STATE_Yb;
-
-
-			return 0;
+		}
+		else if (sign.shunt_open) {		// манёвры
+			if(sign.train_open) {// красный, т.к. ошибка скрипта
+				Interface.Exception("shunt + train signals ?");
 			}
-		else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
-			{
-			if(sign.ex_sgn[zxIndication.STATE_YbYL])		// жёлтый миг. - жёлтый - полоса
-				return zxIndication.STATE_YbYL;
-
-
-			if(sign.ex_sgn[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
-				return zxIndication.STATE_YbY;
-
-
-			if(sign.ex_sgn[zxIndication.STATE_G])		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
-				return zxIndication.STATE_G;
-
-
-			if(sign.ex_sgn[zxIndication.STATE_Yb])		// жёлтый мигающий
-				return zxIndication.STATE_Yb;
-
-
-			return 0;
-
+			else if (sign.ex_sgn[zxIndication.STATE_WW] and nextSign) {// если есть 2 белых, и путь свободен
+				sign.MainState = zxIndication.STATE_WW;
 			}
-		else					// модификаций нет
-			{
-			if((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G])	// зелёный
-				return zxIndication.STATE_G;
-
-			if(sign.ex_sgn[zxIndication.STATE_Yb])		// жёлтый мигающий
-				return zxIndication.STATE_Yb;
-
-			if(sign.ex_sgn[zxIndication.STATE_G])		// если жёлтых нет, значит ПАБ
-				return zxIndication.STATE_G;
-
-			if(sign.ex_sgn[zxIndication.STATE_B])	// синий
-				return zxIndication.STATE_B;
-
-			return 0;
+			else if (sign.ex_sgn[zxIndication.STATE_W]) {		// есть 1 белый
+				sign.MainState = zxIndication.STATE_W;
 			}
-
+			else if (sign.ex_sgn[zxIndication.STATE_RWb]) {		// есть только К-Бм
+				sign.MainState = zxIndication.STATE_RWb;
+			}
+			else if (sign.ex_sgn[zxIndication.STATE_R]) {		// белых нет - красный
+				sign.MainState = zxIndication.STATE_R;
+			}
+			else {
+				sign.MainState = 0;
+			}
+		}
+		else if (!sign.train_open) {	// светофор закрыт
+			if (!(sign.MainState == zxIndication.STATE_R)) {
+				if (sign.ex_sgn[zxIndication.STATE_R]) {	// красный , т.к. он более "закрытый", чем синий
+					sign.MainState = zxIndication.STATE_R;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_B]) {	// синий
+					sign.MainState = zxIndication.STATE_B;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+		}
+		//    светофор (пред) открыт в поездном порядке
+		else if (
+			!nextSign
+			or nextSign.wrong_dir
+			or ((nextSign.Type & zxSignal.ST_FLOAT_BLOCK) and sign.RCCount < sign.distanceY)
+		) {		// впереди поезд или неправильный перегон
+			if (sign.ex_sgn[zxIndication.STATE_R]) {	// красный
+				sign.MainState = zxIndication.STATE_R;
+			}
+			else if(sign.ex_sgn[zxIndication.STATE_B]) {	// синий
+				sign.MainState = zxIndication.STATE_B;
+			}
+			else {
+				sign.MainState = 0;
+			}
+		}
+		// поезда впереди нет
+		else if (trmrk_flag & zxMarker.MRENDAB) {	// АБ нету
+			if (sign.ex_sgn[zxIndication.STATE_W]) {	// отправление по белому
+				sign.MainState = zxIndication.STATE_W;
+			}
+			else if(sign.ex_sgn[zxIndication.STATE_R]) {	// красный
+				sign.MainState = zxIndication.STATE_R;
+			}
+			else if(sign.ex_sgn[zxIndication.STATE_B]) {	// синий
+				sign.MainState = zxIndication.STATE_B;
+			}
+			else {
+				sign.MainState = 0;
+			}
+		}
+		else if (trmrk_flag & zxMarker.MRPAB) {		// если ПАБ то не зависит от следующего сигнала
+			if ((trmrk_flag & zxMarker.MRT) and (sign.ex_sgn[zxIndication.STATE_YY])) {		// жёлтый - жёлтый
+				sign.MainState = zxIndication.STATE_YY;
+			}
+			else if (sign.ex_sgn[zxIndication.STATE_GG]) {		// ПАБ ЗЗ
+				sign.MainState = zxIndication.STATE_GG;
+			}
+			else if(sign.ex_sgn[zxIndication.STATE_G]) {		// ПАБ
+				sign.MainState = zxIndication.STATE_G;
+			}
+			else {
+				sign.MainState = 0;
+			}
+		}
+		else if (
+			(!(nextSign.Type & zxSignal.ST_FLOAT_BLOCK) and (nextSign.MainState == zxIndication.STATE_R or nextSign.MainState == zxIndication.STATE_RWb or nextSign.MainState == zxIndication.STATE_YbW or nextSign.MainState == zxIndication.STATE_W or nextSign.MainState == zxIndication.STATE_WW))
+			or ((nextSign.Type & zxSignal.ST_FLOAT_BLOCK) and (sign.RCCount < sign.distanceG))
+			or (trmrk_flag & zxMarker.MRNOPR)
+		) {	// следующий красный, три жёлтых, белый или Жм+Б, или путь без пропуска
+			if (trmrk_flag & zxMarker.MRHALFBL) {
+				if (sign.ex_sgn[zxIndication.STATE_YYY]) {	// жёлтый - жёлтый - жёлтый
+					sign.MainState = zxIndication.STATE_YYY;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_R]) {	// красный
+					sign.MainState = zxIndication.STATE_R;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else if(trmrk_flag & zxMarker.MRWW) {	// неправильный путь
+				if ((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YYWL]) { // жёлтый + жёлтый + белый + полоса	
+					sign.MainState = zxIndication.STATE_YYWL;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_YbW]) {		// жёлтый миг. + белый
+					sign.MainState = zxIndication.STATE_YbW;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_YY]) {		// жёлтый - жёлтый
+					sign.MainState = zxIndication.STATE_YY;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Y]) {		// жёлтый
+					sign.MainState = zxIndication.STATE_Y;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_G]) {		// если жёлтых нет, значит ПАБ
+					sign.MainState = zxIndication.STATE_G;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else if(trmrk_flag & zxMarker.MRALS) {	// АЛС
+				if ((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YYW]) { // жёлтый + жёлтый + белый
+					sign.MainState = zxIndication.STATE_YYW;
+				}
+				else if ((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_YYWL]) { // жёлтый + жёлтый + белый + полоса	
+					sign.MainState = zxIndication.STATE_YYWL;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_YW]) {		// жёлтый + белый	
+					sign.MainState = zxIndication.STATE_YW;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Y]) {		// жёлтый
+					sign.MainState = zxIndication.STATE_Y;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else if ((trmrk_flag & zxMarker.MRDAB) and (sign.ex_sgn[zxIndication.STATE_GG] or !sign.ex_sgn[zxIndication.STATE_Y]) and sign.ex_sgn[zxIndication.STATE_R]) {	// на неправильный путь с АБ
+				// если есть 2 зелёных или нет жёлтого
+				sign.MainState = zxIndication.STATE_R;
+			}
+			else if(trmrk_flag & zxMarker.MRT) {		// отклонение
+				if (sign.ex_sgn[zxIndication.STATE_YY]) {		// жёлтый - жёлтый
+					sign.MainState = zxIndication.STATE_YY;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Y])	{	// жёлтый
+					sign.MainState = zxIndication.STATE_Y;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_G]) {		// если жёлтых нет, значит ПАБ
+					sign.MainState = zxIndication.STATE_G;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_B]) {	// синий
+					sign.MainState = zxIndication.STATE_B;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else if (trmrk_flag & zxMarker.MRT18) {		// отклонение пологое
+				if (sign.ex_sgn[zxIndication.STATE_YYL]) {		// жёлтый - жёлтый - полоса
+					sign.MainState = zxIndication.STATE_YYL;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_YY]) {		// жёлтый - жёлтый
+					sign.MainState = zxIndication.STATE_YY;
+				}
+				else if(sign.ex_sgn[zxIndication.STATE_Y]) {		// жёлтый
+					sign.MainState = zxIndication.STATE_Y;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else {		// модификаций нет
+				if (sign.ex_sgn[zxIndication.STATE_Y]) {		// жёлтый
+					sign.MainState = zxIndication.STATE_Y;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_G]) {		// если жёлтых нет, значит ПАБ
+					sign.MainState = zxIndication.STATE_G;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_B]) {	// синий
+					sign.MainState = zxIndication.STATE_B;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+		}
+		else if (nextSign.MainState == zxIndication.STATE_YY or nextSign.MainState == zxIndication.STATE_YbY or nextSign.MainState == zxIndication.STATE_YYY or nextSign.MainState == zxIndication.STATE_YYW or nextSign.MainState == zxIndication.STATE_YbYW) {		// следующее отклонение
+			if (trmrk_flag & zxMarker.MRWW) {
+				if ((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_GbYWL]) { // зелёный миг. + жёлтый + белый + полоса
+					sign.MainState = zxIndication.STATE_GbYWL;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_YbW]) {		// жёлтый миг. + белый
+					sign.MainState = zxIndication.STATE_YbW;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_YbY]) {		// жёлтый мигающий - жёлтый
+					sign.MainState =  zxIndication.STATE_YbY;
+				}
+				else if ((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G]) {	// зелёный
+					sign.MainState = zxIndication.STATE_G;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Yb]) {		// жёлтый мигающий
+					sign.MainState = zxIndication.STATE_Yb;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else if (trmrk_flag & zxMarker.MRALS) {			// АЛС 
+				if ((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YbYW]) {
+					sign.MainState = zxIndication.STATE_YbYW;
+				}
+				else if ((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_GbYWL]) { // зелёный миг. + жёлтый + белый + полоса	
+					sign.MainState = zxIndication.STATE_GbYWL;
+				}
+				else if ((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_GW]) {	// зелёный + белый
+					sign.MainState = zxIndication.STATE_GW;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_YbW]) {		// жёлтый миг. + белый
+					sign.MainState = zxIndication.STATE_YbW;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_GW]) {		// зелёный + белый	
+					sign.MainState = zxIndication.STATE_GW;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Yb]) {		// жёлтый мигающий
+					sign.MainState = zxIndication.STATE_Yb;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else if ((trmrk_flag & zxMarker.MRDAB) and sign.ex_sgn[zxIndication.STATE_GG]) {	// на неправильный путь с АБ
+				if ((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G]) {	// зелёный
+					sign.MainState = zxIndication.STATE_G;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Yb]) {		// жёлтый мигающий
+					sign.MainState = zxIndication.STATE_Yb;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else if (trmrk_flag & zxMarker.MRT) {		// отклонение
+				if (sign.ex_sgn[zxIndication.STATE_YbY]) {		// жёлтый мигающий - жёлтый
+					sign.MainState = zxIndication.STATE_YbY;
+				}
+				else if ((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G]) {	// зелёный
+					sign.MainState = zxIndication.STATE_G;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Yb]) {		// жёлтый мигающий
+					sign.MainState = zxIndication.STATE_Yb;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else if (trmrk_flag & zxMarker.MRT18) {		// отклонение пологое
+				if (sign.ex_sgn[zxIndication.STATE_YbYL]) {		// жёлтый миг. - жёлтый - полоса
+					sign.MainState = zxIndication.STATE_YbYL;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_YbY]) {		// жёлтый мигающий - жёлтый
+					sign.MainState = zxIndication.STATE_YbY;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_G]) {		// зелёный (если двух жёлтых на светофоре нет и есть маркер отклонения)
+					sign.MainState = zxIndication.STATE_G;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Yb]) {		// жёлтый мигающий
+					sign.MainState = zxIndication.STATE_Yb;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else {					// модификаций нет
+				if ((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G]) {	// зелёный
+					sign.MainState = zxIndication.STATE_G;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Yb]) {		// жёлтый мигающий
+					sign.MainState = zxIndication.STATE_Yb;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_G]) {		// если жёлтых нет, значит ПАБ
+					sign.MainState = zxIndication.STATE_G;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_B]) {	// синий
+					sign.MainState = zxIndication.STATE_B;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+		}
+		else {
+			int NoState = zxMarker.MRT | zxMarker.MRT18 | zxMarker.MRWW | zxMarker.MRALS | zxMarker.MRDAB;
+			if ((nextSign.MainState == zxIndication.STATE_YYL or nextSign.MainState == zxIndication.STATE_YbYL or nextSign.MainState == zxIndication.STATE_GbYL or nextSign.MainState == zxIndication.STATE_YYWL or nextSign.MainState == zxIndication.STATE_GbYWL) and (trmrk_flag & NoState)== 0) {
+				if ((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G]) {	// зелёный
+					sign.MainState = zxIndication.STATE_G;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Gb]) {		// зелёный мигающий
+					sign.MainState = zxIndication.STATE_Gb;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_G]) {
+					sign.MainState = zxIndication.STATE_G;		// зелёный
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			// в остальных случаях зелёный (или модифицированный)
+			else if (trmrk_flag & zxMarker.MRWW) {
+				if ((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_GbYWL]) { // зелёный миг. + жёлтый + белый + полоса	
+					sign.MainState = zxIndication.STATE_GbYWL;
+				}
+				else if ((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_GW]) {	// зелёный + белый
+					sign.MainState = zxIndication.STATE_GW;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_YbW]) {		// жёлтый миг. + белый
+					sign.MainState = zxIndication.STATE_YbW;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_YbY]) {		// жёлтый мигающий - жёлтый
+					sign.MainState = zxIndication.STATE_YbY;
+				}
+				else if (sign.ex_sgn[zxIndication.STATE_Yb]) {		// жёлтый мигающий
+					sign.MainState = zxIndication.STATE_Yb;
+				}
+				else {
+					sign.MainState = 0;
+				}
+			}
+			else {
+				bool sig_GY_on = (sign.ab4 and sign.ex_sgn[zxIndication.STATE_GY] and (nextSign.MainState == zxIndication.STATE_Y or ((nextSign.MainState == zxIndication.STATE_Gb or nextSign.MainState == zxIndication.STATE_Yb) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or nextSign.MainState == zxIndication.STATE_GG or nextSign.MainState == zxIndication.STATE_YW) and !(trmrk_flag & zxMarker.MREND4AB));
+				if(trmrk_flag & zxMarker.MRALS) {		// АЛС 
+					if ((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YbYW]) {
+						sign.MainState = zxIndication.STATE_YbYW;
+					}
+					else if ((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_GbYWL]) { // зелёный миг. + жёлтый + белый + полоса
+						sign.MainState = zxIndication.STATE_GbYWL;
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_GW]) {		// зелёный + белый	
+						sign.MainState = zxIndication.STATE_GW;
+					}
+					else if (sig_GY_on) {	// жёлтый зелёный
+						sign.MainState = zxIndication.STATE_GY;
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_G]) {
+						sign.MainState = zxIndication.STATE_G;		// зелёный
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_YW]) {		// жёлтый + белый	
+						sign.MainState = zxIndication.STATE_YW;
+					}
+					else {
+						sign.MainState = 0;
+					}
+				}
+				else if ((trmrk_flag & zxMarker.MRDAB) and sign.ex_sgn[zxIndication.STATE_GG]) {		// на неправильный путь с АБ
+					sign.MainState = zxIndication.STATE_GG;		// зелёный зелёный
+				}
+				else if (trmrk_flag & zxMarker.MRT) {	// отклонение
+					if (sign.ex_sgn[zxIndication.STATE_YbY]) {		// жёлтый мигающий - жёлтый
+						sign.MainState = zxIndication.STATE_YbY;
+					}
+					else if (sig_GY_on) {	// жёлтый зелёный
+						sign.MainState = zxIndication.STATE_GY;
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_G]) {
+						sign.MainState = zxIndication.STATE_G;		// зелёный
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_B]) {		// синий
+						sign.MainState = zxIndication.STATE_B;
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_Y]) {		// жёлтый
+						sign.MainState = zxIndication.STATE_Y;
+					}
+					else {
+						sign.MainState = 0;
+					}
+				}
+				else if (trmrk_flag & zxMarker.MRT18) {		// отклонение пологое
+					if (sign.ex_sgn[zxIndication.STATE_GbYL]) {		// зелёный миг. - жёлтый - полоса
+						sign.MainState = zxIndication.STATE_GbYL;
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_YbY]) {		// жёлтый мигающий - жёлтый
+						sign.MainState = zxIndication.STATE_YbY;
+					}
+					else if (sig_GY_on) {	// жёлтый зелёный
+						sign.MainState = zxIndication.STATE_GY;
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_G]) {
+						sign.MainState = zxIndication.STATE_G;		// зелёный
+					}
+					else {
+						sign.MainState = 0;
+					}
+				}
+				else {
+					if (sig_GY_on) {	// жёлтый зелёный
+						sign.MainState = zxIndication.STATE_GY;
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_G]) {
+						sign.MainState = zxIndication.STATE_G;		// зелёный
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_B]) {		// синий
+						sign.MainState = zxIndication.STATE_B;
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_Y]) {		// жёлтый
+						sign.MainState = zxIndication.STATE_Y;
+					}
+					else {
+						sign.MainState = 0;
+					}					
+				}
+			}
+		}
+		if (!sign.train_open) {
+			sign.RCCount = sign.distanceRY;
+		}
+		else if (
+			!(sign.Type & zxSignal.ST_FLOAT_BLOCK)
+			or (trmrk_flag & (zxMarker.MRT | zxMarker.MRT18 | zxMarker.MRWW | zxMarker.MRPAB | zxMarker.MRDAB | zxMarker.MRENDAB | zxMarker.MRENDCONTROL))
+		) {
+			if (sign.MainState == zxIndication.STATE_R or sign.MainState == zxIndication.STATE_RWb or ((sign.MainState == zxIndication.STATE_W or sign.MainState == zxIndication.STATE_WW) and sign.Type & (zxSignal.ST_IN | zxSignal.ST_OUT | zxSignal.ST_ROUTER))) {
+				sign.RCCount = sign.distanceRY;
+			}
+			else if ((sign.MainState >= zxIndication.STATE_YY and sign.MainState <= zxIndication.STATE_YbY) or sign.MainState == zxIndication.STATE_YYY or sign.MainState == zxIndication.STATE_YW or sign.MainState == zxIndication.STATE_YbW or sign.MainState == zxIndication.STATE_YYW or sign.MainState == zxIndication.STATE_YbYW) {
+				sign.RCCount = sign.distanceY;
+			}
+			else if (sign.yellow_code and (sign.MainState == zxIndication.STATE_GY or sign.MainState == zxIndication.STATE_Yb)) {
+				sign.RCCount = sign.distanceY;
+			}
+			else if (sign.MainState >= zxIndication.STATE_GY and sign.MainState != zxIndication.STATE_B) {
+				sign.RCCount = sign.distanceG;
+			}
+			else if (sign.MainState == zxIndication.STATE_B) {
+				sign.RCCount = sign.distanceY;
+			}
+			else {
+				sign.RCCount = 0;
+			}
 		}
 
-	int NoState = zxMarker.MRT | zxMarker.MRT18 | zxMarker.MRWW | zxMarker.MRALS | zxMarker.MRDAB;
-
-
-	if((NextState == zxIndication.STATE_YYL or NextState == zxIndication.STATE_YbYL or NextState == zxIndication.STATE_GbYL or NextState == zxIndication.STATE_YYWL or NextState == zxIndication.STATE_GbYWL ) and 
-	  (trmrk_flag & NoState)== 0)
-
-		{
-		if((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G])	// зелёный
-			return zxIndication.STATE_G;
-
-		if(sign.ex_sgn[zxIndication.STATE_Gb])		// зелёный мигающий
-			return zxIndication.STATE_Gb;
-
-		if(sign.ex_sgn[zxIndication.STATE_G])		 
-			return zxIndication.STATE_G;		// зелёный
-
-		return 0;
-		}
-
-
-
-
-// в остальных случаях зелёный (или модифицированный)
-
-	if(trmrk_flag & zxMarker.MRWW)
-		{
-		if((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
-			return zxIndication.STATE_GbYWL;
-
-		if((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_GW])	// зелёный + белый
-			return zxIndication.STATE_GW;
-
-		if(sign.ex_sgn[zxIndication.STATE_YbW])		// жёлтый миг. + белый
-			return zxIndication.STATE_YbW;
-			
-		if(sign.ex_sgn[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
-			return zxIndication.STATE_YbY;
-
-		if(sign.ex_sgn[zxIndication.STATE_Yb])		// жёлтый мигающий
-			return zxIndication.STATE_Yb;
-
-		return 0;
-		}
-	else if(trmrk_flag & zxMarker.MRALS)		// АЛС 
-		{
-		if((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YbYW])
-			return zxIndication.STATE_YbYW;
-
-		if((trmrk_flag & zxMarker.MRT18) and sign.ex_sgn[zxIndication.STATE_GbYWL]) // зелёный миг. + жёлтый + белый + полоса	
-			return zxIndication.STATE_GbYWL;
-
-		if(sign.ex_sgn[zxIndication.STATE_GW])		// зелёный + белый	
-			return zxIndication.STATE_GW;
-
-		if(sig_GY_on and sign.ex_sgn[zxIndication.STATE_GY])	// жёлтый зелёный
-			return zxIndication.STATE_GY;
-
-		if(sign.ex_sgn[zxIndication.STATE_G])		 
-			return zxIndication.STATE_G;		// зелёный
-
-		if(sign.ex_sgn[zxIndication.STATE_YW])		// жёлтый + белый	
-			return zxIndication.STATE_YW;
-
-		return 0;
-		}
-
-	else if((trmrk_flag & zxMarker.MRDAB) and sign.ex_sgn[zxIndication.STATE_GG])		// на неправильный путь с АБ
-		{
-		return zxIndication.STATE_GG;		// зелёный зелёный
-		}
-
-	else if(trmrk_flag & zxMarker.MRT)	// отклонение
-		{
-		if(sign.ex_sgn[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
-			return zxIndication.STATE_YbY;
-
-		if(sig_GY_on and sign.ex_sgn[zxIndication.STATE_GY])	// жёлтый зелёный
-			return zxIndication.STATE_GY;
-
-		if(sign.ex_sgn[zxIndication.STATE_G])		 
-			return zxIndication.STATE_G;		// зелёный
-
-		if(sign.ex_sgn[zxIndication.STATE_B])		// синий
-			return zxIndication.STATE_B;
-
-		if(sign.ex_sgn[zxIndication.STATE_Y])		// жёлтый
-			return zxIndication.STATE_Y;
-
-
-
-		return 0;
-
-		}
-
-	else if(trmrk_flag & zxMarker.MRT18)		// отклонение пологое
-		{
-		if(sign.ex_sgn[zxIndication.STATE_GbYL])		// зелёный миг. - жёлтый - полоса
-			return zxIndication.STATE_GbYL;
-
-		if(sign.ex_sgn[zxIndication.STATE_YbY])		// жёлтый мигающий - жёлтый
-			return zxIndication.STATE_YbY;
-
-		if(sig_GY_on and sign.ex_sgn[zxIndication.STATE_GY])	// жёлтый зелёный
-			return zxIndication.STATE_GY;
-
-		if(sign.ex_sgn[zxIndication.STATE_G])		 
-			return zxIndication.STATE_G;		// зелёный
-
-		return 0;
-		}
-
-	else
-		{
-		if(sig_GY_on and sign.ex_sgn[zxIndication.STATE_GY])	// жёлтый зелёный
-			return zxIndication.STATE_GY;
-
-		if(sign.ex_sgn[zxIndication.STATE_G])		 
-			return zxIndication.STATE_G;		// зелёный
-
-		if(sign.ex_sgn[zxIndication.STATE_B])		// синий
-			return zxIndication.STATE_B;
-
-		if(sign.ex_sgn[zxIndication.STATE_Y])		// жёлтый
-			return zxIndication.STATE_Y;
-
-		return 0;
-		}
-
-
-	return 0;
+		return sign.MainState != oldMainState or (sign.RCCount != oldRCCount and Math.Max(sign.RCCount, oldRCCount) <= sign.distanceG);
 	}
 
 public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bool ab4, int trmrk_flag, bool is_opend, bool is_shunt, bool sub_closed, int NextState)	//для совместимости
@@ -1408,5 +1320,3 @@ public int FindSignalState(bool any_train, int OldState, bool[] possible_sig, bo
 	}
 
 };
-
-

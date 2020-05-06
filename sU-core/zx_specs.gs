@@ -89,6 +89,8 @@ class zxSignal isclass Signal, ALSN_Provider
 	public int RCCount;		// количество свободных секций (для подвижных блок участков)
 	public int Type;		// тип светофора
 
+	public bool yellow_code;
+
 	public float speed_limit;	// ограничение светофора
 
 	public float max_speed_pass = 0;	// установленное ограничение пассажирским ( 0 - нет ограничений)
@@ -186,7 +188,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 		}
 
-	public void UnlinkedUpdate(int mainstate)
+	public void UnlinkedUpdate(zxSignal nextSign)
 		{
 		}
 

@@ -69,8 +69,6 @@ public bool kor_BU_1;
 public bool kor_BU_2;
 MeshObject[] kor_BU;
 
-public bool yellow_code;
-
 public zxRouter MU;
 
 
@@ -261,36 +259,12 @@ public void CheckPrevSignals(bool no_train)
 	if(!Cur_prev or !Cur_prev.Inited)
 		return;
 
-	int Other_OldState =  Cur_prev.MainState;
-	int MyState = MainState;
-	if (wrong_dir)
-		MyState = zxIndication.STATE_Rx;
-	int Other_MainState = LC.FindSignalState(Cur_prev, (track_params[0])[0]=='+', Other_OldState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', MyState, Type & ST_FLOAT_BLOCK, RCCount);
-
-	int newOtherRCCount = 0;
-	if ((track_params[0])[0] != '+') {
-		if (Cur_prev.Type & ST_FLOAT_BLOCK) {
-			newOtherRCCount = RCCount + 1;
-		}
-		else {
-			if ( Other_MainState == zxIndication.STATE_R or Other_MainState == zxIndication.STATE_RWb or ( (Other_MainState == zxIndication.STATE_W or Other_MainState == zxIndication.STATE_WW ) and Cur_prev.Type & (ST_IN+ST_OUT+ST_ROUTER) ) )
-				newOtherRCCount = distanceRY;
-			else if ( (Other_MainState >= zxIndication.STATE_YY and Other_MainState <= zxIndication.STATE_YbY) or Other_MainState == zxIndication.STATE_YYY or Other_MainState == zxIndication.STATE_YW or Other_MainState == zxIndication.STATE_YbW or Other_MainState == zxIndication.STATE_YYW or Other_MainState == zxIndication.STATE_YbYW)
-				newOtherRCCount = distanceY;
-			else if (cast<zxSignal_main>Cur_prev and (cast<zxSignal_main>Cur_prev).yellow_code and (Other_MainState == zxIndication.STATE_GY or Other_MainState == zxIndication.STATE_Yb) )
-				newOtherRCCount = distanceY;
-			else if (Other_MainState >= zxIndication.STATE_GY and Other_MainState != zxIndication.STATE_B)
-				newOtherRCCount = distanceG;
-
-			else if (Other_MainState == zxIndication.STATE_B)	
-				newOtherRCCount = distanceY;
-		}
+	zxSignal tmpSign = null;
+	if ((track_params[0])[1] != '+') {
+		tmpSign = me;
 	}
-
-	if( ((track_params[0])[0]!='+' or no_train) and (Other_OldState != Other_MainState or ((Cur_prev.Type & ST_FLOAT_BLOCK) and Math.Max(Cur_prev.RCCount, newOtherRCCount) <= Cur_prev.distanceG)))
+	if (LC.applaySignalState(Cur_prev, tmpSign, Str.ToInt(track_params[1]), (track_params[0])[1] == '+'))
 		{
-		Cur_prev.MainState = Other_MainState;
-		Cur_prev.RCCount = newOtherRCCount;
 		Cur_prev.CheckPrevSignals(false);
 
 		Cur_prev.SetSignal(true);
@@ -313,83 +287,33 @@ void CheckMySignal(bool train_entered)
 	string[] track_params = new string[2];
 
 	mainLib.LibraryCall("find_next_signal",track_params,GSO);
-	int next_state = 0;
 
-	bool next_is_router = false;
-	bool next_is_float = false;
-	int nextRCCount = 0;
+	if (((track_params[0])[0]=='+') or train_entered) {
+		Cur_next = null;
+	}
+	LC.applaySignalState(me, Cur_next, Str.ToInt(track_params[1]), (track_params[0])[1]=='+');
 
-	if(Cur_next)
-		{
-		if (Cur_next.wrong_dir)
-			next_state = zxIndication.STATE_Rx;
-		else
-			{
-			next_state = Cur_next.MainState;
-			nextRCCount = Cur_next.RCCount;
-
-			if(Cur_next.Type & ST_ROUTER)
-				next_is_router = true;
-			}
-		if (Cur_next.Type & ST_FLOAT_BLOCK)
-			{
-			next_is_float = true;
-			}
-		}
-	else
-		{
-		next_state = zxIndication.STATE_R;
-		(track_params[0])[0]='+';
-		}
-
-	MainState = LC.FindSignalState(me, ((track_params[0])[0]=='+') or train_entered, MainState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', next_state, next_is_float, nextRCCount);
-	
-	if(next_is_router)
-		{
-		if(Cur_next.train_open and train_open and 
-				(next_state != zxIndication.STATE_R) and 
-				(next_state != zxIndication.STATE_B) and 
-				(MainState != zxIndication.STATE_R) and 
-				(MainState != zxIndication.STATE_Rx) and 
-				(MainState != zxIndication.STATE_RWb) )
-			{
+	if (train_open) {
+		while (
+			Cur_next
+			and (Cur_next.Type & ST_ROUTER)
+			and Cur_next.train_open
+			and (Cur_next.MainState != zxIndication.STATE_R)
+			and (Cur_next.MainState != zxIndication.STATE_B)
+			and (MainState != zxIndication.STATE_R)
+			and (MainState != zxIndication.STATE_Rx)
+			and (MainState != zxIndication.STATE_RWb)
+		) {
 			Cur_next.MainState = zxIndication.STATE_B;
 			Cur_next.SetSignal(true);
 
 			mainLib.LibraryCall("find_next_signal",track_params,GSO);		// повторный поиск следующего сигнала, т.к. разделительный более не влияет
 
-			if(Cur_next)
-				next_state = Cur_next.MainState;
-			else
-				{
-				next_state = zxIndication.STATE_R;
-				(track_params[0])[0]='+';
-				}
-
-			MainState = LC.FindSignalState(me, ((track_params[0])[0]=='+') or train_entered, MainState, Str.ToInt(track_params[1]), (track_params[0])[1]=='+', next_state, Cur_next.Type & ST_FLOAT_BLOCK, Cur_next.RCCount);
+			if (((track_params[0])[0]=='+') or train_entered) {
+				Cur_next = null;
 			}
+			LC.applaySignalState(me, Cur_next, Str.ToInt(track_params[1]), (track_params[0])[1]=='+');
 		}
-
-	if (Type & ST_FLOAT_BLOCK) {
-		if (!Cur_next or ((track_params[0])[0]=='+') or train_entered) {
-			RCCount = 0;
-		}
-		else {
-			RCCount = Cur_next.RCCount + 1;
-		}
-	}
-	else {
-		if ( MainState == zxIndication.STATE_R or MainState == zxIndication.STATE_RWb or ( (MainState == zxIndication.STATE_W or MainState == zxIndication.STATE_WW ) and Type & (ST_IN+ST_OUT+ST_ROUTER) ) )
-			RCCount = distanceRY;
-		else if ( (MainState >= zxIndication.STATE_YY and MainState <= zxIndication.STATE_YbY) or MainState == zxIndication.STATE_YYY or MainState == zxIndication.STATE_YW or MainState == zxIndication.STATE_YbW or MainState == zxIndication.STATE_YYW or MainState == zxIndication.STATE_YbYW)
-			RCCount = distanceY;
-		else if (yellow_code and (MainState == zxIndication.STATE_GY or MainState == zxIndication.STATE_Yb) )
-			RCCount = distanceY;
-		else if (MainState >= zxIndication.STATE_GY and MainState != zxIndication.STATE_B)
-			RCCount = distanceG;
-
-		else if (MainState == zxIndication.STATE_B)	
-			RCCount = distanceY;
 	}
 	}
 
@@ -493,7 +417,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			SetSignalState(GREEN, "");
 
 			if(!(Type & ST_UNLINKED))
-				MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false, 0);
+				LC.applaySignalState(me, null, 0, false);
 			else
 				MainState = 0;
 
@@ -581,7 +505,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			shunt_open = false;
 			prigl_open = false;
 			
-			MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false, 0);
+			LC.applaySignalState(me, null, 0, false);
 
 			SetSignal(true);
 			ApplyNewSpeedLimit(-1);
@@ -725,7 +649,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 
 
-public void UnlinkedUpdate(int mainstate)
+public void UnlinkedUpdate(zxSignal nextSign)
 	{
 
 	if(MP_NotServer)
@@ -733,15 +657,11 @@ public void UnlinkedUpdate(int mainstate)
 
 	if(Type & ST_PERMOPENED)
 		{
-		if(mainstate == 0)
-			mainstate = zxIndication.STATE_R;
-
-
 		if(ex_sgn[zxIndication.STATE_R] or ex_sgn[zxIndication.STATE_Y])
-			MainState = LC.FindSignalState(me, false, 0, 0, false, mainstate, false, 0);
+			LC.applaySignalState(me, nextSign, 0, false);
 		else if(ex_sgn[zxIndication.STATE_G])
 			{		// является повторительным, т.к. имеет только зелёную линзу
-			if(mainstate == 0 or mainstate == zxIndication.STATE_R  or mainstate == zxIndication.STATE_Rx  or mainstate == zxIndication.STATE_RWb or mainstate == zxIndication.STATE_W  or mainstate == zxIndication.STATE_WW)
+			if (!nextSign or nextSign.MainState == 0 or nextSign.MainState == zxIndication.STATE_R or nextSign.MainState == zxIndication.STATE_Rx or nextSign.MainState == zxIndication.STATE_RWb or nextSign.MainState == zxIndication.STATE_W or nextSign.MainState == zxIndication.STATE_WW)
 				MainState = 0;
 			else
 				MainState = zxIndication.STATE_G;
@@ -760,7 +680,12 @@ public void UnlinkedUpdate(int mainstate)
 		{
 		if(train_open)
 			{
-			MainState = mainstate;
+			if (nextSign) {
+				MainState = nextSign.MainState;
+			}
+			else {
+				MainState = 0;
+			}
 			SetSignalState(GREEN, "");
 			SetSignal(false);
 
@@ -770,7 +695,12 @@ public void UnlinkedUpdate(int mainstate)
 		}
 	else
 		{
-		MainState = mainstate;
+		if (nextSign) {
+			MainState = nextSign.MainState;
+		}
+		else {
+			MainState = 0;
+		}
 		SetSignal(false);
 
 		if(IsServer)
@@ -1256,17 +1186,8 @@ public int GetALSNCode(void)
 	if(barrier_closed and protect_influence)
 		return CODE_NONE;
 
-	if (Type & ST_FLOAT_BLOCK) {
-		if (RCCount < distanceRY) {
-			return CODE_NONE;
-		}
-		if (RCCount < distanceY) {
-			return CODE_REDYELLOW;
-		}
-		if (RCCount < distanceG) {
-			return CODE_YELLOW;
-		}
-		return CODE_GREEN;
+	if ((Type & ST_FLOAT_BLOCK) and RCCount < distanceRY) {
+		return CODE_NONE;
 	}
 	if( MainState == zxIndication.STATE_R or MainState == zxIndication.STATE_RWb or ( (MainState == zxIndication.STATE_W or MainState == zxIndication.STATE_WW ) and Type&(ST_IN+ST_OUT+ST_ROUTER) ) )
 		return CODE_REDYELLOW;
@@ -2527,7 +2448,7 @@ public void SetPropertyValue(string id, string val)
 		Type = FindTypeByLens(ex_lins);
 
 		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);			//  генерируем розжиг
-		MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false, 0);
+		LC.applaySignalState(me, null, 0, false);
  		}
  }
 
@@ -2623,7 +2544,7 @@ public void LinkPropertyValue(string id)
 				}
 			}
 
-		MainState = LC.FindSignalState(me, false, 0, 0, false, 0, false, 0);
+		LC.applaySignalState(me, null, 0, false);
 
 		}
 	else if(id=="abtype")
