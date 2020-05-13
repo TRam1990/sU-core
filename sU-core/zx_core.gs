@@ -1477,7 +1477,7 @@ void SendMessagesToClients(Soup data, string type_msg)
 
 
 
-void SendNewSignalSettings(string sig_name, int state, float limit, int default_state, bool train_open, bool shunt_open, bool wrong_dir, bool barrier_closed)
+void SendNewSignalSettings(string sig_name, int state, float limit, int default_state, bool train_open, bool shunt_open, bool wrong_dir, bool barrier_closed, bool prigl_open)
 	{
 	if(!MP_started)
 		return;
@@ -1493,6 +1493,7 @@ void SendNewSignalSettings(string sig_name, int state, float limit, int default_
 	Temp_soup.SetNamedTag("shunt_open",shunt_open);
 	Temp_soup.SetNamedTag("wrong_dir",wrong_dir);
 	Temp_soup.SetNamedTag("barrier_closed",barrier_closed);
+	Temp_soup.SetNamedTag("prigl_open", prigl_open);
 
 	SendMessagesToClients(Temp_soup, "sU_SetSettings");
 	}
@@ -1571,6 +1572,7 @@ void MultiplayerClientHandler1(Message msg)
 		signal_link.sign.shunt_open = sp.GetNamedTagAsFloat("shunt_open",false);
 		signal_link.sign.barrier_closed = sp.GetNamedTagAsFloat("barrier_closed",false);
 		signal_link.sign.wrong_dir = sp.GetNamedTagAsFloat("wrong_dir",false);
+		signal_link.sign.prigl_open = sp.GetNamedTagAsBool("prigl_open", false);
 
 		signal_link.sign.MainState = sp.GetNamedTagAsInt("state", 0);
 		signal_link.sign.SetSignal(false);
@@ -2100,7 +2102,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		zxSignal sig1=cast<zxSignal>objectParam[0];
 
 		if(sig1)
-			SendNewSignalSettings(sig1.GetName(), sig1.MainState, sig1.speed_limit, sig1.GetSignalState(), sig1.train_open, sig1.shunt_open, sig1.wrong_dir, sig1.barrier_closed);
+			SendNewSignalSettings(sig1.GetName(), sig1.MainState, sig1.speed_limit, sig1.GetSignalState(), sig1.train_open, sig1.shunt_open, sig1.wrong_dir, sig1.barrier_closed, sig1.prigl_open);
 		}
 
 	else if(function=="mult_speed")
