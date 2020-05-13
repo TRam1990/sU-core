@@ -1295,6 +1295,28 @@ string TranslNames(string name)
 	}
 
 public string GetCntFloatBlockTable(void) {
+	GSTrackSearch ts = BeginTrackSearch(true);
+	zxSignal[] sigs = new zxSignal[0];
+	sigs[0] = me;
+	int[] distances = new int[0];
+	distances[0] = 0;
+	int i = 0;
+	while (i <= distanceG) {
+		if (!ts.SearchNextObject()) {
+			break;
+		}
+		if (!ts.GetFacingRelativeToSearchDirection()) {
+			continue;
+		}
+		zxSignal tmp = cast<zxSignal>ts.GetObject();
+		if (!tmp or !tmp.IsObligatory()) {
+			continue;
+		}
+		++i;
+		sigs[i] = tmp;
+		distances[i] = ts.GetDistance();
+	}
+	
 	HTMLWindow hw = HTMLWindow;
 	string s = hw.StartTable("border='1' width='90%'");
 	s = s + hw.StartRow();
@@ -1322,7 +1344,28 @@ public string GetCntFloatBlockTable(void) {
 	s = s + hw.MakeLink("live://property/distanceRY", distanceRY);
 	s = s + hw.EndCell();
 	s = s + hw.StartCell("bgcolor='#888888'");
-	s = s + "?? m";
+	s = s + "<font color='#AAAAAA'>";
+	if (i >= distanceRY - 1 and distanceRY > 0) {
+		s = s + distances[distanceRY - 1] + "m (" + hw.MakeLink("live://property/distanceRY_d", sigs[distanceRY - 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font> | ";
+	if (i >= distanceRY) {
+		s = s + distances[distanceRY] + "m (" + sigs[distanceRY].GetLocalisedName() + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + " | <font color='#AAAAAA'>";
+	if (i >= distanceRY + 1) {
+		s = s + distances[distanceRY + 1] + "m (" + hw.MakeLink("live://property/distanceRY_u", sigs[distanceRY + 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font>";
 	s = s + hw.EndCell();
 	s = s + hw.EndRow();
 	s = s + hw.StartRow();
@@ -1333,7 +1376,28 @@ public string GetCntFloatBlockTable(void) {
 	s = s + hw.MakeLink("live://property/distanceY", distanceY);
 	s = s + hw.EndCell();
 	s = s + hw.StartCell("bgcolor='#888888'");
-	s = s + "?? m";
+	s = s + "<font color='#AAAAAA'>";
+	if (i >= distanceY - 1 and distanceY > 0) {
+		s = s + distances[distanceY - 1] + "m (" + hw.MakeLink("live://property/distanceY_d", sigs[distanceY - 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font> | ";
+	if (i >= distanceY) {
+		s = s + distances[distanceY] + "m (" + sigs[distanceY].GetLocalisedName() + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + " | <font color='#AAAAAA'>";
+	if (i >= distanceY + 1) {
+		s = s + distances[distanceY + 1] + "m (" + hw.MakeLink("live://property/distanceY_u", sigs[distanceY + 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font>";
 	s = s + hw.EndCell();
 	s = s + hw.EndRow();
 	s = s + hw.StartRow();
@@ -1344,7 +1408,28 @@ public string GetCntFloatBlockTable(void) {
 	s = s + hw.MakeLink("live://property/distanceG", distanceG);
 	s = s + hw.EndCell();
 	s = s + hw.StartCell("bgcolor='#888888'");
-	s = s + "?? m";
+	s = s + "<font color='#AAAAAA'>";
+	if (i >= distanceG - 1 and distanceG > 0) {
+		s = s + distances[distanceG - 1] + "m (" + hw.MakeLink("live://property/distanceG_d", sigs[distanceG - 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font> | ";
+	if (i >= distanceG) {
+		s = s + distances[distanceG] + "m (" + sigs[distanceG].GetLocalisedName() + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + " | <font color='#AAAAAA'>";
+	if (i >= distanceG + 1) {
+		s = s + distances[distanceG + 1] + "m (" + hw.MakeLink("live://property/distanceG_u", sigs[distanceG + 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font>";
 	s = s + hw.EndCell();
 	s = s + hw.EndRow();
 	s = s + hw.EndTable();
@@ -2042,11 +2127,20 @@ public string GetPropertyType(string id)
 	else if (id == "distanceRY") {
 		s = "int,0," + distanceY + ",1";
 	}
+	else if (id[,10] == "distanceRY") {
+		s = "link";
+	}
 	else if (id == "distanceY") {
 		s = "int," + distanceRY + "," + distanceG + ",1";
 	}
+	else if (id[,9] == "distanceY") {
+		s = "link";
+	}
 	else if (id == "distanceG") {
 		s = "int," + distanceY + ",50,1";
+	}
+	else if (id[,9] == "distanceG") {
+		s = "link";
 	}
 	else
 		{
@@ -2214,12 +2308,24 @@ public void SetPropertyValue(string id, int val)
 		MU.timeToWait=val;
 	else if (id == "distanceRY") {
 		distanceRY = val;
+		if (distanceRY > distanceY) {
+			distanceRY = distanceY;
+		}
 	}
 	else if (id == "distanceY") {
 		distanceY = val;
+		if (distanceY > distanceG) {
+			distanceY = distanceG;
+		}
+		if (distanceY < distanceRY) {
+			distanceY = distanceRY;
+		}
 	}
 	else if (id == "distanceG") {
 		distanceG = val;
+		if (distanceG < distanceY) {
+			distanceG = distanceY;
+		}
 	}
 	else
 		{
@@ -2706,6 +2812,48 @@ public void LinkPropertyValue(string id)
 		{
 		protect_influence = !protect_influence;
 		}
+	else if (id == "distanceRY_d") {
+		if (distanceRY > 0) {
+			--distanceRY;
+		}
+	}
+	else if (id == "distanceRY_u") {
+		++distanceRY;
+		if (distanceY < distanceRY) {
+			distanceY = distanceRY;
+		}
+		if (distanceG < distanceY) {
+			distanceG = distanceY;
+		}
+	}
+	else if (id == "distanceY_d") {
+		if (distanceY > 0) {
+			--distanceY;
+			if (distanceRY > distanceY) {
+				distanceRY = distanceY;
+			}
+		}
+	}
+	else if (id == "distanceY_u") {
+		++distanceY;
+		if (distanceG < distanceY) {
+			distanceG = distanceY;
+		}
+	}
+	else if (id == "distanceG_d") {
+		if (distanceG > 0) {
+			--distanceG;
+			if (distanceY > distanceG) {
+				distanceY = distanceG;
+			}
+			if (distanceRY > distanceY) {
+				distanceRY = distanceY;
+			}
+		}
+	}
+	else if (id == "distanceG_u") {
+		++distanceY;
+	}
 	else
 		{
 		string[] str_a = Str.Tokens(id+"","/");
