@@ -1966,7 +1966,6 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			}
 
 		GSTrackSearch GSTS = sig1.BeginTrackSearch(false);
-		int old_main_state = sig1.MainState;
 
 		MapObject MO = GSTS.SearchNext();
 		bool temp_dir;
@@ -2013,7 +2012,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 								temp_signal.UpdateState(0, -1);
 
 							if(temp_signal.Type & zxSignal.ST_UNLINKED )
-								temp_signal.UnlinkedUpdate(old_main_state);
+								temp_signal.UnlinkedUpdate(sig1);
 							}
 						}
 					}

@@ -69,8 +69,6 @@ public bool kor_BU_1;
 public bool kor_BU_2;
 MeshObject[] kor_BU;
 
-public bool yellow_code;
-
 public zxRouter MU;
 
 
@@ -261,16 +259,12 @@ public void CheckPrevSignals(bool no_train)
 	if(!Cur_prev or !Cur_prev.Inited)
 		return;
 
-	int Other_OldState =  Cur_prev.MainState;
-	int MyState = MainState;
-	if (wrong_dir)
-		MyState = zxIndication.STATE_Rx;
-	int Other_MainState = LC.FindSignalState((track_params[0])[0]=='+', Other_OldState, Cur_prev.ex_sgn, Cur_prev.ab4, Str.ToInt(track_params[1]), Cur_prev.train_open, Cur_prev.shunt_open, Cur_prev.prigl_open, (track_params[0])[1]=='+', MyState);
-
-
-	if( ((track_params[0])[0]!='+' or no_train) and Other_OldState != Other_MainState)
+	zxSignal tmpSign = null;
+	if ((track_params[0])[1] != '+') {
+		tmpSign = me;
+	}
+	if (LC.applaySignalState(Cur_prev, tmpSign, Str.ToInt(track_params[1]), (track_params[0])[1] == '+'))
 		{
-		Cur_prev.MainState = Other_MainState;
 		Cur_prev.CheckPrevSignals(false);
 
 		Cur_prev.SetSignal(true);
@@ -293,55 +287,34 @@ void CheckMySignal(bool train_entered)
 	string[] track_params = new string[2];
 
 	mainLib.LibraryCall("find_next_signal",track_params,GSO);
-	int next_state = 0;
 
-	bool next_is_router = false;
+	if (((track_params[0])[0]=='+') or train_entered) {
+		Cur_next = null;
+	}
+	LC.applaySignalState(me, Cur_next, Str.ToInt(track_params[1]), (track_params[0])[1]=='+');
 
-	if(Cur_next)
-		{
-		if (Cur_next.wrong_dir)
-			next_state = zxIndication.STATE_Rx;
-		else
-			{
-			next_state = Cur_next.MainState;
-
-			if(Cur_next.Type & ST_ROUTER)
-				next_is_router = true;
-			}
-		}
-	else
-		{
-		next_state = zxIndication.STATE_R;
-		(track_params[0])[0]='+';
-		}
-
-	MainState = LC.FindSignalState(((track_params[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(track_params[1]), train_open, shunt_open, prigl_open, (track_params[0])[1]=='+', next_state); 
-	
-	if(next_is_router)
-		{
-		if(Cur_next.train_open and train_open and 
-				(next_state != zxIndication.STATE_R) and 
-				(next_state != zxIndication.STATE_B) and 
-				(MainState != zxIndication.STATE_R) and 
-				(MainState != zxIndication.STATE_Rx) and 
-				(MainState != zxIndication.STATE_RWb) )
-			{
+	if (train_open) {
+		while (
+			Cur_next
+			and (Cur_next.Type & ST_ROUTER)
+			and Cur_next.train_open
+			and (Cur_next.MainState != zxIndication.STATE_R)
+			and (Cur_next.MainState != zxIndication.STATE_B)
+			and (MainState != zxIndication.STATE_R)
+			and (MainState != zxIndication.STATE_Rx)
+			and (MainState != zxIndication.STATE_RWb)
+		) {
 			Cur_next.MainState = zxIndication.STATE_B;
 			Cur_next.SetSignal(true);
 
 			mainLib.LibraryCall("find_next_signal",track_params,GSO);		// повторный поиск следующего сигнала, т.к. разделительный более не влияет
 
-			if(Cur_next)
-				next_state = Cur_next.MainState;
-			else
-				{
-				next_state = zxIndication.STATE_R;
-				(track_params[0])[0]='+';
-				}
-
-			MainState = LC.FindSignalState(((track_params[0])[0]=='+') or train_entered, MainState, ex_sgn, ab4, Str.ToInt(track_params[1]), train_open, shunt_open, prigl_open, (track_params[0])[1]=='+', next_state); 
+			if (((track_params[0])[0]=='+') or train_entered) {
+				Cur_next = null;
 			}
+			LC.applaySignalState(me, Cur_next, Str.ToInt(track_params[1]), (track_params[0])[1]=='+');
 		}
+	}
 	}
 
 
@@ -444,7 +417,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			SetSignalState(GREEN, "");
 
 			if(!(Type & ST_UNLINKED))
-				MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
+				LC.applaySignalState(me, null, 0, false);
 			else
 				MainState = 0;
 
@@ -532,7 +505,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			shunt_open = false;
 			prigl_open = false;
 			
-			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
+			LC.applaySignalState(me, null, 0, false);
 
 			SetSignal(true);
 			ApplyNewSpeedLimit(-1);
@@ -676,7 +649,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 
 
-public void UnlinkedUpdate(int mainstate)
+public void UnlinkedUpdate(zxSignal nextSign)
 	{
 
 	if(MP_NotServer)
@@ -684,15 +657,11 @@ public void UnlinkedUpdate(int mainstate)
 
 	if(Type & ST_PERMOPENED)
 		{
-		if(mainstate == 0)
-			mainstate = zxIndication.STATE_R;
-
-
 		if(ex_sgn[zxIndication.STATE_R] or ex_sgn[zxIndication.STATE_Y])
-			MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, false, false, false, mainstate);
+			LC.applaySignalState(me, nextSign, 0, false);
 		else if(ex_sgn[zxIndication.STATE_G])
 			{		// является повторительным, т.к. имеет только зелёную линзу
-			if(mainstate == 0 or mainstate == zxIndication.STATE_R  or mainstate == zxIndication.STATE_Rx  or mainstate == zxIndication.STATE_RWb or mainstate == zxIndication.STATE_W  or mainstate == zxIndication.STATE_WW)
+			if (!nextSign or nextSign.MainState == 0 or nextSign.MainState == zxIndication.STATE_R or nextSign.MainState == zxIndication.STATE_Rx or nextSign.MainState == zxIndication.STATE_RWb or nextSign.MainState == zxIndication.STATE_W or nextSign.MainState == zxIndication.STATE_WW)
 				MainState = 0;
 			else
 				MainState = zxIndication.STATE_G;
@@ -711,7 +680,12 @@ public void UnlinkedUpdate(int mainstate)
 		{
 		if(train_open)
 			{
-			MainState = mainstate;
+			if (nextSign) {
+				MainState = nextSign.MainState;
+			}
+			else {
+				MainState = 0;
+			}
 			SetSignalState(GREEN, "");
 			SetSignal(false);
 
@@ -721,7 +695,12 @@ public void UnlinkedUpdate(int mainstate)
 		}
 	else
 		{
-		MainState = mainstate;
+		if (nextSign) {
+			MainState = nextSign.MainState;
+		}
+		else {
+			MainState = 0;
+		}
 		SetSignal(false);
 
 		if(IsServer)
@@ -1207,6 +1186,9 @@ public int GetALSNCode(void)
 	if(barrier_closed and protect_influence)
 		return CODE_NONE;
 
+	if ((Type & ST_FLOAT_BLOCK) and RCCount < distanceRY) {
+		return CODE_NONE;
+	}
 	if( MainState == zxIndication.STATE_R or MainState == zxIndication.STATE_RWb or ( (MainState == zxIndication.STATE_W or MainState == zxIndication.STATE_WW ) and Type&(ST_IN+ST_OUT+ST_ROUTER) ) )
 		return CODE_REDYELLOW;
 	else if( (MainState >= zxIndication.STATE_YY and MainState <= zxIndication.STATE_YbY) or MainState == zxIndication.STATE_YYY or MainState == zxIndication.STATE_YW or MainState == zxIndication.STATE_YbW or MainState == zxIndication.STATE_YYW or MainState == zxIndication.STATE_YbYW)
@@ -1312,6 +1294,155 @@ string TranslNames(string name)
 	return ret;
 	}
 
+public string GetCntFloatBlockTable(void) {
+	GSTrackSearch ts = BeginTrackSearch(true);
+	zxSignal[] sigs = new zxSignal[0];
+	sigs[0] = me;
+	int[] distances = new int[0];
+	distances[0] = 0;
+	int i = 0;
+	while (i <= distanceG) {
+		if (!ts.SearchNextObject()) {
+			break;
+		}
+		if (!ts.GetFacingRelativeToSearchDirection()) {
+			continue;
+		}
+		zxSignal tmp = cast<zxSignal>ts.GetObject();
+		if (!tmp or !tmp.IsObligatory()) {
+			continue;
+		}
+		++i;
+		sigs[i] = tmp;
+		distances[i] = ts.GetDistance();
+	}
+	
+	HTMLWindow hw = HTMLWindow;
+	string s = hw.StartTable("border='1' width='90%'");
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#00AA00'");
+	s = s + hw.StartTable("border='0' width='100%'");
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#444444'");
+	s = s + hw.StartTable("border='1' width='100%'");
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#999999'");
+	s = s + "code";
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#999999'");
+	s = s + "RC count";
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#999999'");
+	s = s + "distance";
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "RY";
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + hw.MakeLink("live://property/distanceRY", distanceRY);
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "<font color='#AAAAAA'>";
+	if (i >= distanceRY - 1 and distanceRY > 0) {
+		s = s + distances[distanceRY - 1] + "m (" + hw.MakeLink("live://property/distanceRY_d", sigs[distanceRY - 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font> | ";
+	if (i >= distanceRY) {
+		s = s + distances[distanceRY] + "m (" + sigs[distanceRY].GetLocalisedName() + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + " | <font color='#AAAAAA'>";
+	if (i >= distanceRY + 1) {
+		s = s + distances[distanceRY + 1] + "m (" + hw.MakeLink("live://property/distanceRY_u", sigs[distanceRY + 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font>";
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "Y";
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + hw.MakeLink("live://property/distanceY", distanceY);
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "<font color='#AAAAAA'>";
+	if (i >= distanceY - 1 and distanceY > 0) {
+		s = s + distances[distanceY - 1] + "m (" + hw.MakeLink("live://property/distanceY_d", sigs[distanceY - 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font> | ";
+	if (i >= distanceY) {
+		s = s + distances[distanceY] + "m (" + sigs[distanceY].GetLocalisedName() + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + " | <font color='#AAAAAA'>";
+	if (i >= distanceY + 1) {
+		s = s + distances[distanceY + 1] + "m (" + hw.MakeLink("live://property/distanceY_u", sigs[distanceY + 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font>";
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.StartRow();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "G";
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + hw.MakeLink("live://property/distanceG", distanceG);
+	s = s + hw.EndCell();
+	s = s + hw.StartCell("bgcolor='#888888'");
+	s = s + "<font color='#AAAAAA'>";
+	if (i >= distanceG - 1 and distanceG > 0) {
+		s = s + distances[distanceG - 1] + "m (" + hw.MakeLink("live://property/distanceG_d", sigs[distanceG - 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font> | ";
+	if (i >= distanceG) {
+		s = s + distances[distanceG] + "m (" + sigs[distanceG].GetLocalisedName() + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + " | <font color='#AAAAAA'>";
+	if (i >= distanceG + 1) {
+		s = s + distances[distanceG + 1] + "m (" + hw.MakeLink("live://property/distanceG_u", sigs[distanceG + 1].GetLocalisedName()) + ")";
+	}
+	else {
+		s = s + "??m";
+	}
+	s = s + "</font>";
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.EndTable();
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.EndTable();
+	s = s + hw.EndCell();
+	s = s + hw.EndRow();
+	s = s + hw.EndTable();
+
+	return s;
+}
+
 
 public string GetCntSpeedTable(void)
 {
@@ -1346,7 +1477,7 @@ public string GetCntSpeedTable(void)
                         for(i=0;i<26;i++)
 				{
 
-                        	if(ex_sgn[i] and (i != 9 or ab4) and i != zxIndication.STATE_B)
+                        	if(ex_sgn[i] and (i != zxIndication.STATE_GY or ab4) and i != zxIndication.STATE_B)
 
 					{
 
@@ -1850,6 +1981,7 @@ public string GetDescriptionHTML(void)
  	s=s+MakeCheckBoxRow("live://property/type/PERMOPENED",STT.GetString("PERMOPENED_flag"), Type & ST_PERMOPENED);
  	s=s+MakeCheckBoxRow("live://property/type/SHUNT",STT.GetString("SHUNT_flag"), Type & ST_SHUNT);
  	s=s+MakeCheckBoxRow("live://property/type/ZAGRAD",STT.GetString("ZAGRAD_flag"), Type & ST_PROTECT);
+ 	s=s+MakeCheckBoxRow("live://property/type/FLOAT",STT.GetString("FLOAT_flag"), Type & ST_FLOAT_BLOCK);
 
 	s=s+hw.EndTable();
 
@@ -1932,6 +2064,7 @@ public string GetDescriptionHTML(void)
 	if(Type & ST_PROTECT)
 		s=s+"<br>"+GetProtectTable();		
 
+	s = s + "<br>" + GetCntFloatBlockTable();
 
 	if(!( Type &  ST_UNLINKED))
 		s=s+"<br>"+GetCntSpeedTable();
@@ -1991,6 +2124,24 @@ public string GetPropertyType(string id)
 		{
 		s="float,0,10,0.1";
 		}
+	else if (id == "distanceRY") {
+		s = "int,0," + distanceY + ",1";
+	}
+	else if (id[,10] == "distanceRY") {
+		s = "link";
+	}
+	else if (id == "distanceY") {
+		s = "int," + distanceRY + "," + distanceG + ",1";
+	}
+	else if (id[,9] == "distanceY") {
+		s = "link";
+	}
+	else if (id == "distanceG") {
+		s = "int," + distanceY + ",50,1";
+	}
+	else if (id[,9] == "distanceG") {
+		s = "link";
+	}
 	else
 		{
 		string[] str_a = Str.Tokens(id+"","/");
@@ -2155,6 +2306,27 @@ public void SetPropertyValue(string id, int val)
 		}
 	else if(id=="twait")
 		MU.timeToWait=val;
+	else if (id == "distanceRY") {
+		distanceRY = val;
+		if (distanceRY > distanceY) {
+			distanceRY = distanceY;
+		}
+	}
+	else if (id == "distanceY") {
+		distanceY = val;
+		if (distanceY > distanceG) {
+			distanceY = distanceG;
+		}
+		if (distanceY < distanceRY) {
+			distanceY = distanceRY;
+		}
+	}
+	else if (id == "distanceG") {
+		distanceG = val;
+		if (distanceG < distanceY) {
+			distanceG = distanceY;
+		}
+	}
 	else
 		{
 		string[] str_a = Str.Tokens(id+"","/");
@@ -2382,7 +2554,7 @@ public void SetPropertyValue(string id, string val)
 		Type = FindTypeByLens(ex_lins);
 
 		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);			//  генерируем розжиг
-		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
+		LC.applaySignalState(me, null, 0, false);
  		}
  }
 
@@ -2478,7 +2650,7 @@ public void LinkPropertyValue(string id)
 				}
 			}
 
-		MainState = LC.FindSignalState(false, 0, ex_sgn, ab4, 0, train_open, shunt_open, prigl_open, false, 0);
+		LC.applaySignalState(me, null, 0, false);
 
 		}
 	else if(id=="abtype")
@@ -2640,6 +2812,48 @@ public void LinkPropertyValue(string id)
 		{
 		protect_influence = !protect_influence;
 		}
+	else if (id == "distanceRY_d") {
+		if (distanceRY > 0) {
+			--distanceRY;
+		}
+	}
+	else if (id == "distanceRY_u") {
+		++distanceRY;
+		if (distanceY < distanceRY) {
+			distanceY = distanceRY;
+		}
+		if (distanceG < distanceY) {
+			distanceG = distanceY;
+		}
+	}
+	else if (id == "distanceY_d") {
+		if (distanceY > 0) {
+			--distanceY;
+			if (distanceRY > distanceY) {
+				distanceRY = distanceY;
+			}
+		}
+	}
+	else if (id == "distanceY_u") {
+		++distanceY;
+		if (distanceG < distanceY) {
+			distanceG = distanceY;
+		}
+	}
+	else if (id == "distanceG_d") {
+		if (distanceG > 0) {
+			--distanceG;
+			if (distanceY > distanceG) {
+				distanceY = distanceG;
+			}
+			if (distanceRY > distanceY) {
+				distanceRY = distanceY;
+			}
+		}
+	}
+	else if (id == "distanceG_u") {
+		++distanceY;
+	}
 	else
 		{
 		string[] str_a = Str.Tokens(id+"","/");
@@ -2736,6 +2950,14 @@ public void LinkPropertyValue(string id)
 					protect_soup = Constructors.NewSoup();
 
 					}
+				}
+
+			if(str_a[1]=="FLOAT")
+				{
+				if(Type & ST_FLOAT_BLOCK)
+					Type = Type - ST_FLOAT_BLOCK;
+				else
+					Type = Type + ST_FLOAT_BLOCK;
 				}
 
 			}
@@ -2877,6 +3099,15 @@ public string GetPropertyValue(string id)
  		}
 	else if(id=="priority")
 		ret=def_path_priority;
+	else if (id == "distanceRY") {
+		ret = distanceRY;
+	}
+	else if (id == "distanceY") {
+		ret	= distanceY;
+	}
+	else if (id == "distanceG") {
+		ret = distanceG;
+	}
 	return ret;
 
 
@@ -3483,9 +3714,13 @@ public void SetProperties(Soup soup)
 
 	ShowName(false);
 	MainState = soup.GetNamedTagAsInt("MainState",0);
+	RCCount = soup.GetNamedTagAsInt("RCCount", 0);
 	Type = soup.GetNamedTagAsInt("GetSignalType()",-1);
 
 	ab4 = soup.GetNamedTagAsInt("ab4",-1);
+	distanceRY = soup.GetNamedTagAsInt("distanceRY", 2);
+	distanceY = soup.GetNamedTagAsInt("distanceY", 5);
+	distanceG = soup.GetNamedTagAsInt("distanceG", 8);
 
 
 	lens_kit_n = soup.GetNamedTagAsInt("lens_kit_n",0);
@@ -3781,6 +4016,7 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("stationName",stationName);
 	retSoup.SetNamedTag("privateName",privateName);
 	retSoup.SetNamedTag("MainState",MainState);
+	retSoup.SetNamedTag("RCCount", RCCount);
 
 	if(!wrong_dir)
 		{
@@ -3810,6 +4046,9 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("wrong_dir",wrong_dir);
 	retSoup.SetNamedTag("train_is_l",train_is_l);
 	retSoup.SetNamedTag("ab4",ab4);
+	retSoup.SetNamedTag("distanceRY", distanceRY);
+	retSoup.SetNamedTag("distanceY", distanceY);
+	retSoup.SetNamedTag("distanceG", distanceG);
 
 	retSoup.SetNamedTag("code_freq",code_freq);
 	retSoup.SetNamedTag("code_dev",code_dev);

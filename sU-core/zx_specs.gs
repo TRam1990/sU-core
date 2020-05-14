@@ -70,6 +70,7 @@ class zxSignal isclass Signal, ALSN_Provider
 	public define int ST_PERMOPENED	= 32;		// постоянно открытый в поездном, напр. проходной
 	public define int ST_SHUNT	= 64;		// неспособный работать в поездном порядке
 	public define int ST_PROTECT	= 128;		// заградительный
+	public define int ST_FLOAT_BLOCK	= 256;	// подвижные блок участки
 
 
 	public int OwnId;		// идентификатор, каждый раз новый
@@ -85,7 +86,10 @@ class zxSignal isclass Signal, ALSN_Provider
 
 
 	public int MainState;		// состояние светофора
+	public int RCCount;		// количество свободных секций (для подвижных блок участков)
 	public int Type;		// тип светофора
+
+	public bool yellow_code;
 
 	public float speed_limit;	// ограничение светофора
 
@@ -105,6 +109,9 @@ class zxSignal isclass Signal, ALSN_Provider
 
 	public bool[] ex_sgn;		// допустимые показания
 	public int ab4;			// 4-значная АБ. -1 - не определено, 0 - нет, 1 - есть
+	public int distanceRY;	// количество свободных секций для кода КЖ на АЛСН
+	public int distanceY;	// количество свободных секций для кода Ж на АЛСН
+	public int distanceG;	// количество свободных секций для кода З на АЛСН
 
 	public zxSignal Cur_next;
 	public zxSignal Cur_prev;
@@ -181,7 +188,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 		}
 
-	public void UnlinkedUpdate(int mainstate)
+	public void UnlinkedUpdate(zxSignal nextSign)
 		{
 		}
 

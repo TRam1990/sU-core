@@ -76,6 +76,7 @@ string-table
   permopened_flag                       "автомат без маневрового режима"
   shunt_flag                            "маневровый без поездного режима"
   zagrad_flag                           "заградительный"
+  float_flag                            "подвижный блок участок"
   dir_track_to                          "Путь открыть от "
   str_speed_init                        "по умолчанию"
   str_speed_copy                        "копировать"
