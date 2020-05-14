@@ -3920,7 +3920,7 @@ public void SetProperties(Soup soup)
 		{
 		AddHandler(me,"SetSpanDirection","","OldSpanHandler");
 
-		if((TrainzScript.GetTrainzVersion() >= 4.0) and !wrong_dir and speed_soup and speed_soup.GetNamedTagAsBool("Inited",false))
+		if((TrainzScript.GetTrainzVersion() >= 4.0) and !wrong_dir and span_soup and span_soup.GetNamedTagAsBool("Inited",false))
 			ExtraSpanRechecker();
 
 		}
