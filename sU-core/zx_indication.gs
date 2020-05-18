@@ -899,16 +899,15 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 			}
 		}
 		else if (!sign.train_open) {	// светофор закрыт
-			if (!(sign.MainState == zxIndication.STATE_R)) {
-				if (sign.ex_sgn[zxIndication.STATE_R]) {	// красный , т.к. он более "закрытый", чем синий
-					sign.MainState = zxIndication.STATE_R;
-				}
-				else if (sign.ex_sgn[zxIndication.STATE_B]) {	// синий
-					sign.MainState = zxIndication.STATE_B;
-				}
-				else {
-					sign.MainState = 0;
-				}
+			
+			if (sign.ex_sgn[zxIndication.STATE_R]) {	// красный , т.к. он более "закрытый", чем синий
+				sign.MainState = zxIndication.STATE_R;
+			}
+			else if (sign.ex_sgn[zxIndication.STATE_B]) {	// синий
+				sign.MainState = zxIndication.STATE_B;
+			}
+			else {
+				sign.MainState = 0;
 			}
 		}
 		//    светофор (пред) открыт в поездном порядке
@@ -1310,6 +1309,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 				sign.RCCount = 0;
 			}
 		}
+
 
 		return sign.MainState != oldMainState or (sign.RCCount != oldRCCount and Math.Max(sign.RCCount, oldRCCount) <= sign.distanceG);
 	}
