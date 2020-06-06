@@ -1902,17 +1902,23 @@ public string GetDescriptionHTML(void)
 
 	  	if(Type & (ST_OUT | ST_ROUTER) and !(Type & ST_IN))
 			{
-			s=s+hw.StartCell("bgcolor='#886666' colspan='3' align='center'");
+			s=s+hw.StartCell("bgcolor='#886666' colspan='2' align='center'");
 			s=s+hw.CheckBox("live://property/code_dev/1", code_dev & 1);
 	 		s=s+" "+hw.MakeLink("live://property/code_dev/1", STT.GetString("code_dev"));
 	  		}
 		else if(Type & ST_IN) 
-			s=s+hw.StartCell("bgcolor='#886666' colspan='4' align='center' ") + "  ";
-		else 
 			s=s+hw.StartCell("bgcolor='#886666' colspan='3' align='center' ") + "  ";
-
-
+		else 
+			s=s+hw.StartCell("bgcolor='#886666' colspan='2' align='center' ") + "  ";
 		s=s+hw.EndCell();
+
+
+		s=s+hw.StartCell("bgcolor='#886666'");
+		s=s+hw.CheckBox("live://property/saut_equipped",saut_eq);
+		s=s+" "+hw.MakeLink("live://property/saut_equipped", STT.GetString("SAUT"));
+		s=s+hw.EndCell();
+
+
 		s=s+hw.EndRow();
 
 
@@ -2812,6 +2818,12 @@ public void LinkPropertyValue(string id)
 		{
 		protect_influence = !protect_influence;
 		}
+
+	else if(id=="saut_equipped")
+		{
+		saut_eq = !saut_eq;
+		}
+
 	else if (id == "distanceRY_d") {
 		if (distanceRY > 0) {
 			--distanceRY;
@@ -3954,6 +3966,8 @@ public void SetProperties(Soup soup)
 	code_dev = soup.GetNamedTagAsInt("code_dev");
 	def_path_priority = soup.GetNamedTagAsInt("def_path_priority",0);
 
+	saut_eq = soup.GetNamedTagAsBool("saut_equipped",false);
+
 
 	if(station_edited and stationName!="")
 		{
@@ -4052,6 +4066,8 @@ public Soup GetProperties(void)
 
 	retSoup.SetNamedTag("code_freq",code_freq);
 	retSoup.SetNamedTag("code_dev",code_dev);
+	retSoup.SetNamedTag("saut_equipped",saut_eq);
+
 	retSoup.SetNamedTag("def_path_priority",def_path_priority);
 	retSoup.SetNamedTag("predvhod",predvhod);
 	retSoup.SetNamedTag("kor_BU_1",kor_BU_1);

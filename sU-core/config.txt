@@ -65,6 +65,7 @@ string-table
   als50                                 "АЛС-50"
   als75                                 "АЛС-75"
   alsen                                 "АЛС-ЕН"
+  saut                                  "САУТ"
   yellow_code                           "код жёлтого для ЖЗ и Жм"
   prigl_enabled                         "пригласительный сигнал"
   pause_bef_red                         "Задержка включения красного "

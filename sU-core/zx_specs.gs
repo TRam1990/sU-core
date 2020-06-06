@@ -58,6 +58,13 @@ class zxSpeedLimit isclass zxSpeedObject
 };
 
 
+
+class zxExtraSignalData
+{
+};
+
+
+
 class zxSignal isclass Signal, ALSN_Provider
 {
 
@@ -138,11 +145,15 @@ class zxSignal isclass Signal, ALSN_Provider
 	public int code_freq;		// частота кодирования АЛС (0 - не кодируется)
 	public int code_dev;		// съезды к пути не кодируются, путь кодируется (1 - кодируются к светофору, 2 - кодируются от светофора, 3 - полное кодирование)
 
+	public bool saut_eq;		// наличие устройств САУТ
+
 
 	public string ProtectGroup;
 	public Soup protect_soup;
 
 	public bool protect_influence;
+
+	public zxExtraSignalData extra_data;
 
 
 	public void AddTrainId(int id)			// добавление и удаление наехавших поездов
@@ -382,29 +393,6 @@ class zxSignal_Cache isclass GSObject
 
 class zxMarker isclass Trackside
 {
-
-
-/*
-
-0 прямой путь
-1 отклонение      - доп
-2 отклонение пологое
-3 неправильное (ЖмБ)
-4 ПАБ (ЗЗ)
-5 АЛС
-6 неправильное с 2-сторонней блокировкой (ЗЗ)
-7 маркер "располовиненого" пути (для ЖЖЖ)   - доп.
-8 конец АБ
-9 маркер направления
-10 маркер включения З перед Жм на 4АБ
-11 маркер отсутствия контроля занятости перегона
-
-
-public int trmrk_mod;
-
-*/
-
-
 /*
 
 0 прямой путь
