@@ -857,7 +857,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 		sign.RCCount = 0;
 		if (nextSign) {
 			sign.RCCount = nextSign.RCCount + 1;
-			if (nextSign.Type & zxSignal.ST_FLOAT_BLOCK) {
+			if (nextSign.x_mode) {
 				trmrk_flag = trmrk_flag | zxMarker.MRALS;
 			}
 		}
@@ -898,8 +898,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 				sign.MainState = 0;
 			}
 		}
-		else if (!sign.train_open) {	// светофор закрыт
-			
+		else if (!sign.train_open and !sign.x_mode) {	// светофор закрыт
 			if (sign.ex_sgn[zxIndication.STATE_R]) {	// красный , т.к. он более "закрытый", чем синий
 				sign.MainState = zxIndication.STATE_R;
 			}
@@ -914,9 +913,9 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 		else if (
 			!nextSign
 			or nextSign.wrong_dir
-			or ((nextSign.Type & zxSignal.ST_FLOAT_BLOCK) and sign.RCCount < sign.distanceY)
+			or (nextSign.x_mode and sign.RCCount < sign.distanceY)
 		) {		// впереди поезд или неправильный перегон
-			if (sign.ex_sgn[zxIndication.STATE_R]) {	// красный
+			if (sign.ex_sgn[zxIndication.STATE_R] or sign.x_mode) {	// красный
 				sign.MainState = zxIndication.STATE_R;
 			}
 			else if(sign.ex_sgn[zxIndication.STATE_B]) {	// синий
@@ -956,8 +955,8 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 			}
 		}
 		else if (
-			(!(nextSign.Type & zxSignal.ST_FLOAT_BLOCK) and (nextSign.MainState == zxIndication.STATE_R or nextSign.MainState == zxIndication.STATE_RWb or nextSign.MainState == zxIndication.STATE_YbW or nextSign.MainState == zxIndication.STATE_W or nextSign.MainState == zxIndication.STATE_WW))
-			or ((nextSign.Type & zxSignal.ST_FLOAT_BLOCK) and (sign.RCCount < sign.distanceG))
+			(!nextSign.x_mode and (nextSign.MainState == zxIndication.STATE_R or nextSign.MainState == zxIndication.STATE_RWb or nextSign.MainState == zxIndication.STATE_YbW or nextSign.MainState == zxIndication.STATE_W or nextSign.MainState == zxIndication.STATE_WW))
+			or (nextSign.x_mode and (sign.RCCount < sign.distanceG))
 			or (trmrk_flag & zxMarker.MRNOPR)
 		) {	// следующий красный, три жёлтых, белый или Жм+Б, или путь без пропуска
 			if (trmrk_flag & zxMarker.MRHALFBL) {
@@ -1001,7 +1000,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 				else if (sign.ex_sgn[zxIndication.STATE_YW]) {		// жёлтый + белый	
 					sign.MainState = zxIndication.STATE_YW;
 				}
-				else if (sign.ex_sgn[zxIndication.STATE_Y]) {		// жёлтый
+				else if (sign.ex_sgn[zxIndication.STATE_Y] or sign.x_mode) {		// жёлтый
 					sign.MainState = zxIndication.STATE_Y;
 				}
 				else {
@@ -1092,7 +1091,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 				else if (sign.ex_sgn[zxIndication.STATE_YbW]) {		// жёлтый миг. + белый
 					sign.MainState = zxIndication.STATE_YbW;
 				}
-				else if (sign.ex_sgn[zxIndication.STATE_GW]) {		// зелёный + белый	
+				else if (sign.ex_sgn[zxIndication.STATE_GW] or sign.x_mode) {		// зелёный + белый	
 					sign.MainState = zxIndication.STATE_GW;
 				}
 				else if (sign.ex_sgn[zxIndication.STATE_Yb]) {		// жёлтый мигающий
@@ -1214,7 +1213,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 					else if (sig_GY_on) {	// жёлтый зелёный
 						sign.MainState = zxIndication.STATE_GY;
 					}
-					else if (sign.ex_sgn[zxIndication.STATE_G]) {
+					else if (sign.ex_sgn[zxIndication.STATE_G] or sign.x_mode) {
 						sign.MainState = zxIndication.STATE_G;		// зелёный
 					}
 					else if (sign.ex_sgn[zxIndication.STATE_YW]) {		// жёлтый + белый	
@@ -1283,11 +1282,12 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 				}
 			}
 		}
-		if (!sign.train_open) {
+
+		if (!sign.train_open and !sign.x_mode) {
 			sign.RCCount = sign.distanceRY;
 		}
 		else if (
-			!(sign.Type & zxSignal.ST_FLOAT_BLOCK)
+			!sign.x_mode
 			or (trmrk_flag & (zxMarker.MRT | zxMarker.MRT18 | zxMarker.MRWW | zxMarker.MRPAB | zxMarker.MRDAB | zxMarker.MRENDAB | zxMarker.MRENDCONTROL))
 		) {
 			if (sign.MainState == zxIndication.STATE_R or sign.MainState == zxIndication.STATE_RWb or ((sign.MainState == zxIndication.STATE_W or sign.MainState == zxIndication.STATE_WW) and sign.Type & (zxSignal.ST_IN | zxSignal.ST_OUT | zxSignal.ST_ROUTER))) {

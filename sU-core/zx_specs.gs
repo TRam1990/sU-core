@@ -80,6 +80,7 @@ class zxSignal isclass Signal, ALSN_Provider
 	public bool wrong_dir;		// входной противонаправлен перегону
 	public bool barrier_closed;	// заградительный закрыт
 	public bool prigl_open;		// открыт пригласительный
+	public bool x_mode;			// режим подвижных блок участков
 
 	public string stationName;
 	public string privateName;
@@ -262,6 +263,9 @@ class zxSignal isclass Signal, ALSN_Provider
 	public bool IsObligatory()
 		{
 		if(!Inited)
+			return true;
+
+		if (x_mode)
 			return true;
 
 		if(MainState == zxIndication.STATE_B)

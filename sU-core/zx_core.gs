@@ -1417,6 +1417,8 @@ Soup GetChangeSoup()
 			Temp_soup.SetNamedTag("shunt_open"+j,temp_sign.shunt_open);
 			Temp_soup.SetNamedTag("barrier_closed"+j,temp_sign.barrier_closed);
 			Temp_soup.SetNamedTag("wrong_dir"+j,temp_sign.wrong_dir);
+			Temp_soup.SetNamedTag("prigl_open"+j, temp_sign.prigl_open);
+			Temp_soup.SetNamedTag("x_mode"+j, temp_sign.x_mode);
 
 
 
@@ -1444,10 +1446,12 @@ void SetChangeSoup(Soup sp)
 
 		signal_link.sign.SetSignalState( sp.GetNamedTagAsInt("default_state"+i,2) , "");
 
-		signal_link.sign.train_open = sp.GetNamedTagAsFloat("train_open"+i,false);
-		signal_link.sign.shunt_open = sp.GetNamedTagAsFloat("shunt_open"+i,false);
-		signal_link.sign.barrier_closed = sp.GetNamedTagAsFloat("barrier_closed"+i,false);
-		signal_link.sign.wrong_dir = sp.GetNamedTagAsFloat("wrong_dir"+i,false);
+		signal_link.sign.train_open = sp.GetNamedTagAsBool("train_open"+i,false);
+		signal_link.sign.shunt_open = sp.GetNamedTagAsBool("shunt_open"+i,false);
+		signal_link.sign.barrier_closed = sp.GetNamedTagAsBool("barrier_closed"+i,false);
+		signal_link.sign.wrong_dir = sp.GetNamedTagAsBool("wrong_dir"+i,false);
+		signal_link.sign.prigl_open = sp.GetNamedTagAsBool("prigl_open"+i, false);
+		signal_link.sign.x_mode = sp.GetNamedTagAsBool("x_mode"+i, false);
 
 		signal_link.sign.MainState = sp.GetNamedTagAsInt("state"+i, 0);
 		signal_link.sign.SetSignal(false);
@@ -1477,7 +1481,7 @@ void SendMessagesToClients(Soup data, string type_msg)
 
 
 
-void SendNewSignalSettings(string sig_name, int state, float limit, int default_state, bool train_open, bool shunt_open, bool wrong_dir, bool barrier_closed, bool prigl_open)
+void SendNewSignalSettings(string sig_name, int state, float limit, int default_state, bool train_open, bool shunt_open, bool wrong_dir, bool barrier_closed, bool prigl_open, bool x_mode)
 	{
 	if(!MP_started)
 		return;
@@ -1494,6 +1498,7 @@ void SendNewSignalSettings(string sig_name, int state, float limit, int default_
 	Temp_soup.SetNamedTag("wrong_dir",wrong_dir);
 	Temp_soup.SetNamedTag("barrier_closed",barrier_closed);
 	Temp_soup.SetNamedTag("prigl_open", prigl_open);
+	Temp_soup.SetNamedTag("x_mode", x_mode);
 
 	SendMessagesToClients(Temp_soup, "sU_SetSettings");
 	}
@@ -1573,6 +1578,7 @@ void MultiplayerClientHandler1(Message msg)
 		signal_link.sign.barrier_closed = sp.GetNamedTagAsFloat("barrier_closed",false);
 		signal_link.sign.wrong_dir = sp.GetNamedTagAsFloat("wrong_dir",false);
 		signal_link.sign.prigl_open = sp.GetNamedTagAsBool("prigl_open", false);
+		signal_link.sign.x_mode = sp.GetNamedTagAsBool("x_mode", false);
 
 		signal_link.sign.MainState = sp.GetNamedTagAsInt("state", 0);
 		signal_link.sign.SetSignal(false);
@@ -2011,7 +2017,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 							if(temp_signal.shunt_open and (temp_signal.MainState == zxIndication.STATE_R or temp_signal.MainState == zxIndication.STATE_B) and ((stringParam[0])[1]!='+'))
 								temp_signal.UpdateState(0, -1);
 
-							if(temp_signal.Type & zxSignal.ST_UNLINKED )
+							if ((temp_signal.Type & zxSignal.ST_UNLINKED) and !(temp_signal.x_mode))
 								temp_signal.UnlinkedUpdate(sig1);
 							}
 						}
@@ -2101,7 +2107,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		zxSignal sig1=cast<zxSignal>objectParam[0];
 
 		if(sig1)
-			SendNewSignalSettings(sig1.GetName(), sig1.MainState, sig1.speed_limit, sig1.GetSignalState(), sig1.train_open, sig1.shunt_open, sig1.wrong_dir, sig1.barrier_closed, sig1.prigl_open);
+			SendNewSignalSettings(sig1.GetName(), sig1.MainState, sig1.speed_limit, sig1.GetSignalState(), sig1.train_open, sig1.shunt_open, sig1.wrong_dir, sig1.barrier_closed, sig1.prigl_open, sig1.x_mode);
 		}
 
 	else if(function=="mult_speed")
