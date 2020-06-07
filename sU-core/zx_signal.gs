@@ -193,18 +193,27 @@ bool SetOwnSignalState(bool set_auto_state)
 				}
 			}
 
-		if(MU)
-			{
-			if(MainState == zxIndication.STATE_R)
+		if(MU) {
+			if (x_mode) {
+				MU.OnLightsRouterSign("x");
+			}
+			else if(MainState == zxIndication.STATE_R) {
 				MU.UpdateMU();
-			else
+			}
+			else {
 				MUChecker();
 			}
+		}
 
 		if(MainState == zxIndication.STATE_RWb)
 			(cast<bb_RWb>LC.sgn_st[zxIndication.STATE_RWb].l).white_lens = kbm_mode;
 
-		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
+		if (x_mode and MainState != zxIndication.STATE_RWb) {
+			LC.sgn_st[0].l.InitIndif(set_lens, set_blink);
+		}
+		else {
+			LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
+		}
 
 		if(set_auto_state)
 			{
