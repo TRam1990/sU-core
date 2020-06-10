@@ -294,7 +294,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 		MapObject MO = GSTS.SearchNext();
 
-		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !(((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or ((cast<zxSignal>MO).MainState == zxIndication.STATE_B) ) ) )
+		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !((((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or ((cast<zxSignal>MO).MainState == zxIndication.STATE_B)) and !(cast<zxSignal>MO).x_mode ) ) )
 			MO = GSTS.SearchNext();
 
 		if(!MO or !MO.isclass(Vehicle))

@@ -261,7 +261,7 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 				{
 				zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
 				
-				if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B) and (sig.MainState != 0))
+				if((!(sig.Type & zxSignal.ST_UNLINKED) or sig.x_mode) and (sig.MainState != zxIndication.STATE_B) and (sig.MainState != 0))
 					{
 
 					if(sig.max_speed_pass > 0)
@@ -310,7 +310,7 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 					{
 					zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
 
-					if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B))
+					if((!(sig.Type & zxSignal.ST_UNLINKED) or sig.x_mode) and (sig.MainState != zxIndication.STATE_B))
 						sig.SetSpeedLimit(max_speed);
 					else if(sig.GetSpeedLimit() > max_speed)
 						sig.SetSpeedLimit(max_speed);	
@@ -335,7 +335,7 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 				{
 				zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
 
-				if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B) and (sig.MainState != 0))
+				if((!(sig.Type & zxSignal.ST_UNLINKED) or sig.x_mode) and (sig.MainState != zxIndication.STATE_B) and (sig.MainState != 0))
 					{
 
 					if(sig.max_speed_cargo > 0)
@@ -384,7 +384,7 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 					{
 					zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
 					
-					if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B))
+					if((!(sig.Type & zxSignal.ST_UNLINKED) or sig.x_mode) and (sig.MainState != zxIndication.STATE_B))
 						sig.SetSpeedLimit(max_speed);
 					else if(sig.GetSpeedLimit() > max_speed)
 						sig.SetSpeedLimit(max_speed);	
@@ -2017,7 +2017,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 							if(temp_signal.shunt_open and (temp_signal.MainState == zxIndication.STATE_R or temp_signal.MainState == zxIndication.STATE_B) and ((stringParam[0])[1]!='+'))
 								temp_signal.UpdateState(0, -1);
 
-							if ((temp_signal.Type & zxSignal.ST_UNLINKED) and !(temp_signal.x_mode))
+							if ((temp_signal.Type & zxSignal.ST_UNLINKED) and !temp_signal.x_mode)
 								temp_signal.UnlinkedUpdate(sig1);
 							}
 						}
@@ -2132,7 +2132,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			Interface.Exception("signal with error!");
 			return "";
 			}
-		if((sig1.MainState == 0) or (sig1.MainState == zxIndication.STATE_B) or (sig1.Type & zxSignal.ST_UNLINKED) )
+		if((sig1.MainState == 0) or (sig1.MainState == zxIndication.STATE_B) or ((sig1.Type & zxSignal.ST_UNLINKED) and !sig1.x_mode))
 			{
 			//Interface.Exception("error with call NewSpeed");
 			return "";
@@ -2169,7 +2169,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						return "";
 
 
-					if((sig2.MainState == zxIndication.STATE_B) or (sig2.MainState == 0) or (sig2.Type & zxSignal.ST_UNLINKED))
+					if((sig2.MainState == zxIndication.STATE_B) or (sig2.MainState == 0) or ((sig2.Type & zxSignal.ST_UNLINKED) and !sig2.x_mode))
 						{
 						if(sig2.GetSpeedLimit() != last_set_speed)
 							{
@@ -2313,7 +2313,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 
 
-		while(MO and !(MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  !((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) and ((cast<zxSignal>MO).MainState != zxIndication.STATE_B) and ((cast<zxSignal>MO).MainState != 0)  ) )
+		while(MO and !(MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  (!((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or (cast<zxSignal>MO).x_mode) and ((cast<zxSignal>MO).MainState != zxIndication.STATE_B) and ((cast<zxSignal>MO).MainState != 0)  ) )
 			{
 
 			if(GSTS.GetFacingRelativeToSearchDirection() == true)
@@ -2326,7 +2326,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 					if( sig2.train_is_l)
 						return "";
 
-					if(  (sig2.Type & zxSignal.ST_UNLINKED) or (sig2.MainState == zxIndication.STATE_B) or (sig2.MainState == 0))
+					if(  ((sig2.Type & zxSignal.ST_UNLINKED) and !sig2.x_mode) or (sig2.MainState == zxIndication.STATE_B) or (sig2.MainState == 0))
 						{
 						if(sig2.GetSpeedLimit() != curr_limit)
 							{

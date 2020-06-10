@@ -215,7 +215,7 @@ bool SetOwnSignalState(bool set_auto_state)
 			LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
 		}
 
-		if(set_auto_state)
+		if(set_auto_state and (!x_mode or wrong_dir))
 			{
 			if(MainState == zxIndication.STATE_R)
 				SetSignalState(RED, "");
@@ -608,7 +608,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		type_ToFind[0]=priority;
 		type_ToFind[1]="-";
 
-		if((MainState != 0) and (MainState != zxIndication.STATE_B) and !(Type & zxSignal.ST_UNLINKED))
+		if((MainState != 0) and (MainState != zxIndication.STATE_B) and (!(Type & zxSignal.ST_UNLINKED) or x_mode))
 			mainLib.LibraryCall("new_speed",type_ToFind,GSO);	// раньше, чем SetSignal()
 
 
@@ -966,6 +966,7 @@ public void Deswitch_span()
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
 		zxs.MainState = zxIndication.STATE_Rx;
 		zxs.wrong_dir = true;
+		zxs.x_mode = false;
 		zxs.SetSignal(true);
 
 		if(IsServer)
@@ -1237,10 +1238,13 @@ public int GetALSNTypeSignal(void)
 	if(Type & ST_ROUTER)
 		type1 = type1 + TYPE_DIVIDE;
 
-	if(type1 == TYPE_NONE and Type & ST_UNLINKED and !x_mode)
+	if (x_mode)
+		type1 = type1 + TYPE_CIRCUIT;
+
+	if(type1 == TYPE_NONE and Type & ST_UNLINKED)
 		return TYPE_NONE;
 
-	if(Type & ST_PERMOPENED or x_mode)
+	if(Type & ST_PERMOPENED)
 		type1 = type1 + TYPE_PASSING;
 
 	return type1;
@@ -1326,6 +1330,9 @@ public string GetCntFloatBlockTable(void) {
 		++i;
 		sigs[i] = tmp;
 		distances[i] = ts.GetDistance();
+		if (!(tmp.Type & ST_FLOAT_BLOCK)) {
+			break;
+		}
 	}
 	
 	HTMLWindow hw = HTMLWindow;
@@ -1482,15 +1489,23 @@ public string GetCntSpeedTable(void)
 
 					s=s+hw.EndRow();
 
-                        int i;
-
-
-                        for(i=0;i<26;i++)
-				{
-
-                        	if(ex_sgn[i] and (i != zxIndication.STATE_GY or ab4) and i != zxIndication.STATE_B)
-
-					{
+					int i;
+					for (i = 0; i < 26; ++i) {
+						if (
+							(
+								ex_sgn[i]
+								and (i != zxIndication.STATE_GY or ab4)
+								and i != zxIndication.STATE_B
+							)
+							or (
+								(Type & ST_FLOAT_BLOCK)
+								and (
+									zxIndication.STATE_R == i
+									or zxIndication.STATE_Y == i
+									or zxIndication.STATE_G == i
+								)
+							)
+						) {
 
 		        		s=s+hw.StartRow();
 					s=s+hw.StartCell("bgcolor='#888888'");
@@ -1824,7 +1839,7 @@ public string GetDescriptionHTML(void)
 
 		}
 
-	if( isMacht and !(Type & ST_UNLINKED) )
+	if( isMacht and (!(Type & ST_UNLINKED) or (Type & ST_FLOAT_BLOCK)))
 		{
 
 		s=s+hw.StartTable("border='1' width=90%");
