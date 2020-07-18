@@ -87,6 +87,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 
 	public int MainState;		// состояние светофора
+	public int MainStateALS;	// состояние следующего светофора для кода АЛСН в режиме крестов. В режиме АБ совпадает с оснновным состоянием
 	public int RCCount;		// количество свободных секций (для подвижных блок участков)
 	public int Type;		// тип светофора
 

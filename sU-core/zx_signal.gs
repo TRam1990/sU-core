@@ -215,9 +215,9 @@ bool SetOwnSignalState(bool set_auto_state)
 			LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
 		}
 
-		if(set_auto_state and (!x_mode or wrong_dir))
+		if(set_auto_state)
 			{
-			if(MainState == zxIndication.STATE_R)
+			if(MainState == zxIndication.STATE_R or MainState == 0)
 				SetSignalState(RED, "");
 			else if((MainState > zxIndication.STATE_R and MainState < zxIndication.STATE_GY) or MainState == zxIndication.STATE_YYY or MainState == zxIndication.STATE_YW or MainState == zxIndication.STATE_YbW or MainState == zxIndication.STATE_YYW or MainState == zxIndication.STATE_YbYW)
 				SetSignalState(YELLOW, "");
@@ -313,7 +313,7 @@ void CheckMySignal(bool train_entered)
 			and (MainState != zxIndication.STATE_Rx)
 			and (MainState != zxIndication.STATE_RWb)
 		) {
-			Cur_next.MainState = zxIndication.STATE_B;
+			Cur_next.MainState = Cur_next.MainStateALS = zxIndication.STATE_B;
 			Cur_next.SetSignal(true);
 
 			mainLib.LibraryCall("find_next_signal",track_params,GSO);		// повторный поиск следующего сигнала, т.к. разделительный более не влияет
@@ -400,6 +400,12 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			if(!pre_protected)
 				{
 				MainState = zxIndication.STATE_R;
+				if (protect_influence) {
+					MainStateALS = 0;
+				}
+				else {
+					MainStateALS = 0;
+				}
 				SetSignalState(RED, "");
 				}
 			else
@@ -428,7 +434,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			if(!(Type & ST_UNLINKED) or x_mode)
 				LC.applaySignalState(me, null, 0, false);
 			else
-				MainState = 0;
+				MainState = MainStateALS = 0;
 
 			string[] track_params = new string[2];
 				
@@ -461,6 +467,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				train_open = false;
 				shunt_open = false;
 				MainState = zxIndication.STATE_R;
+				MainStateALS = 0;
 				SetSignalState(RED, "");
 				SetSignal(false);
 				CheckPrevSignals(false);
@@ -472,7 +479,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				{
 				if(!train_open and !shunt_open)
 					{
-					MainState = zxIndication.STATE_R;
+					MainState = MainStateALS = zxIndication.STATE_R;
 					SetSignalState(RED, "");
 					CheckPrevSignals(false);
 					SetSignal(false);
@@ -487,7 +494,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 						if(mainLib.LibraryCall("find_any_next_signal",null,GSO)=="true")
 							{
 							SetSignalState(GREEN, "");	
-							MainState=zxIndication.STATE_W;
+							MainState = MainStateALS = zxIndication.STATE_W;
 							}
 						else
 							shunt_open = false;
@@ -552,7 +559,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				}
 			else
 				{
-				MainState = zxIndication.STATE_B;
+				MainState = MainStateALS = zxIndication.STATE_B;
 
 				mainLib.LibraryCall("find_next_signal",track_params,GSO);
 
@@ -679,6 +686,13 @@ public void UnlinkedUpdate(zxSignal nextSign)
 		else
 			MainState = 0;
 
+		if (nextSign) {
+			MainStateALS = nextSign.MainStateALS;
+		}
+		else {
+			MainStateALS = 0;
+		}
+
 		SetSignal(false);
 
 		if(IsServer)
@@ -691,9 +705,10 @@ public void UnlinkedUpdate(zxSignal nextSign)
 			{
 			if (nextSign) {
 				MainState = nextSign.MainState;
+				MainStateALS = nextSign.MainStateALS;
 			}
 			else {
-				MainState = 0;
+				MainState = MainStateALS = 0;
 			}
 			SetSignalState(GREEN, "");
 			SetSignal(false);
@@ -706,9 +721,10 @@ public void UnlinkedUpdate(zxSignal nextSign)
 		{
 		if (nextSign) {
 			MainState = nextSign.MainState;
+			MainStateALS = nextSign.MainStateALS;
 		}
 		else {
-			MainState = 0;
+			MainState = MainStateALS = 0;
 		}
 		SetSignal(false);
 
@@ -964,7 +980,7 @@ public void Deswitch_span()
 	for(i=0;i<n;i++)
 		{
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
-		zxs.MainState = zxIndication.STATE_Rx;
+		zxs.MainState = zxs.MainStateALS = zxIndication.STATE_Rx;
 		zxs.wrong_dir = true;
 		zxs.x_mode = false;
 		zxs.SetSignal(true);
@@ -1195,22 +1211,22 @@ public void GenerateSpan(bool recurs)
 
 public int GetALSNCode(void)
 	{
-	if(barrier_closed and protect_influence)
-		return CODE_NONE;
+//	if(barrier_closed and protect_influence)
+//		return CODE_NONE;
 
-	if (x_mode and RCCount < distanceRY) {
-		return CODE_NONE;
-	}
-	if( MainState == zxIndication.STATE_R or MainState == zxIndication.STATE_RWb or ( (MainState == zxIndication.STATE_W or MainState == zxIndication.STATE_WW ) and Type&(ST_IN+ST_OUT+ST_ROUTER) ) )
+//	if (x_mode and RCCount < distanceRY) {
+//		return CODE_NONE;
+//	}
+	if( MainStateALS == zxIndication.STATE_R or MainStateALS == zxIndication.STATE_RWb or ( (MainStateALS == zxIndication.STATE_W or MainStateALS == zxIndication.STATE_WW ) and Type&(ST_IN+ST_OUT+ST_ROUTER) ) )
 		return CODE_REDYELLOW;
-	else if( (MainState >= zxIndication.STATE_YY and MainState <= zxIndication.STATE_YbY) or MainState == zxIndication.STATE_YYY or MainState == zxIndication.STATE_YW or MainState == zxIndication.STATE_YbW or MainState == zxIndication.STATE_YYW or MainState == zxIndication.STATE_YbYW)
+	else if( (MainStateALS >= zxIndication.STATE_YY and MainStateALS <= zxIndication.STATE_YbY) or MainStateALS == zxIndication.STATE_YYY or MainStateALS == zxIndication.STATE_YW or MainStateALS == zxIndication.STATE_YbW or MainStateALS == zxIndication.STATE_YYW or MainStateALS == zxIndication.STATE_YbYW)
 		return CODE_YELLOW;
-	else if(yellow_code and (MainState == zxIndication.STATE_GY or MainState == zxIndication.STATE_Yb) )
+	else if(yellow_code and (MainStateALS == zxIndication.STATE_GY or MainStateALS == zxIndication.STATE_Yb) )
 		return CODE_YELLOW;		
-	else if(MainState >= zxIndication.STATE_GY and MainState != zxIndication.STATE_B)
+	else if(MainStateALS >= zxIndication.STATE_GY and MainStateALS != zxIndication.STATE_B)
 		return CODE_GREEN;
 
-	if(MainState == zxIndication.STATE_B)	
+	if(MainStateALS == zxIndication.STATE_B)	
 		return CODE_YELLOW;
 
 	return CODE_NONE;
@@ -3752,6 +3768,7 @@ public void SetProperties(Soup soup)
 
 	ShowName(false);
 	MainState = soup.GetNamedTagAsInt("MainState",0);
+	MainStateALS = soup.GetNamedTagAsInt("MainStateALS", MainState);
 	RCCount = soup.GetNamedTagAsInt("RCCount", 0);
 	Type = soup.GetNamedTagAsInt("GetSignalType()",-1);
 
@@ -4012,7 +4029,7 @@ public void SetProperties(Soup soup)
 		{
 		if((Type &  (ST_IN | ST_OUT)) and !train_open)
 			{
-			MainState = zxIndication.STATE_R;
+			MainState = MainStateALS = zxIndication.STATE_R;
 			SetSignalState(RED, "");
 			}
 		else
@@ -4056,6 +4073,7 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("stationName",stationName);
 	retSoup.SetNamedTag("privateName",privateName);
 	retSoup.SetNamedTag("MainState",MainState);
+	retSoup.SetNamedTag("MainStateALS", MainStateALS);
 	retSoup.SetNamedTag("RCCount", RCCount);
 
 	if(!wrong_dir)
