@@ -196,6 +196,7 @@ bool SetOwnSignalState(bool set_auto_state)
 		if(MU) {
 			if (x_mode) {
 				MU.OnLightsRouterSign("x");
+				MU.WasOpen = true;
 			}
 			else if(MainState == zxIndication.STATE_R) {
 				MU.UpdateMU();
@@ -392,6 +393,10 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 	if(!(Type & ST_UNTYPED))
 		return;
+
+	if (reason == 0) {
+		OldMainState = -1;
+	}
 
 	if(Type & ST_PROTECT and reason==0)
 		{
@@ -2024,9 +2029,6 @@ public string GetDescriptionHTML(void)
  	s=s+MakeCheckBoxRow("live://property/type/SHUNT",STT.GetString("SHUNT_flag"), Type & ST_SHUNT);
  	s=s+MakeCheckBoxRow("live://property/type/ZAGRAD",STT.GetString("ZAGRAD_flag"), Type & ST_PROTECT);
  	s=s+MakeCheckBoxRow("live://property/type/FLOAT",STT.GetString("FLOAT_flag"), Type & ST_FLOAT_BLOCK);
-	if (Type & ST_FLOAT_BLOCK) {
-		s=s+MakeCheckBoxRow("live://property/x_mode",STT.GetString("FLOAT_flag"), x_mode);
-	}
 
 	s=s+hw.EndTable();
 
@@ -2901,9 +2903,6 @@ public void LinkPropertyValue(string id)
 	else if (id == "distanceG_u") {
 		++distanceY;
 	}
-	else if (id == "x_mode") {
-		x_mode = !x_mode;
-	}
 	else
 		{
 		string[] str_a = Str.Tokens(id+"","/");
@@ -3256,6 +3255,15 @@ public string GetImgPriglMode(bool state)
  	return s;
 }
 
+public string GetImgXMode(bool state) {
+ 	HTMLWindow hw=HTMLWindow;
+
+	if (state) {
+		return hw.MakeImage("<kuid2:236443:103204:1>",true,32,32);
+	}
+	return hw.MakeImage("<kuid2:236443:103206:1>",true,32,32);
+}
+
 
 
 public string GetContentViewDetails()
@@ -3313,6 +3321,12 @@ public string GetContentViewDetails()
 	 	 		);
 		}
 
+	if (Type & ST_FLOAT_BLOCK) {
+		s2 = s2+ hw.MakeRow(
+			hw.MakeCell(STT.GetString("ability_to_x_mode"),"bgcolor=#777777")+
+			hw.MakeCell(hw.MakeLink("live://XMode^" + !x_mode, GetImgXMode(x_mode)), "bgcolor=#777777")
+		);
+	}
 
 
 
@@ -3415,6 +3429,14 @@ public void ChangeText(Message msg)
  				PostMessage(me,"CTRL","PriglMode.false",0);
 
  			}
+ 		else if (tok2[0] == "XMode") {
+			if (tok2[1] == "true") {
+ 				PostMessage(me, "CTRL", "XMode^true", 0);
+			}
+ 			else if (tok2[1] == "false") {
+ 				PostMessage(me, "CTRL", "XMode^false", 0);
+			}
+		}
 
 
  		PostMessage(me,"RefreshBrowser","",0.5);

@@ -191,6 +191,14 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 		curr_sign.prigl_open = false;
 		update_signal = true;
 		}
+	else if (msg.minor == "XMode^true") {
+		curr_sign.x_mode = true;
+		update_signal = true;
+	}
+	else if (msg.minor == "XMode^false") {
+		curr_sign.x_mode = false;
+		update_signal = true;
+	}
 	else if(msg.minor[0,4]=="ALS-")
 		{
 		curr_sign.code_freq= Str.ToInt(msg.minor[4,]);
