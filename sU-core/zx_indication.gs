@@ -1315,7 +1315,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 		}
 		else if (
 			!sign.x_mode
-			or (trmrk_flag & (zxMarker.MRT | zxMarker.MRT18 | zxMarker.MRWW | zxMarker.MRPAB | zxMarker.MRDAB | zxMarker.MRENDAB | zxMarker.MRENDCONTROL))
+			or (trmrk_flag & zxMarker.MRFORBIDXMODE)
 		) {
 			if (sign.MainState == zxIndication.STATE_R or sign.MainState == zxIndication.STATE_RWb or ((sign.MainState == zxIndication.STATE_W or sign.MainState == zxIndication.STATE_WW) and sign.Type & (zxSignal.ST_IN | zxSignal.ST_OUT | zxSignal.ST_ROUTER))) {
 				sign.RCCount = sign.distanceRY;

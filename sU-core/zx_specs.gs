@@ -446,6 +446,8 @@ public int trmrk_mod;
 	public define int MRNOYLBL	= 4096;
 	public define int MRENDCONTROL	= 8192;
 
+	public define int MRFORBIDXMODE = MRT | MRT18 | MRWW | MRPAB | MRDAB | MRENDAB | MRENDCONTROL;
+
 	public int trmrk_flag;
 
 	public string info;
