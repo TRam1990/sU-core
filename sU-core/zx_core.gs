@@ -191,6 +191,14 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 		curr_sign.prigl_open = false;
 		update_signal = true;
 		}
+	else if (msg.minor == "XMode^true") {
+		curr_sign.x_mode = true;
+		update_signal = true;
+	}
+	else if (msg.minor == "XMode^false") {
+		curr_sign.x_mode = false;
+		update_signal = true;
+	}
 	else if(msg.minor[0,4]=="ALS-")
 		{
 		curr_sign.code_freq= Str.ToInt(msg.minor[4,]);
@@ -261,7 +269,7 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 				{
 				zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
 				
-				if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B) and (sig.MainState != 0))
+				if((!(sig.Type & zxSignal.ST_UNLINKED) or sig.x_mode) and (sig.MainState != zxIndication.STATE_B) and (sig.MainState != 0))
 					{
 
 					if(sig.max_speed_pass > 0)
@@ -310,7 +318,7 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 					{
 					zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
 
-					if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B))
+					if((!(sig.Type & zxSignal.ST_UNLINKED) or sig.x_mode) and (sig.MainState != zxIndication.STATE_B))
 						sig.SetSpeedLimit(max_speed);
 					else if(sig.GetSpeedLimit() > max_speed)
 						sig.SetSpeedLimit(max_speed);	
@@ -335,7 +343,7 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 				{
 				zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
 
-				if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B) and (sig.MainState != 0))
+				if((!(sig.Type & zxSignal.ST_UNLINKED) or sig.x_mode) and (sig.MainState != zxIndication.STATE_B) and (sig.MainState != 0))
 					{
 
 					if(sig.max_speed_cargo > 0)
@@ -384,7 +392,7 @@ void LowerMaxLimits(TrainContainer train_con, int prior)	// поиск минимального п
 					{
 					zxSignal sig = (cast<zxSignalLink>(Signals.DBSE[(train_con.signal[i])].Object)).sign;
 					
-					if(!(sig.Type & zxSignal.ST_UNLINKED) and (sig.MainState != zxIndication.STATE_B))
+					if((!(sig.Type & zxSignal.ST_UNLINKED) or sig.x_mode) and (sig.MainState != zxIndication.STATE_B))
 						sig.SetSpeedLimit(max_speed);
 					else if(sig.GetSpeedLimit() > max_speed)
 						sig.SetSpeedLimit(max_speed);	
@@ -1417,6 +1425,8 @@ Soup GetChangeSoup()
 			Temp_soup.SetNamedTag("shunt_open"+j,temp_sign.shunt_open);
 			Temp_soup.SetNamedTag("barrier_closed"+j,temp_sign.barrier_closed);
 			Temp_soup.SetNamedTag("wrong_dir"+j,temp_sign.wrong_dir);
+			Temp_soup.SetNamedTag("prigl_open"+j, temp_sign.prigl_open);
+			Temp_soup.SetNamedTag("x_mode"+j, temp_sign.x_mode);
 
 
 
@@ -1444,10 +1454,12 @@ void SetChangeSoup(Soup sp)
 
 		signal_link.sign.SetSignalState( sp.GetNamedTagAsInt("default_state"+i,2) , "");
 
-		signal_link.sign.train_open = sp.GetNamedTagAsFloat("train_open"+i,false);
-		signal_link.sign.shunt_open = sp.GetNamedTagAsFloat("shunt_open"+i,false);
-		signal_link.sign.barrier_closed = sp.GetNamedTagAsFloat("barrier_closed"+i,false);
-		signal_link.sign.wrong_dir = sp.GetNamedTagAsFloat("wrong_dir"+i,false);
+		signal_link.sign.train_open = sp.GetNamedTagAsBool("train_open"+i,false);
+		signal_link.sign.shunt_open = sp.GetNamedTagAsBool("shunt_open"+i,false);
+		signal_link.sign.barrier_closed = sp.GetNamedTagAsBool("barrier_closed"+i,false);
+		signal_link.sign.wrong_dir = sp.GetNamedTagAsBool("wrong_dir"+i,false);
+		signal_link.sign.prigl_open = sp.GetNamedTagAsBool("prigl_open"+i, false);
+		signal_link.sign.x_mode = sp.GetNamedTagAsBool("x_mode"+i, false);
 
 		signal_link.sign.MainState = sp.GetNamedTagAsInt("state"+i, 0);
 		signal_link.sign.SetSignal(false);
@@ -1477,7 +1489,7 @@ void SendMessagesToClients(Soup data, string type_msg)
 
 
 
-void SendNewSignalSettings(string sig_name, int state, float limit, int default_state, bool train_open, bool shunt_open, bool wrong_dir, bool barrier_closed, bool prigl_open)
+void SendNewSignalSettings(string sig_name, int state, float limit, int default_state, bool train_open, bool shunt_open, bool wrong_dir, bool barrier_closed, bool prigl_open, bool x_mode)
 	{
 	if(!MP_started)
 		return;
@@ -1494,6 +1506,7 @@ void SendNewSignalSettings(string sig_name, int state, float limit, int default_
 	Temp_soup.SetNamedTag("wrong_dir",wrong_dir);
 	Temp_soup.SetNamedTag("barrier_closed",barrier_closed);
 	Temp_soup.SetNamedTag("prigl_open", prigl_open);
+	Temp_soup.SetNamedTag("x_mode", x_mode);
 
 	SendMessagesToClients(Temp_soup, "sU_SetSettings");
 	}
@@ -1573,6 +1586,7 @@ void MultiplayerClientHandler1(Message msg)
 		signal_link.sign.barrier_closed = sp.GetNamedTagAsFloat("barrier_closed",false);
 		signal_link.sign.wrong_dir = sp.GetNamedTagAsFloat("wrong_dir",false);
 		signal_link.sign.prigl_open = sp.GetNamedTagAsBool("prigl_open", false);
+		signal_link.sign.x_mode = sp.GetNamedTagAsBool("x_mode", false);
 
 		signal_link.sign.MainState = sp.GetNamedTagAsInt("state", 0);
 		signal_link.sign.SetSignal(false);
@@ -2011,7 +2025,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 							if(temp_signal.shunt_open and (temp_signal.MainState == zxIndication.STATE_R or temp_signal.MainState == zxIndication.STATE_B) and ((stringParam[0])[1]!='+'))
 								temp_signal.UpdateState(0, -1);
 
-							if(temp_signal.Type & zxSignal.ST_UNLINKED )
+							if ((temp_signal.Type & zxSignal.ST_UNLINKED) and !temp_signal.x_mode)
 								temp_signal.UnlinkedUpdate(sig1);
 							}
 						}
@@ -2101,7 +2115,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		zxSignal sig1=cast<zxSignal>objectParam[0];
 
 		if(sig1)
-			SendNewSignalSettings(sig1.GetName(), sig1.MainState, sig1.speed_limit, sig1.GetSignalState(), sig1.train_open, sig1.shunt_open, sig1.wrong_dir, sig1.barrier_closed, sig1.prigl_open);
+			SendNewSignalSettings(sig1.GetName(), sig1.MainState, sig1.speed_limit, sig1.GetSignalState(), sig1.train_open, sig1.shunt_open, sig1.wrong_dir, sig1.barrier_closed, sig1.prigl_open, sig1.x_mode);
 		}
 
 	else if(function=="mult_speed")
@@ -2126,7 +2140,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			Interface.Exception("signal with error!");
 			return "";
 			}
-		if((sig1.MainState == 0) or (sig1.MainState == zxIndication.STATE_B) or (sig1.Type & zxSignal.ST_UNLINKED) )
+		if((sig1.MainState == 0) or (sig1.MainState == zxIndication.STATE_B) or ((sig1.Type & zxSignal.ST_UNLINKED) and !sig1.x_mode))
 			{
 			//Interface.Exception("error with call NewSpeed");
 			return "";
@@ -2163,7 +2177,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						return "";
 
 
-					if((sig2.MainState == zxIndication.STATE_B) or (sig2.MainState == 0) or (sig2.Type & zxSignal.ST_UNLINKED))
+					if((sig2.MainState == zxIndication.STATE_B) or (sig2.MainState == 0) or ((sig2.Type & zxSignal.ST_UNLINKED) and !sig2.x_mode))
 						{
 						if(sig2.GetSpeedLimit() != last_set_speed)
 							{
@@ -2307,7 +2321,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 
 
-		while(MO and !(MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  !((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) and ((cast<zxSignal>MO).MainState != zxIndication.STATE_B) and ((cast<zxSignal>MO).MainState != 0)  ) )
+		while(MO and !(MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  (!((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or (cast<zxSignal>MO).x_mode) and ((cast<zxSignal>MO).MainState != zxIndication.STATE_B) and ((cast<zxSignal>MO).MainState != 0)  ) )
 			{
 
 			if(GSTS.GetFacingRelativeToSearchDirection() == true)
@@ -2320,7 +2334,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 					if( sig2.train_is_l)
 						return "";
 
-					if(  (sig2.Type & zxSignal.ST_UNLINKED) or (sig2.MainState == zxIndication.STATE_B) or (sig2.MainState == 0))
+					if(  ((sig2.Type & zxSignal.ST_UNLINKED) and !sig2.x_mode) or (sig2.MainState == zxIndication.STATE_B) or (sig2.MainState == 0))
 						{
 						if(sig2.GetSpeedLimit() != curr_limit)
 							{

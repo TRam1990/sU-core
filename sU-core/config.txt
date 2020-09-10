@@ -37,6 +37,7 @@ string-table
   ability_to_shnt                       "маневровое открытие"
   ability_to_close                      "заградительное закрытие"
   ability_to_prigl                      "пригласительный"
+  ability_to_x_mode                     "авторежим"
   lens_kit                              "Линзовый набор"
   abtype                                "Автоблокировка"
   ab3                                   "3-значная"

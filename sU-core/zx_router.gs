@@ -100,6 +100,7 @@ public string GetRules(void)
 			s=s+"f:m14,m24,m34,m44,m54,m64,m74;";
 			s=s+"r:m35,m44,m53,m62,m26;";
 			s=s+"h:m45,m42,m43,m44,m46;";
+			s=s+"x:m22,m26,m33,m35,m44,m53,m55,m62,m66;";
 		}else
 		if(typeMatrix=="19"){
 			s=s+"1:m15,m25,m24,m35,m45,m55,m65,m75,m74,m76;";
@@ -156,6 +157,7 @@ public string GetRules(void)
 			s=s+"f:mb13,mb23,mb33,mb43,mb53,mb63,mb73;";
 			s=s+"r:mb25,mb34,mb43,mb52,mb61;";
 			s=s+"h:mb45,mb41,mb42,mb43,mb44;";
+			s=s+"x:mb22,mb26,mb33,mb35,mb44,mb53,mb55,mb62,mb66;";
 		}else
 		if(typeMatrix=="x"){        
 			s=s+"r:ur1,ur2,ur3,u0,ur4,ur5,ur6;";
@@ -163,6 +165,7 @@ public string GetRules(void)
 			s=s+"f:uv1,uv2,u0,uv3,uv4;";
 			s=s+"h:uh1,uh2,u0,uh3,uh4;";
 			s=s+"e:ul2,uv1,ur2,uh4,ul5,uv4,ur5,uh3,u0;";
+			s=s+"x:ur1,ur2,ur3,u0,ur4,ur5,ur6,ul1,ul2,ul3,ul4,ul5,ul6;";
 		}
 		
 		

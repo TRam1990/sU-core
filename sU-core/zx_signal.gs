@@ -193,22 +193,32 @@ bool SetOwnSignalState(bool set_auto_state)
 				}
 			}
 
-		if(MU)
-			{
-			if(MainState == zxIndication.STATE_R)
+		if(MU) {
+			if (x_mode) {
+				MU.OnLightsRouterSign("x");
+				MU.WasOpen = true;
+			}
+			else if(MainState == zxIndication.STATE_R) {
 				MU.UpdateMU();
-			else
+			}
+			else {
 				MUChecker();
 			}
+		}
 
 		if(MainState == zxIndication.STATE_RWb)
 			(cast<bb_RWb>LC.sgn_st[zxIndication.STATE_RWb].l).white_lens = kbm_mode;
 
-		LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
+		if (x_mode and MainState != zxIndication.STATE_RWb) {
+			LC.sgn_st[0].l.InitIndif(set_lens, set_blink);
+		}
+		else {
+			LC.sgn_st[MainState].l.InitIndif(set_lens, set_blink);
+		}
 
 		if(set_auto_state)
 			{
-			if(MainState == zxIndication.STATE_R)
+			if(MainState == zxIndication.STATE_R or MainState == 0)
 				SetSignalState(RED, "");
 			else if((MainState > zxIndication.STATE_R and MainState < zxIndication.STATE_GY) or MainState == zxIndication.STATE_YYY or MainState == zxIndication.STATE_YW or MainState == zxIndication.STATE_YbW or MainState == zxIndication.STATE_YYW or MainState == zxIndication.STATE_YbYW)
 				SetSignalState(YELLOW, "");
@@ -304,7 +314,7 @@ void CheckMySignal(bool train_entered)
 			and (MainState != zxIndication.STATE_Rx)
 			and (MainState != zxIndication.STATE_RWb)
 		) {
-			Cur_next.MainState = zxIndication.STATE_B;
+			Cur_next.MainState = Cur_next.MainStateALS = zxIndication.STATE_B;
 			Cur_next.SetSignal(true);
 
 			mainLib.LibraryCall("find_next_signal",track_params,GSO);		// повторный поиск следующего сигнала, т.к. разделительный более не влияет
@@ -384,6 +394,10 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 	if(!(Type & ST_UNTYPED))
 		return;
 
+	if (reason == 0) {
+		OldMainState = -1;
+	}
+
 	if(Type & ST_PROTECT and reason==0)
 		{
 		if(barrier_closed)
@@ -391,6 +405,12 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			if(!pre_protected)
 				{
 				MainState = zxIndication.STATE_R;
+				if (protect_influence) {
+					MainStateALS = 0;
+				}
+				else {
+					MainStateALS = 0;
+				}
 				SetSignalState(RED, "");
 				}
 			else
@@ -416,10 +436,10 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			{
 			SetSignalState(GREEN, "");
 
-			if(!(Type & ST_UNLINKED))
+			if(!(Type & ST_UNLINKED) or x_mode)
 				LC.applaySignalState(me, null, 0, false);
 			else
-				MainState = 0;
+				MainState = MainStateALS = 0;
 
 			string[] track_params = new string[2];
 				
@@ -443,7 +463,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		}
 
 
-	if(Type & ST_UNLINKED)
+	if((Type & ST_UNLINKED) and !x_mode)
 		{
 		if(Type & (ST_IN+ST_OUT) )
 			{
@@ -452,6 +472,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				train_open = false;
 				shunt_open = false;
 				MainState = zxIndication.STATE_R;
+				MainStateALS = 0;
 				SetSignalState(RED, "");
 				SetSignal(false);
 				CheckPrevSignals(false);
@@ -463,7 +484,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				{
 				if(!train_open and !shunt_open)
 					{
-					MainState = zxIndication.STATE_R;
+					MainState = MainStateALS = zxIndication.STATE_R;
 					SetSignalState(RED, "");
 					CheckPrevSignals(false);
 					SetSignal(false);
@@ -478,7 +499,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 						if(mainLib.LibraryCall("find_any_next_signal",null,GSO)=="true")
 							{
 							SetSignalState(GREEN, "");	
-							MainState=zxIndication.STATE_W;
+							MainState = MainStateALS = zxIndication.STATE_W;
 							}
 						else
 							shunt_open = false;
@@ -543,7 +564,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				}
 			else
 				{
-				MainState = zxIndication.STATE_B;
+				MainState = MainStateALS = zxIndication.STATE_B;
 
 				mainLib.LibraryCall("find_next_signal",track_params,GSO);
 
@@ -588,7 +609,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			mainLib.LibraryCall("mult_settings",null,GSO);
 		}
 
-	else if(reason==1 and (train_open or shunt_open or prigl_open))
+	else if(reason==1 and (train_open or shunt_open or prigl_open or x_mode))
 		{
 		string[] type_ToFind = new string[2];
 
@@ -599,13 +620,13 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 		type_ToFind[0]=priority;
 		type_ToFind[1]="-";
 
-		if((MainState != 0) and (MainState != zxIndication.STATE_B) and !(Type & zxSignal.ST_UNLINKED))
+		if((MainState != 0) and (MainState != zxIndication.STATE_B) and (!(Type & zxSignal.ST_UNLINKED) or x_mode))
 			mainLib.LibraryCall("new_speed",type_ToFind,GSO);	// раньше, чем SetSignal()
 
 
-		if(train_open)
+		if(train_open or x_mode)
 			{
-			if(!(Type & ST_PERMOPENED))
+			if(!(Type & ST_PERMOPENED) and !x_mode)
 				train_open = false;
 
 			CheckMySignal(true);
@@ -670,6 +691,13 @@ public void UnlinkedUpdate(zxSignal nextSign)
 		else
 			MainState = 0;
 
+		if (nextSign) {
+			MainStateALS = nextSign.MainStateALS;
+		}
+		else {
+			MainStateALS = 0;
+		}
+
 		SetSignal(false);
 
 		if(IsServer)
@@ -682,9 +710,10 @@ public void UnlinkedUpdate(zxSignal nextSign)
 			{
 			if (nextSign) {
 				MainState = nextSign.MainState;
+				MainStateALS = nextSign.MainStateALS;
 			}
 			else {
-				MainState = 0;
+				MainState = MainStateALS = 0;
 			}
 			SetSignalState(GREEN, "");
 			SetSignal(false);
@@ -697,9 +726,10 @@ public void UnlinkedUpdate(zxSignal nextSign)
 		{
 		if (nextSign) {
 			MainState = nextSign.MainState;
+			MainStateALS = nextSign.MainStateALS;
 		}
 		else {
-			MainState = 0;
+			MainState = MainStateALS = 0;
 		}
 		SetSignal(false);
 
@@ -955,8 +985,9 @@ public void Deswitch_span()
 	for(i=0;i<n;i++)
 		{
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
-		zxs.MainState = zxIndication.STATE_Rx;
+		zxs.MainState = zxs.MainStateALS = zxIndication.STATE_Rx;
 		zxs.wrong_dir = true;
+		zxs.x_mode = false;
 		zxs.SetSignal(true);
 
 		if(IsServer)
@@ -1039,6 +1070,7 @@ public bool Switch_span(bool obligatory)		// повернуть перегон в сторону этого с
 				{
 				zxs.MainState = zxIndication.STATE_R;
 				zxs.wrong_dir = false;
+				zxs.x_mode = zxs.Type & ST_FLOAT_BLOCK;
 
 				zxs.UpdateState(0, -1);
 				}
@@ -1053,6 +1085,7 @@ public bool Switch_span(bool obligatory)		// повернуть перегон в сторону этого с
 				{
 				zxs.MainState = zxIndication.STATE_R;
 				zxs.wrong_dir = false;
+				zxs.x_mode = zxs.Type & ST_FLOAT_BLOCK;
 				}
 			else
 				faulty_span = true;
@@ -1183,22 +1216,22 @@ public void GenerateSpan(bool recurs)
 
 public int GetALSNCode(void)
 	{
-	if(barrier_closed and protect_influence)
-		return CODE_NONE;
+//	if(barrier_closed and protect_influence)
+//		return CODE_NONE;
 
-	if ((Type & ST_FLOAT_BLOCK) and RCCount < distanceRY) {
-		return CODE_NONE;
-	}
-	if( MainState == zxIndication.STATE_R or MainState == zxIndication.STATE_RWb or ( (MainState == zxIndication.STATE_W or MainState == zxIndication.STATE_WW ) and Type&(ST_IN+ST_OUT+ST_ROUTER) ) )
+//	if (x_mode and RCCount < distanceRY) {
+//		return CODE_NONE;
+//	}
+	if( MainStateALS == zxIndication.STATE_R or MainStateALS == zxIndication.STATE_RWb or ( (MainStateALS == zxIndication.STATE_W or MainStateALS == zxIndication.STATE_WW ) and Type&(ST_IN+ST_OUT+ST_ROUTER) ) )
 		return CODE_REDYELLOW;
-	else if( (MainState >= zxIndication.STATE_YY and MainState <= zxIndication.STATE_YbY) or MainState == zxIndication.STATE_YYY or MainState == zxIndication.STATE_YW or MainState == zxIndication.STATE_YbW or MainState == zxIndication.STATE_YYW or MainState == zxIndication.STATE_YbYW)
+	else if( (MainStateALS >= zxIndication.STATE_YY and MainStateALS <= zxIndication.STATE_YbY) or MainStateALS == zxIndication.STATE_YYY or MainStateALS == zxIndication.STATE_YW or MainStateALS == zxIndication.STATE_YbW or MainStateALS == zxIndication.STATE_YYW or MainStateALS == zxIndication.STATE_YbYW)
 		return CODE_YELLOW;
-	else if(yellow_code and (MainState == zxIndication.STATE_GY or MainState == zxIndication.STATE_Yb) )
+	else if(yellow_code and (MainStateALS == zxIndication.STATE_GY or MainStateALS == zxIndication.STATE_Yb) )
 		return CODE_YELLOW;		
-	else if(MainState >= zxIndication.STATE_GY and MainState != zxIndication.STATE_B)
+	else if(MainStateALS >= zxIndication.STATE_GY and MainStateALS != zxIndication.STATE_B)
 		return CODE_GREEN;
 
-	if(MainState == zxIndication.STATE_B)	
+	if(MainStateALS == zxIndication.STATE_B)	
 		return CODE_YELLOW;
 
 	return CODE_NONE;
@@ -1226,7 +1259,10 @@ public int GetALSNTypeSignal(void)
 	if(Type & ST_ROUTER)
 		type1 = type1 + TYPE_DIVIDE;
 
-	if(type1 == TYPE_NONE and Type & ST_UNLINKED )
+	if (x_mode)
+		type1 = type1 + TYPE_CIRCUIT;
+
+	if(type1 == TYPE_NONE and Type & ST_UNLINKED)
 		return TYPE_NONE;
 
 	if(Type & ST_PERMOPENED)
@@ -1309,12 +1345,15 @@ public string GetCntFloatBlockTable(void) {
 			continue;
 		}
 		zxSignal tmp = cast<zxSignal>ts.GetObject();
-		if (!tmp or !tmp.IsObligatory()) {
+		if (!tmp or !(tmp.Type & (ST_IN | ST_OUT | ST_ROUTER | ST_PERMOPENED | ST_FLOAT_BLOCK))) {
 			continue;
 		}
 		++i;
 		sigs[i] = tmp;
 		distances[i] = ts.GetDistance();
+		if (!(tmp.Type & ST_FLOAT_BLOCK)) {
+			break;
+		}
 	}
 	
 	HTMLWindow hw = HTMLWindow;
@@ -1471,15 +1510,23 @@ public string GetCntSpeedTable(void)
 
 					s=s+hw.EndRow();
 
-                        int i;
-
-
-                        for(i=0;i<26;i++)
-				{
-
-                        	if(ex_sgn[i] and (i != zxIndication.STATE_GY or ab4) and i != zxIndication.STATE_B)
-
-					{
+					int i;
+					for (i = 0; i < 26; ++i) {
+						if (
+							(
+								ex_sgn[i]
+								and (i != zxIndication.STATE_GY or ab4)
+								and i != zxIndication.STATE_B
+							)
+							or (
+								(Type & ST_FLOAT_BLOCK)
+								and (
+									zxIndication.STATE_R == i
+									or zxIndication.STATE_Y == i
+									or zxIndication.STATE_G == i
+								)
+							)
+						) {
 
 		        		s=s+hw.StartRow();
 					s=s+hw.StartCell("bgcolor='#888888'");
@@ -1813,7 +1860,7 @@ public string GetDescriptionHTML(void)
 
 		}
 
-	if( isMacht and !(Type & ST_UNLINKED) )
+	if( isMacht and (!(Type & ST_UNLINKED) or (Type & ST_FLOAT_BLOCK)))
 		{
 
 		s=s+hw.StartTable("border='1' width=90%");
@@ -2070,9 +2117,11 @@ public string GetDescriptionHTML(void)
 	if(Type & ST_PROTECT)
 		s=s+"<br>"+GetProtectTable();		
 
-	s = s + "<br>" + GetCntFloatBlockTable();
+	if (Type & (ST_IN | ST_OUT | ST_ROUTER | ST_PERMOPENED | ST_FLOAT_BLOCK)) {
+		s = s + "<br>" + GetCntFloatBlockTable();
+	}
 
-	if(!( Type &  ST_UNLINKED))
+	if(!( Type &  ST_UNLINKED) or (Type & ST_FLOAT_BLOCK))
 		s=s+"<br>"+GetCntSpeedTable();
 
 	s=s+"<br>"+GetExtraSetTable();
@@ -2966,10 +3015,14 @@ public void LinkPropertyValue(string id)
 
 			if(str_a[1]=="FLOAT")
 				{
-				if(Type & ST_FLOAT_BLOCK)
+				if(Type & ST_FLOAT_BLOCK) {
 					Type = Type - ST_FLOAT_BLOCK;
-				else
+					x_mode = false;
+				}
+				else {
 					Type = Type + ST_FLOAT_BLOCK;
+					x_mode = (Type & ST_PERMOPENED) and !(Type & (ST_IN | ST_OUT | ST_ROUTER | ST_UNLINKED));
+				}
 				}
 
 			}
@@ -3214,6 +3267,15 @@ public string GetImgPriglMode(bool state)
  	return s;
 }
 
+public string GetImgXMode(bool state) {
+ 	HTMLWindow hw=HTMLWindow;
+
+	if (state) {
+		return hw.MakeImage("<kuid2:236443:103204:1>",true,32,32);
+	}
+	return hw.MakeImage("<kuid2:236443:103206:1>",true,32,32);
+}
+
 
 
 public string GetContentViewDetails()
@@ -3271,6 +3333,12 @@ public string GetContentViewDetails()
 	 	 		);
 		}
 
+	if (Type & ST_FLOAT_BLOCK) {
+		s2 = s2+ hw.MakeRow(
+			hw.MakeCell(STT.GetString("ability_to_x_mode"),"bgcolor=#777777")+
+			hw.MakeCell(hw.MakeLink("live://XMode^" + !x_mode, GetImgXMode(x_mode)), "bgcolor=#777777")
+		);
+	}
 
 
 
@@ -3373,6 +3441,14 @@ public void ChangeText(Message msg)
  				PostMessage(me,"CTRL","PriglMode.false",0);
 
  			}
+ 		else if (tok2[0] == "XMode") {
+			if (tok2[1] == "true") {
+ 				PostMessage(me, "CTRL", "XMode^true", 0);
+			}
+ 			else if (tok2[1] == "false") {
+ 				PostMessage(me, "CTRL", "XMode^false", 0);
+			}
+		}
 
 
  		PostMessage(me,"RefreshBrowser","",0.5);
@@ -3726,6 +3802,7 @@ public void SetProperties(Soup soup)
 
 	ShowName(false);
 	MainState = soup.GetNamedTagAsInt("MainState",0);
+	MainStateALS = soup.GetNamedTagAsInt("MainStateALS", MainState);
 	RCCount = soup.GetNamedTagAsInt("RCCount", 0);
 	Type = soup.GetNamedTagAsInt("GetSignalType()",-1);
 
@@ -3807,6 +3884,7 @@ public void SetProperties(Soup soup)
 
 	prigl_open = soup.GetNamedTagAsBool("prigl_open",false);
 
+	x_mode = soup.GetNamedTagAsBool("x_mode", Type & ST_FLOAT_BLOCK);
 
 	if(Type & ST_PROTECT)
 		{
@@ -3957,7 +4035,7 @@ public void SetProperties(Soup soup)
 	if(predvhod)
 		SetPredvhod();
 
-	if((Type & ST_SHUNT) or (Type & ST_UNLINKED))
+	if (((Type & ST_SHUNT) or (Type & ST_UNLINKED)) and !x_mode)
 		code_freq = soup.GetNamedTagAsInt("code_freq",0);
 	else
 		code_freq = soup.GetNamedTagAsInt("code_freq",2);
@@ -3983,11 +4061,11 @@ public void SetProperties(Soup soup)
 	Inited=true;
 
 
-	if( Type &  ST_UNLINKED)
+	if ((Type &  ST_UNLINKED) and !x_mode)
 		{
 		if((Type &  (ST_IN | ST_OUT)) and !train_open)
 			{
-			MainState = zxIndication.STATE_R;
+			MainState = MainStateALS = zxIndication.STATE_R;
 			SetSignalState(RED, "");
 			}
 		else
@@ -4025,16 +4103,18 @@ public Soup GetProperties(void)
 	retSoup.SetNamedTag("shunt_open",shunt_open);
 	retSoup.SetNamedTag("barrier_closed",barrier_closed);
 	retSoup.SetNamedTag("prigl_open",prigl_open);
+	retSoup.SetNamedTag("x_mode", x_mode);
 
 
 	retSoup.SetNamedTag("stationName",stationName);
 	retSoup.SetNamedTag("privateName",privateName);
 	retSoup.SetNamedTag("MainState",MainState);
+	retSoup.SetNamedTag("MainStateALS", MainStateALS);
 	retSoup.SetNamedTag("RCCount", RCCount);
 
 	if(!wrong_dir)
 		{
-		if(Type & (ST_UNLINKED|ST_PROTECT))
+		if ((Type & (ST_UNLINKED|ST_PROTECT)) and !x_mode)
 			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[zxIndication.STATE_B].l.MainState   );	// для совместимости с z7
 		else
 			retSoup.SetNamedTag("privateStateEx", LC.sgn_st[MainState].l.MainState   );	// для совместимости с z7

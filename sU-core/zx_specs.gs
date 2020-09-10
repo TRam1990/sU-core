@@ -87,12 +87,14 @@ class zxSignal isclass Signal, ALSN_Provider
 	public bool wrong_dir;		// входной противонаправлен перегону
 	public bool barrier_closed;	// заградительный закрыт
 	public bool prigl_open;		// открыт пригласительный
+	public bool x_mode;			// режим подвижных блок участков
 
 	public string stationName;
 	public string privateName;
 
 
 	public int MainState;		// состояние светофора
+	public int MainStateALS;	// состояние следующего светофора для кода АЛСН в режиме крестов. В режиме АБ совпадает с оснновным состоянием
 	public int RCCount;		// количество свободных секций (для подвижных блок участков)
 	public int Type;		// тип светофора
 
@@ -275,6 +277,9 @@ class zxSignal isclass Signal, ALSN_Provider
 		if(!Inited)
 			return true;
 
+		if (x_mode)
+			return true;
+
 		if(MainState == zxIndication.STATE_B)
 			return false;
 
@@ -301,7 +306,7 @@ class zxSignal isclass Signal, ALSN_Provider
 
 		MapObject MO = GSTS.SearchNext();
 
-		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !(((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or ((cast<zxSignal>MO).MainState == zxIndication.STATE_B) ) ) )
+		while(MO and !MO.isclass(Vehicle)  and !(MO.isclass(zxSignal) and  GSTS.GetFacingRelativeToSearchDirection() == dir  and !((((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED) or ((cast<zxSignal>MO).MainState == zxIndication.STATE_B)) and !(cast<zxSignal>MO).x_mode ) ) )
 			MO = GSTS.SearchNext();
 
 		if(!MO or !MO.isclass(Vehicle))
@@ -428,6 +433,8 @@ class zxMarker isclass Trackside
 	public define int MRGR4ABFL	= 2048;
 	public define int MRNOYLBL	= 4096;
 	public define int MRENDCONTROL	= 8192;
+
+	public define int MRFORBIDXMODE = MRT | MRT18 | MRWW | MRPAB | MRDAB | MRENDAB | MRENDCONTROL;
 
 	public int trmrk_flag;
 
