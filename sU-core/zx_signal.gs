@@ -1366,18 +1366,18 @@ public string GetCntFloatBlockTable(void) {
 	s = s + hw.StartTable("border='1' width='100%'");
 	s = s + hw.StartRow();
 	s = s + hw.StartCell("bgcolor='#999999'");
-	s = s + "code";
+	s = s + STT.GetString("als_code");
 	s = s + hw.EndCell();
 	s = s + hw.StartCell("bgcolor='#999999'");
-	s = s + "RC count";
+	s = s + STT.GetString("als_rc_count");
 	s = s + hw.EndCell();
 	s = s + hw.StartCell("bgcolor='#999999'");
-	s = s + "distance";
+	s = s + STT.GetString("als_distance");
 	s = s + hw.EndCell();
 	s = s + hw.EndRow();
 	s = s + hw.StartRow();
 	s = s + hw.StartCell("bgcolor='#888888'");
-	s = s + "RY";
+	s = s + STT.GetString("als_ry");
 	s = s + hw.EndCell();
 	s = s + hw.StartCell("bgcolor='#888888'");
 	s = s + hw.MakeLink("live://property/distanceRY", distanceRY);
@@ -1409,7 +1409,7 @@ public string GetCntFloatBlockTable(void) {
 	s = s + hw.EndRow();
 	s = s + hw.StartRow();
 	s = s + hw.StartCell("bgcolor='#888888'");
-	s = s + "Y";
+	s = s + STT.GetString("als_y");
 	s = s + hw.EndCell();
 	s = s + hw.StartCell("bgcolor='#888888'");
 	s = s + hw.MakeLink("live://property/distanceY", distanceY);
@@ -1441,7 +1441,7 @@ public string GetCntFloatBlockTable(void) {
 	s = s + hw.EndRow();
 	s = s + hw.StartRow();
 	s = s + hw.StartCell("bgcolor='#888888'");
-	s = s + "G";
+	s = s + STT.GetString("als_g");
 	s = s + hw.EndCell();
 	s = s + hw.StartCell("bgcolor='#888888'");
 	s = s + hw.MakeLink("live://property/distanceG", distanceG);
@@ -3341,6 +3341,14 @@ public string GetContentViewDetails()
 	}
 
 
+/*	s2 = s2 + hw.MakeRow(
+
+ 	 				hw.MakeCell(STT.GetString("mainstate_rc_count"),"bgcolor=#777777")+
+
+ 	 				hw.MakeCell(MainState + " / " + RCCount,"bgcolor=#777777")
+
+	 	 		);
+*/
 
 	if((Type & ST_IN) and span_soup and span_soup.GetNamedTagAsBool("Inited",false) )	// входной. Панель перегона.
 		{

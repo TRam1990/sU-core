@@ -58,6 +58,13 @@ string-table
   type_matrix                           "тип матрицы"
   twait                                 "задержка гашения"
   als                                   "АЛС"
+  als_code                              "Код подв. БУ"
+  als_rc_count                          "Кол-во РЦ в БУ"
+  als_distance                          "Дистанция подв. БУ"
+  als_ry                                "КЖ"
+  als_y                                 "Ж"
+  als_g                                 "З"
+  mainstate_rc_count                    "Показание/Кол-во РЦ"
   code_dev                              "кодирование съездов"
   code_dev_f                            "от светофора"
   code_dev_t                            "к светофору"
@@ -101,7 +108,7 @@ string-table
 extensions
 {
 }
-kuid                                    <kuid2:400260:100120:48>
+kuid                                    <kuid2:400260:100120:49>
 
 kuid-table
 {
