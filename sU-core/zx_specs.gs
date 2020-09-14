@@ -80,6 +80,7 @@ class zxSignal isclass Signal, ALSN_Provider
 	public define int ST_FLOAT_BLOCK	= 256;	// подвижные блок участки
 
 
+
 	public int OwnId;		// идентификатор, каждый раз новый
 
 	public bool train_open;		// светофор открыт в поездном режиме
