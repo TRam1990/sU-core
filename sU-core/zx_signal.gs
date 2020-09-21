@@ -1776,7 +1776,7 @@ public string GetDescriptionHTML(void)
 	s=s+hw.EndRow();
 
 
-	if( !(Type & ST_PERMOPENED) )
+//	if( !(Type & ST_PERMOPENED) )
 		{
 	        s=s+hw.StartRow();
 		s=s+hw.MakeCell( hw.MakeLink("live://property/station_name",  STT.GetString("station_name")),"bgcolor='#886666'");
@@ -1938,91 +1938,91 @@ public string GetDescriptionHTML(void)
 
 
 
-	if( GetALSNTypeSignal() != TYPE_NONE )
+	if( GetALSNTypeSignal() == TYPE_NONE )
+		s=s+STT.GetString("als_code")+":<br>";
+
+	s=s+hw.StartTable("border='1' width=90%");
+
+	s=s+hw.StartRow();
+	s=s+hw.MakeCell(STT.GetString("ALS"),"bgcolor='#AAAAAA' colspan='2' ");
+
+
+	  if(Type & (ST_OUT | ST_ROUTER) and !(Type & ST_IN))
 		{
+		s=s+hw.StartCell("bgcolor='#886666' colspan='2' align='center'");
+		s=s+hw.CheckBox("live://property/code_dev/1", code_dev & 1);
+	 	s=s+" "+hw.MakeLink("live://property/code_dev/1", STT.GetString("code_dev"));
+	  	}
+	else if(Type & ST_IN) 
+		s=s+hw.StartCell("bgcolor='#886666' colspan='3' align='center' ") + "  ";
+	else 
+		s=s+hw.StartCell("bgcolor='#886666' colspan='2' align='center' ") + "  ";
+	s=s+hw.EndCell();
 
-		s=s+hw.StartTable("border='1' width=90%");
 
+	s=s+hw.StartCell("bgcolor='#886666'");
+	s=s+hw.CheckBox("live://property/saut_equipped",saut_eq);
+	s=s+" "+hw.MakeLink("live://property/saut_equipped", STT.GetString("SAUT"));
+	s=s+hw.EndCell();
+
+
+	s=s+hw.EndRow();
+
+
+	s=s+hw.StartRow();
+	s=s+MakeRadioButtonCell("live://property/code_freq/0",STT.GetString("uncoded"), code_freq==0);
+	s=s+MakeRadioButtonCell("live://property/code_freq/1",STT.GetString("ALS25"), code_freq & 1);
+	s=s+MakeRadioButtonCell("live://property/code_freq/2",STT.GetString("ALS50"), code_freq & 2);
+
+	if(Type & ST_IN)
+		{
+		s=s+hw.StartCell("bgcolor='#888888' colspan='2'");
+		s=s+hw.RadioButton("live://property/code_freq/4", code_freq & 4);
+		s=s+" "+hw.MakeLink("live://property/code_freq/4", STT.GetString("ALS75"));
+		s=s+hw.EndCell();
+		}
+	else
+		s=s+MakeRadioButtonCell("live://property/code_freq/4",STT.GetString("ALS75"), code_freq & 4);
+
+
+	s=s+MakeCheckBoxCell("live://property/code_freq/8",STT.GetString("ALSEN"), code_freq & 8);
+	s=s+hw.EndRow();
+
+	int column_number = 5;
+
+
+	if(Type & ST_IN)
+		{
+		column_number++;
 		s=s+hw.StartRow();
-		s=s+hw.MakeCell(STT.GetString("ALS"),"bgcolor='#AAAAAA' colspan='2' ");
+		s=s+hw.MakeCell(STT.GetString("code_dev"),"bgcolor='#AAAAAA' colspan='2' ");
 
-
-	  	if(Type & (ST_OUT | ST_ROUTER) and !(Type & ST_IN))
-			{
-			s=s+hw.StartCell("bgcolor='#886666' colspan='2' align='center'");
-			s=s+hw.CheckBox("live://property/code_dev/1", code_dev & 1);
-	 		s=s+" "+hw.MakeLink("live://property/code_dev/1", STT.GetString("code_dev"));
-	  		}
-		else if(Type & ST_IN) 
-			s=s+hw.StartCell("bgcolor='#886666' colspan='3' align='center' ") + "  ";
-		else 
-			s=s+hw.StartCell("bgcolor='#886666' colspan='2' align='center' ") + "  ";
+		s=s+hw.StartCell("bgcolor='#888888' colspan='2'");
+		s=s+hw.CheckBox("live://property/code_dev/1", code_dev & 1);
+		s=s+" "+hw.MakeLink("live://property/code_dev/1", STT.GetString("code_dev_t"));
 		s=s+hw.EndCell();
 
-
-		s=s+hw.StartCell("bgcolor='#886666'");
-		s=s+hw.CheckBox("live://property/saut_equipped",saut_eq);
-		s=s+" "+hw.MakeLink("live://property/saut_equipped", STT.GetString("SAUT"));
+		s=s+hw.StartCell("bgcolor='#888888' colspan='2'");
+		s=s+hw.CheckBox("live://property/code_dev/2", code_dev & 2);
+		s=s+" "+hw.MakeLink("live://property/code_dev/2", STT.GetString("code_dev_f"));
 		s=s+hw.EndCell();
-
-
 		s=s+hw.EndRow();
-
-
-		s=s+hw.StartRow();
-		s=s+MakeRadioButtonCell("live://property/code_freq/0",STT.GetString("uncoded"), code_freq==0);
-		s=s+MakeRadioButtonCell("live://property/code_freq/1",STT.GetString("ALS25"), code_freq & 1);
-		s=s+MakeRadioButtonCell("live://property/code_freq/2",STT.GetString("ALS50"), code_freq & 2);
-
-		if(Type & ST_IN)
-			{
-			s=s+hw.StartCell("bgcolor='#888888' colspan='2'");
-			s=s+hw.RadioButton("live://property/code_freq/4", code_freq & 4);
-			s=s+" "+hw.MakeLink("live://property/code_freq/4", STT.GetString("ALS75"));
-			s=s+hw.EndCell();
-			}
-		else
-			s=s+MakeRadioButtonCell("live://property/code_freq/4",STT.GetString("ALS75"), code_freq & 4);
-
-
-		s=s+MakeCheckBoxCell("live://property/code_freq/8",STT.GetString("ALSEN"), code_freq & 8);
-		s=s+hw.EndRow();
-
-		int column_number = 5;
-
-
-		if(Type & ST_IN)
-			{
-			column_number++;
-			s=s+hw.StartRow();
-			s=s+hw.MakeCell(STT.GetString("code_dev"),"bgcolor='#AAAAAA' colspan='2' ");
-
-			s=s+hw.StartCell("bgcolor='#888888' colspan='2'");
-			s=s+hw.CheckBox("live://property/code_dev/1", code_dev & 1);
-			s=s+" "+hw.MakeLink("live://property/code_dev/1", STT.GetString("code_dev_t"));
-			s=s+hw.EndCell();
-
-			s=s+hw.StartCell("bgcolor='#888888' colspan='2'");
-			s=s+hw.CheckBox("live://property/code_dev/2", code_dev & 2);
-			s=s+" "+hw.MakeLink("live://property/code_dev/2", STT.GetString("code_dev_f"));
-			s=s+hw.EndCell();
-			s=s+hw.EndRow();
-			}
+		}
 
 	
-		s=s+hw.StartRow();	
-		s=s+hw.StartCell("bgcolor='#888888' colspan='"+column_number+"' align='left'");
+	s=s+hw.StartRow();	
+	s=s+hw.StartCell("bgcolor='#888888' colspan='"+column_number+"' align='left'");
 
-		s=s+hw.CheckBox("live://property/yellow_code", yellow_code);
-	 	s=s+" "+hw.MakeLink("live://property/yellow_code", STT.GetString("yellow_code"));
+	s=s+hw.CheckBox("live://property/yellow_code", yellow_code);
+	 s=s+" "+hw.MakeLink("live://property/yellow_code", STT.GetString("yellow_code"));
 
-		s=s+hw.EndCell();
-		s=s+hw.EndRow();
+	s=s+hw.EndCell();
+	s=s+hw.EndRow();
 
-		s=s+hw.EndTable();
+	s=s+hw.EndTable();
 
-		s=s+"<br>";
-		}
+	s=s+"<br>";
+
 
  	s=s+hw.StartTable("border='1' width=90%");
 

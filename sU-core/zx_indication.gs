@@ -915,6 +915,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 			if (
 				!nextSign
 				or (nextSign.wrong_dir and (sign.Type & (zxSignal.ST_UNLINKED | zxSignal.ST_PERMOPENED) ) != (zxSignal.ST_UNLINKED | zxSignal.ST_PERMOPENED) )
+				or (((nextSign.MainState == zxIndication.STATE_W) or (nextSign.MainState == zxIndication.STATE_WW)) and !(nextSign.Type & (zxSignal.ST_IN | zxSignal.ST_OUT | zxSignal.ST_ROUTER)))
 				or (x_mode and nextSign.MainStateALS == 0)
 			) {		// впереди поезд или неправильный перегон
 				if (sign.ex_sgn[zxIndication.STATE_R] or sign.x_mode) {	// красный
