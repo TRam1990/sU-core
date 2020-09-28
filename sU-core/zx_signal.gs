@@ -270,7 +270,7 @@ public void CheckPrevSignals(bool no_train)
 		return;
 
 	zxSignal tmpSign = null;
-	if ((track_params[0])[1] != '+') {
+	if ( ((track_params[0])[0] != '+') and ((track_params[0])[1] != '+')) {
 		tmpSign = me;
 	}
 	if (LC.applaySignalState(Cur_prev, tmpSign, Str.ToInt(track_params[1]), (track_params[0])[1] == '+'))
@@ -638,6 +638,9 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 
 			mainLib.LibraryCall("find_prev_signal",type_ToFind,GSO);
+
+			
+
 			}
 		}
 
