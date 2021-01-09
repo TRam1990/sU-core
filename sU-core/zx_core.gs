@@ -1489,7 +1489,7 @@ void SendMessagesToClients(Soup data, string type_msg)
 
 
 
-void SendNewSignalSettings(string sig_name, int state, float limit, int default_state, bool train_open, bool shunt_open, bool wrong_dir, bool barrier_closed, bool prigl_open, bool x_mode)
+void SendNewSignalSettings(string sig_name, int state, int stateALS, float limit, int default_state, bool train_open, bool shunt_open, bool wrong_dir, bool barrier_closed, bool prigl_open, bool x_mode)
 	{
 	if(!MP_started)
 		return;
@@ -1498,6 +1498,7 @@ void SendNewSignalSettings(string sig_name, int state, float limit, int default_
 
 	Temp_soup.SetNamedTag("id",sig_name);
 	Temp_soup.SetNamedTag("state",state);
+	Temp_soup.SetNamedTag("stateALS",stateALS);
 
 	Temp_soup.SetNamedTag("limit",limit);
 	Temp_soup.SetNamedTag("default_state",default_state);
@@ -1589,6 +1590,8 @@ void MultiplayerClientHandler1(Message msg)
 		signal_link.sign.x_mode = sp.GetNamedTagAsBool("x_mode", false);
 
 		signal_link.sign.MainState = sp.GetNamedTagAsInt("state", 0);
+		signal_link.sign.MainStateALS = sp.GetNamedTagAsInt("stateALS", 0);
+
 		signal_link.sign.SetSignal(false);
 
 
@@ -2115,7 +2118,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		zxSignal sig1=cast<zxSignal>objectParam[0];
 
 		if(sig1)
-			SendNewSignalSettings(sig1.GetName(), sig1.MainState, sig1.speed_limit, sig1.GetSignalState(), sig1.train_open, sig1.shunt_open, sig1.wrong_dir, sig1.barrier_closed, sig1.prigl_open, sig1.x_mode);
+			SendNewSignalSettings(sig1.GetName(), sig1.MainState, sig1.MainStateALS, sig1.speed_limit, sig1.GetSignalState(), sig1.train_open, sig1.shunt_open, sig1.wrong_dir, sig1.barrier_closed, sig1.prigl_open, sig1.x_mode);
 		}
 
 	else if(function=="mult_speed")

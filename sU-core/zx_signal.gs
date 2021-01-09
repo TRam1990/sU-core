@@ -912,7 +912,6 @@ public void ShowName(bool reset)
 	else
 		{
 
-
 /*
 ряды табичек
 
@@ -920,56 +919,65 @@ public void ShowName(bool reset)
 01234
 56789
 */
+		MeshObject MO;
 
 
-		if(q == 1)
+		switch(q)
 			{
-			MeshObject MO = SetFXAttachment(name_str[2], tabl_m);
-			MO.SetFXTextureReplacement("texture",tex,tabl[0]);
+			case 1:
+				MO = SetFXAttachment(name_str[2], tabl_m);
+				MO.SetFXTextureReplacement("texture",tex,tabl[0]);
+				break;
+
+			case 2:
+				MO = SetFXAttachment(name_str[1], tabl_m);
+				MO.SetFXTextureReplacement("texture",tex,tabl[0]);
+				MO = SetFXAttachment(name_str[3], tabl_m);
+				MO.SetFXTextureReplacement("texture",tex,tabl[1]);
+				break;
+
+			default:
+			case 3:
+				MO = SetFXAttachment(name_str[0], tabl_m);
+				MO.SetFXTextureReplacement("texture",tex,tabl[0]);
+				MO = SetFXAttachment(name_str[2], tabl_m);
+				MO.SetFXTextureReplacement("texture",tex,tabl[1]);
+				MO = SetFXAttachment(name_str[4], tabl_m);
+				MO.SetFXTextureReplacement("texture",tex,tabl[2]);
+				break;
+
 			}
-		else if(q == 2)
-			{
-			MeshObject MO = SetFXAttachment(name_str[1], tabl_m);
-			MO.SetFXTextureReplacement("texture",tex,tabl[0]);
-			MO = SetFXAttachment(name_str[3], tabl_m);
-			MO.SetFXTextureReplacement("texture",tex,tabl[1]);
-			}
-		else if(q == 3)
-			{
-			MeshObject MO = SetFXAttachment(name_str[0], tabl_m);
-			MO.SetFXTextureReplacement("texture",tex,tabl[0]);
-			MO = SetFXAttachment(name_str[2], tabl_m);
-			MO.SetFXTextureReplacement("texture",tex,tabl[1]);
-			MO = SetFXAttachment(name_str[4], tabl_m);
-			MO.SetFXTextureReplacement("texture",tex,tabl[2]);
-			}
+
 
 		int q1 = n_tabl - q;
 
 
 		if(q1 > 0)
 			{
+			switch(q1)
+				{
+				case 1:
+					MO = SetFXAttachment(name_str[7], tabl_m);
+					MO.SetFXTextureReplacement("texture",tex,tabl[q]);
+					break;
 
-			if(q1 == 1)
-				{
-				MeshObject MO = SetFXAttachment(name_str[7], tabl_m);
-				MO.SetFXTextureReplacement("texture",tex,tabl[q]);
-				}
-			else if(q1 == 2)
-				{
-				MeshObject MO = SetFXAttachment(name_str[6], tabl_m);
-				MO.SetFXTextureReplacement("texture",tex,tabl[q]);
-				MO = SetFXAttachment(name_str[8], tabl_m);
-				MO.SetFXTextureReplacement("texture",tex,tabl[(q+1)]);
-				}
-			else if(q1 == 3)
-				{
-				MeshObject MO = SetFXAttachment(name_str[5], tabl_m);
-				MO.SetFXTextureReplacement("texture",tex,tabl[q]);
-				MO = SetFXAttachment(name_str[7], tabl_m);
-				MO.SetFXTextureReplacement("texture",tex,tabl[(q+1)]);
-				MO = SetFXAttachment(name_str[9], tabl_m);
-				MO.SetFXTextureReplacement("texture",tex,tabl[(q+2)]);
+				case 2:
+					MO = SetFXAttachment(name_str[6], tabl_m);
+					MO.SetFXTextureReplacement("texture",tex,tabl[q]);
+					MO = SetFXAttachment(name_str[8], tabl_m);
+					MO.SetFXTextureReplacement("texture",tex,tabl[(q+1)]);
+					break;
+
+				default:
+				case 3:
+					MO = SetFXAttachment(name_str[5], tabl_m);
+					MO.SetFXTextureReplacement("texture",tex,tabl[q]);
+					MO = SetFXAttachment(name_str[7], tabl_m);
+					MO.SetFXTextureReplacement("texture",tex,tabl[(q+1)]);
+					MO = SetFXAttachment(name_str[9], tabl_m);
+					MO.SetFXTextureReplacement("texture",tex,tabl[(q+2)]);
+					break;
+
 				}
 			}
 		}
