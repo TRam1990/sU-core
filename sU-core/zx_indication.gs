@@ -1207,7 +1207,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 					}
 				}
 				else {
-					bool sig_GY_on = (sign.ab4 and sign.ex_sgn[zxIndication.STATE_GY] and (nextSign.MainStateALS == zxIndication.STATE_Y or ((nextSign.MainStateALS == zxIndication.STATE_Gb or nextSign.MainStateALS == zxIndication.STATE_Yb) and !(trmrk_flag & zxMarker.MRGR4ABFL)) or nextSign.MainStateALS == zxIndication.STATE_GG or nextSign.MainStateALS == zxIndication.STATE_YW) and !(trmrk_flag & zxMarker.MREND4AB));
+					bool sig_GY_on = (sign.ab4 and sign.ex_sgn[zxIndication.STATE_GY] and (nextSign.MainStateALS == zxIndication.STATE_Y or (nextSign.MainStateALS == zxIndication.STATE_Yb and !(trmrk_flag & zxMarker.MRGR4ABFL)) or nextSign.MainStateALS == zxIndication.STATE_GG or nextSign.MainStateALS == zxIndication.STATE_YW) and !(trmrk_flag & zxMarker.MREND4AB));
 					if(trmrk_flag & zxMarker.MRALS) {		// ¿À— 
 						if ((trmrk_flag & zxMarker.MRT) and sign.ex_sgn[zxIndication.STATE_YbYW]) {
 							sign.MainState = zxIndication.STATE_YbYW;

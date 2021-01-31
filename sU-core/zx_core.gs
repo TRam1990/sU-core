@@ -1592,7 +1592,7 @@ void MultiplayerClientHandler1(Message msg)
 		signal_link.sign.MainState = sp.GetNamedTagAsInt("state", 0);
 		signal_link.sign.MainStateALS = sp.GetNamedTagAsInt("stateALS", 0);
 
-		signal_link.sign.SetSignal(false);
+		signal_link.sign.SetSignal(true);
 
 
 		if(zxExtra.size() > 0)

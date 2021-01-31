@@ -108,7 +108,7 @@ string-table
 extensions
 {
 }
-kuid                                    <kuid2:400260:100120:53>
+kuid                                    <kuid2:400260:100120:55>
 
 kuid-table
 {
