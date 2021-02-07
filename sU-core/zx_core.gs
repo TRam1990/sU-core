@@ -592,6 +592,11 @@ void RemoveTrain(Message msg)
 	}
 
 
+thread void TrainCleanerError(int train_id, string sig_name, int sign_id)
+	{
+	Interface.Print("Signal "+sig_name+" id " + sign_id + " not in train "+train_id+" array");
+	}
+
 
 void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int sign_numb, bool recheck) // ожидание съезда поезда с сигнала, ловля Object,Leave
 	{
@@ -709,7 +714,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int si
 			}
 		}
 	else
-		Interface.Print("Signal not found for train "+train_arr.DBSE[train_nmb].a);
+		TrainCleanerError(train_arr.DBSE[train_nmb].a, entered_sign.GetName(), entered_sign.OwnId);
 	}
 
 

@@ -909,7 +909,7 @@ public void ShowName(bool reset)
 				}
 			}
 		}
-	else
+	else if(q > 0)
 		{
 
 /*
