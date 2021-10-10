@@ -195,7 +195,12 @@ bool SetOwnSignalState(bool set_auto_state)
 
 		if(MU) {
 			if (x_mode) {
-				MU.OnLightsRouterSign("x");
+				if (MU.typeMatrix == "99") {
+					MU.OnLightsRouterSign("x ");
+				}
+				else {
+					MU.OnLightsRouterSign("x");
+				}
 				MU.WasOpen = true;
 			}
 			else if(MainState == zxIndication.STATE_R) {
@@ -3026,16 +3031,10 @@ public void LinkPropertyValue(string id)
 
 			if(str_a[1]=="FLOAT")
 				{
-				if(Type & ST_FLOAT_BLOCK) {
-					Type = Type - ST_FLOAT_BLOCK;
-					x_mode = false;
-				}
-				else {
-					Type = Type + ST_FLOAT_BLOCK;
-					x_mode = (Type & ST_PERMOPENED) and !(Type & (ST_IN | ST_OUT | ST_ROUTER | ST_UNLINKED));
-				}
+					Type = Type ^ ST_FLOAT_BLOCK;
 				}
 
+			x_mode = (Type & ST_PERMOPENED) and (Type & ST_FLOAT_BLOCK) and !(Type & (ST_IN | ST_OUT | ST_ROUTER | ST_UNLINKED));
 			}
 		else if(str_a[0]=="displace1")
 			{
