@@ -153,11 +153,16 @@ public string GetRules(void)
 			s=s+"Y:mb11,mb14,mb25,mb21,mb23,mb35,mb31,mb33,mb45,mb41,mb42,mb43,mb55,mb51,mb53,mb65,mb61,mb63,mb71,mb74;"; //Þ
 			s=s+"Z:mb12,mb13,mb14,mb15,mb25,mb21,mb35,mb31,mb45,mb42,mb43,mb44,mb55,mb52,mb65,mb61,mb75,mb71;";
 
+			s=s+"a:mb12,mb13,mb14,mb23,mb33,mb43,mb53,mb63,mb74,mb72,mb73;";
+			s=s+"b:mb11,mb12,mb13,mb14,mb24,mb22,mb34,mb32,mb44,mb42,mb54,mb52,mb64,mb62,mb74,mb71,mb72,mb73,mb15,mb75;";
+			s=s+"c:mb11,mb13,mb21,mb23,mb31,mb33,mb41,mb43,mb51,mb53,mb61,mb63,mb71,mb73,mb15,mb25,mb35,mb45,mb55,mb65,mb75;";
+			s=s+"d:mb11,mb13,mb21,mb23,mb31,mb33,mb41,mb43,mb51,mb53,mb62,mb63,mb74,mb71,mb15,mb25,mb35,mb45,mb55,mb65;";
+
 			s=s+"l:mb21,mb32,mb43,mb54,mb65;";
 			s=s+"f:mb13,mb23,mb33,mb43,mb53,mb63,mb73;";
 			s=s+"r:mb25,mb34,mb43,mb52,mb61;";
 			s=s+"h:mb45,mb41,mb42,mb43,mb44;";
-			s=s+"x:mb22,mb26,mb33,mb35,mb44,mb53,mb55,mb62,mb66;";
+			s=s+"x:mb21,mb25,mb32,mb34,mb43,mb52,mb54,mb61,mb65;";
 		}else
 		if(typeMatrix=="x"){        
 			s=s+"r:ur1,ur2,ur3,u0,ur4,ur5,ur6;";
@@ -219,6 +224,13 @@ public string GetRules2(void)
 			s=s+"e:ma11,ma12,ma13,ma14,ma25,ma35,ma45,ma42,ma43,ma44,ma55,ma65,ma71,ma72,ma73,ma74;"; //Ý
 			s=s+"Y:ma11,ma14,ma25,ma21,ma23,ma35,ma31,ma33,ma45,ma41,ma42,ma43,ma55,ma51,ma53,ma65,ma61,ma63,ma71,ma74;"; //Þ
 			s=s+"Z:ma12,ma13,ma14,ma15,ma25,ma21,ma35,ma31,ma45,ma42,ma43,ma44,ma55,ma52,ma65,ma61,ma75,ma71;";
+
+			s=s+"a:ma12,ma13,ma14,ma23,ma33,ma43,ma53,ma63,ma74,ma72,ma73;";
+			s=s+"b:ma11,ma12,ma13,ma14,ma24,ma22,ma34,ma32,ma44,ma42,ma54,ma52,ma64,ma62,ma74,ma71,ma72,ma73,ma15,ma75;";
+			s=s+"c:ma11,ma13,ma21,ma23,ma31,ma33,ma41,ma43,ma51,ma53,ma61,ma63,ma71,ma73,ma15,ma25,ma35,ma45,ma55,ma65,ma75;";
+			s=s+"d:ma11,ma13,ma21,ma23,ma31,ma33,ma41,ma43,ma51,ma53,ma62,ma63,ma74,ma71,ma15,ma25,ma35,ma45,ma55,ma65;";
+
+			s=s+"x:ma21,ma25,ma32,ma34,ma43,ma52,ma54,ma61,ma65;";
 		}
 		return s;
 	}
