@@ -1124,6 +1124,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 	MapObject MO = GSTS.SearchNext();
 
 	bool train_found = false;
+	bool low_speed = false;
 
 	while(MO and GSTS.GetDistance()<(str_distance*multiplicator) and !train_found)
 		{
@@ -1156,8 +1157,17 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 		if(GSTS.GetFacingRelativeToSearchDirection())
 			vel_ty = -vel_ty;
 
-		if(vel_ty < -0.00001)
+		if(vel_ty < 0)
+			{
 			vel_dir = true;
+			if(vel_ty > -0.001)
+				low_speed = true; 
+			}
+		else
+			{
+			if(vel_ty < 0.001)
+				low_speed = true; 
+			}
 		}
 
 
@@ -1193,8 +1203,17 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 		if(!GSTS.GetFacingRelativeToSearchDirection())
 			vel_ty = -vel_ty;
 
-		if(vel_ty < -0.00001)
+		if(vel_ty < 0)
+			{
 			vel_dir = true;
+			if(vel_ty > -0.001)
+				low_speed = true; 
+			}
+		else
+			{
+			if(vel_ty < 0.001)
+				low_speed = true; 
+			}
 		}
 
 
@@ -1204,7 +1223,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 
 	if(vel_dir)
 		{
-		if(behind and before)
+		if((behind and before) or low_speed)
 			return 2;
 		else if(!behind and before)
 			return 1;
@@ -1213,7 +1232,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 		}
 	else
 		{
-		if(behind and before)
+		if((behind and before) or low_speed)
 			return 5;
 		else if(!behind and before)
 			return 6;
@@ -2494,7 +2513,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			last_edited_station = Stations.SE[0];
 
 
-		if(Stations.N>0);
+		if(Stations.N>0)
 			{
 			string temp = Stations.SE[0];
 
