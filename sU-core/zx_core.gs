@@ -1220,10 +1220,20 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 	if(!behind and !before)			//поезд не найден
 		return 0;
 
+	if(low_speed)
+		{
+		if(behind and before)
+			return 2;
+		if(before)
+			return 1;
+		if(behind)
+			return 4;			
+		}
+
 
 	if(vel_dir)
 		{
-		if((behind and before) or low_speed)
+		if(behind and before)
 			return 2;
 		else if(!behind and before)
 			return 1;
@@ -1232,7 +1242,7 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 		}
 	else
 		{
-		if((behind and before) or low_speed)
+		if(behind and before)
 			return 5;
 		else if(!behind and before)
 			return 6;
