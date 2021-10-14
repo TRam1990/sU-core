@@ -100,6 +100,7 @@ class zxSignal isclass Signal, ALSN_Provider
 	public int Type;		// тип светофора
 
 	public bool yellow_code;
+	public bool prigl_enabled;	// наличие совмещённого пригласительного с маневровым / раздельное применение двух белых огней
 
 	public float speed_limit;	// ограничение светофора
 

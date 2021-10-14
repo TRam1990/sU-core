@@ -882,7 +882,7 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 			if(sign.train_open) {// красный, т.к. ошибка скрипта
 				Interface.Exception("shunt + train signals ?");
 			}
-			else if (sign.ex_sgn[zxIndication.STATE_WW] and nextSign) {// если есть 2 белых, и путь свободен
+			else if (sign.ex_sgn[zxIndication.STATE_WW] and !sign.prigl_enabled and nextSign) {// если есть 2 белых, и путь свободен
 				sign.MainState = zxIndication.STATE_WW;
 			}
 			else if (sign.ex_sgn[zxIndication.STATE_W]) {		// есть 1 белый

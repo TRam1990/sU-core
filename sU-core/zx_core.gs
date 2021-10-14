@@ -29,7 +29,9 @@ public BinarySortedStrings ProtectGroups;									//массив групп заградительных
 
 MultiplayerSessionManager mp_lib;
 
-public float str_distance = 60.0;
+public define float str_distance = 60.0;
+
+public define float vel_presision = 0.01;
 
 string err;
 string last_edited_station = "";
@@ -446,7 +448,7 @@ void TrainCatcher(zxSignal entered_sign, Train curr_train)
 		high_speed = true;		
 		if(state1 == 0)		// поезд найти не удалось
 			{
-			Interface.Exception("Can't find train started motion "+train_id);
+			Interface.Exception("Can't find train started motion "+train_id +" at "+entered_sign.privateName+"@"+entered_sign.stationName);
 			return;
 			}
 		}
@@ -592,17 +594,16 @@ void RemoveTrain(Message msg)
 	}
 
 
-thread void TrainCleanerError(int train_id, string sig_name, int sign_id)
-	{
-	Interface.Print("Signal "+sig_name+" id " + sign_id + " not in train "+train_id+" array");
-	}
 
 
 void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int sign_numb, bool recheck) // ожидание съезда поезда с сигнала, ловля Object,Leave
 	{
 	if(!curr_train or (train_nmb < 0))  // поезд потерян
 		{
-		Interface.Print("A train "+ train_nmb + " was deletted or contains a bad vehicle!");
+		if(entered_sign)
+			Interface.Print("A train "+ train_nmb + " was deletted or contains a bad vehicle at "+entered_sign.privateName+"@"+entered_sign.stationName);
+		else
+			Interface.Print("A train "+ train_nmb + " was deletted or contains a bad vehicle!");
 
 		int n = entered_sign.TC_id.size();
 		int i=0;
@@ -616,13 +617,13 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int si
 			if(!tr1)
 				{
 				int train_id1 = entered_sign.TC_id[i];
-				int train_nmb=train_arr.Find( train_id1);
+				int train_nmb1=train_arr.Find( train_id1);
 
 				UpdateSignState(entered_sign,5,-1);
 
 				entered_sign.RemoveTrainId(train_id1);
 				
-				train_arr.DeleteElementByNmb(train_nmb);
+				train_arr.DeleteElementByNmb(train_nmb1);
 
 				any_removed = true;
 				}
@@ -714,7 +715,23 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int si
 			}
 		}
 	else
-		TrainCleanerError(train_arr.DBSE[train_nmb].a, entered_sign.GetName(), entered_sign.OwnId);
+		{
+		Interface.Log("Signal "+entered_sign.privateName+"@"+entered_sign.stationName+" id " + entered_sign.OwnId + " not in train "+train_arr.DBSE[train_nmb].a+" array");
+		
+/*		string temp;
+		int i = 0;
+		for(;i < train_con.signal.size(); i++)
+			{
+			int number = train_con.signal[i];
+			zxSignal tmp_sgn = (cast<zxSignalLink>(Signals.DBSE[number].Object)).sign;
+			
+			temp =  temp + tmp_sgn.privateName+"@"+tmp_sgn.stationName + ", ";
+			}
+
+		Interface.Print("train "+train_arr.DBSE[train_nmb].a+ " on signals "+temp);
+*/		}
+
+
 	}
 
 
@@ -755,7 +772,7 @@ void TrainSpeedTriggerCatcher(Message msg)
 	Train curr_train = cast<Train>(msg.src);
 	if(!curr_train)  // поезд потерян
 		{
-		Interface.Print("A train was deletted or contains a bad vehicle!");
+		Interface.Print("A train was deletted or contains a bad vehicle at "+entered_object.GetName());
 		return;
 		}
 
@@ -872,7 +889,7 @@ void TrainSpeedTriggerCleaner(Message msg)
 	Train curr_train = cast<Train>(msg.src);
 	if(!curr_train)  // поезд потерян
 		{
-		Interface.Print("A train was deletted or contains a bad vehicle!");
+		Interface.Print("A train was deletted or contains a bad vehicle at "+entered_object.GetName());
 		return;
 		}
 
@@ -972,7 +989,7 @@ void ReUpdateSignals()
 		sign.UpdateState(0, -1);
 		sign.OwnId = i;
 
-		if(i % 50)
+		if((i % 20) == 0)
 			Sleep(0.01);
 		}
 
@@ -995,7 +1012,7 @@ void ReUpdateSignals()
 				Interface.Exception("signal map name changed from "+Signals.DBSE[i].a+" to "+sign.GetName());
 			}
 
-		if(i % 50)
+		if((i % 20) == 0)
 			Sleep(0.01);
 
 		}
@@ -1160,12 +1177,12 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 		if(vel_ty < 0)
 			{
 			vel_dir = true;
-			if(vel_ty > -0.001)
+			if(vel_ty > -vel_presision)
 				low_speed = true; 
 			}
 		else
 			{
-			if(vel_ty < 0.001)
+			if(vel_ty < vel_presision)
 				low_speed = true; 
 			}
 		}
@@ -1206,12 +1223,12 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 		if(vel_ty < 0)
 			{
 			vel_dir = true;
-			if(vel_ty > -0.001)
+			if(vel_ty > -vel_presision)
 				low_speed = true; 
 			}
 		else
 			{
-			if(vel_ty < 0.001)
+			if(vel_ty < vel_presision)
 				low_speed = true; 
 			}
 		}
@@ -1256,20 +1273,23 @@ int SearchForTrain(zxSignal sig1, int train_id, int multiplicator) 	// тут идут 
 	}
 
 
+bool train_arr_updating = false;
+int curr_check_series = 0;
 
-thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
+
+thread void CheckTrainList(int series)			// проверка поездов, подъезжающих к светофорам
 	{
-	int q = 0;
 
-	while(!MP_NotServer)
-		{
+		train_arr_updating = true;
+
+
 		int i;
 		int sleep_counter = 0;
 
-		for(i=0;i<train_arr.N;i++)
+
+		for(i=0;(i<train_arr.N) and (series == curr_check_series);i++)
 			{
 			TrainContainer TC= cast<TrainContainer>(train_arr.DBSE[i].Object);
-
 
 			if(!TC.IsStopped)
 				{
@@ -1379,8 +1399,40 @@ thread void CheckTrainList()			// проверка поездов, подъезжающих к светофорам
 				}
 				
 			}
-		Sleep(0.5);
 
+
+	if(series == curr_check_series)
+		train_arr_updating = false;
+
+
+	}
+
+
+thread void CheckTrainListUpdater()
+	{
+
+	int fault_counter = 0;
+
+
+	while(!MP_NotServer)
+		{
+
+		if(!train_arr_updating)
+			CheckTrainList(curr_check_series);
+		else
+			{
+			fault_counter++;
+
+			if(fault_counter > 120)	// зависание более чем на 60 секунд - перезапуск алгоритма
+				{
+				fault_counter = 0;
+				Interface.Print("CheckTrainListUpdater() reset");
+
+				curr_check_series++;
+				CheckTrainList(curr_check_series);
+				}
+			}
+		Sleep(0.5);
 		}
 	}
 
@@ -1786,7 +1838,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		AddHandler(me, "Train", "StoppedMoving", "TrainStopping");
 		AddHandler(me, "Train", "Cleanup", "RemoveTrain");
 
-		CheckTrainList();
+		CheckTrainListUpdater();
 
 
 		int i;

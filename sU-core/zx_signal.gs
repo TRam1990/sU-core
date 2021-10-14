@@ -53,8 +53,6 @@ bool station_edited = false;
 
 bool pre_protected = false;
 
-bool prigl_enabled = false;	// влияет только на наличие совмещённого пригласительного с маневровым
-
 float pause_bef_red = 3.5;
 
 
@@ -535,6 +533,15 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 
 			SetSignal(true);
 			ApplyNewSpeedLimit(-1);
+
+			if(MainState == zxIndication.STATE_B)	// сброс белого может быть, когда пред. светофор уже открыт.
+				{
+				string[] track_params = new string[2];
+				mainLib.LibraryCall("find_next_signal",track_params,GSO);
+
+				if(Cur_next)
+					Cur_next.CheckPrevSignals(false);
+				}
 
 			if(IsServer)
 				mainLib.LibraryCall("mult_settings",null,GSO);
