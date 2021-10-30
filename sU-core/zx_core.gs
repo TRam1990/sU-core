@@ -1418,7 +1418,10 @@ thread void CheckTrainListUpdater()
 		{
 
 		if(!train_arr_updating)
+			{
+			fault_counter = 0;
 			CheckTrainList(curr_check_series);
+			}
 		else
 			{
 			fault_counter++;
@@ -1506,7 +1509,7 @@ Soup GetChangeSoup()
 			Temp_soup.SetNamedTag("state"+j,temp_sign.MainState);
 
 			Temp_soup.SetNamedTag("limit"+j, temp_sign.speed_limit);
-			Temp_soup.SetNamedTag("default_state"+j,  temp_sign.GetSpeedLimit());
+			Temp_soup.SetNamedTag("default_state"+j,  temp_sign.GetSignalState());
 			Temp_soup.SetNamedTag("train_open"+j,temp_sign.train_open);
 			Temp_soup.SetNamedTag("shunt_open"+j,temp_sign.shunt_open);
 			Temp_soup.SetNamedTag("barrier_closed"+j,temp_sign.barrier_closed);

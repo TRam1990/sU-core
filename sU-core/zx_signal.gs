@@ -2632,6 +2632,13 @@ public void SetPropertyValue(string id, string val)
 		Type = FindTypeByLens(ex_lins);
 
 		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);			//  генерируем розжиг
+
+		if(MainState == zxIndication.STATE_Rx)
+			{
+			MainState = MainStateALS = zxIndication.STATE_R;
+			wrong_dir = false;
+			}
+
 		LC.applaySignalState(me, null, 0, false);
  		}
  }
@@ -2699,6 +2706,13 @@ public void LinkPropertyValue(string id)
 
 
 		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);			//  генерируем розжиг
+
+
+		if(MainState == zxIndication.STATE_Rx)
+			{
+			MainState = MainStateALS = zxIndication.STATE_R;
+			wrong_dir = false;
+			}
 
 		if(Type & ST_PROTECT)
 			{
@@ -2798,6 +2812,13 @@ public void LinkPropertyValue(string id)
 
 		CreateLinsArr(lens_kit, ex_lins, pos_lins);
 		kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);
+
+
+		if(MainState == zxIndication.STATE_Rx)
+			{
+			MainState = MainStateALS = zxIndication.STATE_R;
+			wrong_dir = false;
+			}
 
 		if(Type & ST_PROTECT)
 			{
@@ -3025,6 +3046,13 @@ public void LinkPropertyValue(string id)
 
 					CreateLinsArr(lens_kit, ex_lins, pos_lins);
 					kbm_mode = LC.FindPossibleSgn(ex_sgn, ex_lins, prigl_enabled);
+
+
+					if(MainState == zxIndication.STATE_Rx)
+						{
+						MainState = MainStateALS = zxIndication.STATE_R;
+						wrong_dir = false;
+						}
 					}
 				else
 					{
@@ -3320,7 +3348,7 @@ public string GetContentViewDetails()
 		{
 		s2 = 	hw.MakeRow(
  	 			hw.MakeCell(STT.GetString("ability_to_close"),"width=80% bgcolor=#777777")+
- 		 		hw.MakeCell(hw.MakeLink("live://MayOpen^"+barrier_closed,GetImgMayOpen(!barrier_closed)),"bgcolor=#777777")
+ 		 		hw.MakeCell(hw.MakeLink("live://"+GetId()+"/MayOpen^"+barrier_closed,GetImgMayOpen(!barrier_closed)),"bgcolor=#777777")
  		 	);
 		}
 	else
@@ -3329,7 +3357,7 @@ public string GetContentViewDetails()
 		if( !(Type & ST_SHUNT) )
 			s2 = 	hw.MakeRow(
  	 				hw.MakeCell(STT.GetString("ability_to_open"),"width=80% bgcolor=#777777")+
- 		 			hw.MakeCell(hw.MakeLink("live://MayOpen^"+!train_open,GetImgMayOpen(train_open)),"bgcolor=#777777")
+ 		 			hw.MakeCell(hw.MakeLink("live://"+GetId()+"/MayOpen^"+!train_open,GetImgMayOpen(train_open)),"bgcolor=#777777")
  		 		);
 		}
 
@@ -3339,21 +3367,21 @@ public string GetContentViewDetails()
 		if(ex_sgn[zxIndication.STATE_W])	// только если есть маневровый
 			s2 = s2+ hw.MakeRow(
  	 				hw.MakeCell(STT.GetString("ability_to_shnt"),"bgcolor=#777777")+
- 	 				hw.MakeCell(hw.MakeLink("live://ShuntMode^"+!shunt_open,GetImgShuntMode(shunt_open)),"bgcolor=#777777")
+ 	 				hw.MakeCell(hw.MakeLink("live://"+GetId()+"/ShuntMode^"+!shunt_open,GetImgShuntMode(shunt_open)),"bgcolor=#777777")
  	 			);
 
 
 		if(ex_sgn[zxIndication.STATE_RWb] )	// только если есть пригласительный
 			s2 = s2+ hw.MakeRow(
  	 				hw.MakeCell(STT.GetString("ability_to_prigl"),"bgcolor=#777777")+
- 	 				hw.MakeCell(hw.MakeLink("live://PriglMode^"+!prigl_open,GetImgPriglMode(prigl_open)),"bgcolor=#777777")
+ 	 				hw.MakeCell(hw.MakeLink("live://"+GetId()+"/PriglMode^"+!prigl_open,GetImgPriglMode(prigl_open)),"bgcolor=#777777")
 	 	 		);
 		}
 
 	if (Type & ST_FLOAT_BLOCK) {
 		s2 = s2+ hw.MakeRow(
 			hw.MakeCell(STT.GetString("ability_to_x_mode"),"bgcolor=#777777")+
-			hw.MakeCell(hw.MakeLink("live://XMode^" + !x_mode, GetImgXMode(x_mode)), "bgcolor=#777777")
+			hw.MakeCell(hw.MakeLink("live://"+GetId()+"/XMode^" + !x_mode, GetImgXMode(x_mode)), "bgcolor=#777777")
 		);
 	}
 
@@ -3391,8 +3419,8 @@ public string GetContentViewDetails()
 		s2 = s2 + hw.MakeRow(
         		  		hw.MakeCell(STT.GetString("dir_track_to")+"<br>"+
 
-	                		hw.MakeLink("live://spanTrackFromOther",bb_s[0]+privateName+"@"+stationName+"  &gt;&gt;&gt; "+bb_s[1])+" . "+
-	                		hw.MakeLink("live://spanTrackFromMe",bb_s[2]+"&lt;&lt;&lt; "+span_soup.GetNamedTag("end_sign_n")+"@"+span_soup.GetNamedTag("end_sign_s")+bb_s[3]) ,"bgcolor='#555555' align='center'")+
+	                		hw.MakeLink("live://"+GetId()+"/spanTrackFromOther",bb_s[0]+privateName+"@"+stationName+"  &gt;&gt;&gt; "+bb_s[1])+" . "+
+	                		hw.MakeLink("live://"+GetId()+"/spanTrackFromMe",bb_s[2]+"&lt;&lt;&lt; "+span_soup.GetNamedTag("end_sign_n")+"@"+span_soup.GetNamedTag("end_sign_s")+bb_s[3]) ,"bgcolor='#555555' align='center'")+
 
 					hw.MakeCell("","bgcolor='#555555'")
 
@@ -3417,10 +3445,11 @@ public string GetContentViewDetails()
 
 public void ChangeText(Message msg)
 {
- 	string s="";
 	string[] tok=Str.Tokens(msg.minor,"/");
- 	string[] tok2=Str.Tokens(tok[1],"^");
+	if(Str.ToInt(tok[1]) != GetId())
+		return;
 
+ 	string[] tok2=Str.Tokens(tok[2],"^");
  	if(tok2.size()==1)
 		{
 		if(tok2[0]=="spanTrackFromMe")
@@ -3489,11 +3518,6 @@ thread void ShowBrowser(void)
         	{
         	wait()
 			{
-			on "Browser-URL","",msg:
-				{
-			        ChangeText(msg);
-                        	continue;
-                        	}
                 	on "Browser-Closed","",msg:
 				if(msg.src==mn)
 					mn=null;
@@ -4329,6 +4353,8 @@ public void Init(Asset asset)
 
 	AddHandler(me,"MapObject","View-Details","ViewDetails");
   	AddHandler(me,"RefreshBrowser","","RefreshBrowser");
+	AddHandler(me,"Browser-URL","","ChangeText");
+
 
 	AddHandler(me,"UpdateMU","Off","OffMU");
 

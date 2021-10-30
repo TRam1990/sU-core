@@ -1121,7 +1121,10 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 					}
 				}
 				else if (trmrk_flag & zxMarker.MRT) {		// отклонение
-					if (sign.ex_sgn[zxIndication.STATE_YbY]) {		// жёлтый мигающий - жёлтый
+					if ((trmrk_flag & zxMarker.MRHALFBL) and sign.ex_sgn[zxIndication.STATE_YY] and (nextSign.MainStateALS == zxIndication.STATE_YY)) {
+						sign.MainState = zxIndication.STATE_YY;		// жёлтый - жёлтый
+					}
+					else if (sign.ex_sgn[zxIndication.STATE_YbY]) {		// жёлтый мигающий - жёлтый
 						sign.MainState = zxIndication.STATE_YbY;
 					}
 					else if ((trmrk_flag & zxMarker.MRNOYLBL) and sign.ex_sgn[zxIndication.STATE_G]) {	// зелёный
@@ -1235,7 +1238,10 @@ public int FindPossibleSgn(bool[] possible_sgn, bool[] ex_lens)
 						sign.MainState = zxIndication.STATE_GG;		// зелёный зелёный
 					}
 					else if (trmrk_flag & zxMarker.MRT) {	// отклонение
-						if (sign.ex_sgn[zxIndication.STATE_YbY]) {		// жёлтый мигающий - жёлтый
+						if ((trmrk_flag & zxMarker.MRHALFBL) and sign.ex_sgn[zxIndication.STATE_YY] and (nextSign.MainStateALS == zxIndication.STATE_Y)) {
+							sign.MainState = zxIndication.STATE_YY;		// жёлтый - жёлтый
+						}
+						else if (sign.ex_sgn[zxIndication.STATE_YbY]) {		// жёлтый мигающий - жёлтый
 							sign.MainState = zxIndication.STATE_YbY;
 						}
 						else if (sig_GY_on) {	// жёлтый зелёный
