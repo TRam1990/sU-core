@@ -1274,22 +1274,25 @@ public int GetALSNTypeSignal(void)
 	int type1 = TYPE_NONE;
 
 	if(Type & ST_IN)
-		type1 = type1 + TYPE_IN;
+		type1 = type1 | TYPE_IN;
 
 	if(Type & ST_OUT)
-		type1 = type1 + TYPE_OUT;
+		type1 = type1 | TYPE_OUT;
 
 	if(Type & ST_ROUTER)
-		type1 = type1 + TYPE_DIVIDE;
+		type1 = type1 | TYPE_DIVIDE;
 
 	if (x_mode)
-		type1 = type1 + TYPE_CIRCUIT;
+		type1 = type1 | TYPE_CIRCUIT;
 
 	if(type1 == TYPE_NONE and Type & ST_UNLINKED)
 		return TYPE_NONE;
 
 	if(Type & ST_PERMOPENED)
-		type1 = type1 + TYPE_PASSING;
+		type1 = type1 | TYPE_PASSING;
+
+	if (Type & (ST_IN | ST_OUT | ST_ROUTER | ST_SHUNT))
+		type1 = type1 | 128; //Новый флаг TYPE_SIDINGBRAKE для реализации провайдера для ТРС2019+
 
 	return type1;
 	}
@@ -1959,24 +1962,13 @@ public string GetDescriptionHTML(void)
 	s=s+"<br>";
 
 
-
-
-	if( GetALSNTypeSignal() == TYPE_NONE )
-		s=s+STT.GetString("als_code")+":<br>";
-
 	s=s+hw.StartTable("border='1' width=90%");
 
 	s=s+hw.StartRow();
 	s=s+hw.MakeCell(STT.GetString("ALS"),"bgcolor='#AAAAAA' colspan='2' ");
 
 
-	  if(Type & (ST_OUT | ST_ROUTER) and !(Type & ST_IN))
-		{
-		s=s+hw.StartCell("bgcolor='#886666' colspan='2' align='center'");
-		s=s+hw.CheckBox("live://property/code_dev/1", code_dev & 1);
-	 	s=s+" "+hw.MakeLink("live://property/code_dev/1", STT.GetString("code_dev"));
-	  	}
-	else if(Type & ST_IN) 
+	if(Type & (ST_IN | ST_OUT | ST_ROUTER))
 		s=s+hw.StartCell("bgcolor='#886666' colspan='3' align='center' ") + "  ";
 	else 
 		s=s+hw.StartCell("bgcolor='#886666' colspan='2' align='center' ") + "  ";
@@ -1997,7 +1989,7 @@ public string GetDescriptionHTML(void)
 	s=s+MakeRadioButtonCell("live://property/code_freq/1",STT.GetString("ALS25"), code_freq & 1);
 	s=s+MakeRadioButtonCell("live://property/code_freq/2",STT.GetString("ALS50"), code_freq & 2);
 
-	if(Type & ST_IN)
+	if(Type & (ST_IN | ST_OUT | ST_ROUTER))
 		{
 		s=s+hw.StartCell("bgcolor='#888888' colspan='2'");
 		s=s+hw.RadioButton("live://property/code_freq/4", code_freq & 4);
@@ -2014,7 +2006,7 @@ public string GetDescriptionHTML(void)
 	int column_number = 5;
 
 
-	if(Type & ST_IN)
+	if(Type & (ST_IN | ST_OUT | ST_ROUTER))
 		{
 		column_number++;
 		s=s+hw.StartRow();
