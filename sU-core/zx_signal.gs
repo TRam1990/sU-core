@@ -1187,16 +1187,15 @@ public void GenerateSpan(bool recurs)
 				{
 				span_soup.SetNamedTag("sub_sign_"+Extra_sign,MO.GetName());
 				(cast<zxSignal_main>MO).stationName = stationName;
-				Extra_sign++;
-				}
-			else
-				{
 				if((cast<zxSignal_main>MO).predvhod)
 					{
 					(cast<zxSignal_main>MO).predvhod = false;
 					(cast<zxSignal_main>MO).SetPredvhod();
 					}
-				TempMO = MO;
+				if(!TempMO)
+					TempMO = MO;
+
+				Extra_sign++;
 				}
 			}
 
@@ -1228,10 +1227,12 @@ public void GenerateSpan(bool recurs)
 	if(recurs)
 		{
 		zx_oth.GenerateSpan(false);
+		span_soup.SetNamedTag("Inited",true);
+
 		Switch_span(true);
 		}
-
-	span_soup.SetNamedTag("Inited",true);
+	else
+		span_soup.SetNamedTag("Inited",true);
 }
 
 

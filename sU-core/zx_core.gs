@@ -983,38 +983,28 @@ public Soup GetProperties(void)
 void ReUpdateSignals()
 	{
 	int i;
+	Sleep(1);
 	for(i=0;i<Signals.N;i++)
 		{
 		zxSignal sign = (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign;
 		sign.UpdateState(0, -1);
 		sign.OwnId = i;
 
-		if((i % 20) == 0)
-			Sleep(0.01);
-		}
+		Sniff(sign, "Object", "Enter", true);
+		Sniff(sign, "Object", "Leave", true);
+		Sniff(sign, "CTRL", "", true);
 
-	Sleep(5);
-
-	for(i=0;i<Signals.N;i++)
-		{
-		zxSignal sign = (cast<zxSignalLink>(Signals.DBSE[i].Object)).sign;
-
-		if(sign != null)
+		if(sign.Type & zxSignal.ST_IN)
 			{
-
-			sign.OwnId = i;
-
-			Sniff(sign, "Object", "Enter", true);
-			Sniff(sign, "Object", "Leave", true);
-			Sniff(sign, "CTRL", "", true);
-	
-			if(sign.GetName() != Signals.DBSE[i].a)
-				Interface.Exception("signal map name changed from "+Signals.DBSE[i].a+" to "+sign.GetName());
+			if(!sign.wrong_dir)
+				{
+				sign.Switch_span(false);
+				Sleep(0.0);
+				}
 			}
 
-		if((i % 20) == 0)
-			Sleep(0.01);
-
+		if((i % 5) == 0)
+			Sleep(0.0);
 		}
 	}
 
