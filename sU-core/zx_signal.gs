@@ -1008,16 +1008,22 @@ public void Deswitch_span()
 	for(i=0;i<n;i++)
 		{
 		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
-		zxs.MainState = zxs.MainStateALS = zxIndication.STATE_Rx;
-		zxs.wrong_dir = true;
-		zxs.x_mode = false;
-		zxs.SetSignal(true);
-
-		if(IsServer)
+		
+		if(zxs)
 			{
-			GSO2[0] = cast<GSObject>zxs;
-			mainLib.LibraryCall("mult_settings",null,GSO2);
+			zxs.MainState = zxs.MainStateALS = zxIndication.STATE_Rx;
+			zxs.wrong_dir = true;
+			zxs.x_mode = false;
+			zxs.SetSignal(true);
+
+			if(IsServer)
+				{
+				GSO2[0] = cast<GSObject>zxs;
+				mainLib.LibraryCall("mult_settings",null,GSO2);
+				}
 			}
+		else
+			Interface.Exception("Initiate span in signal "+privateName+"@"+stationName+": incorrect sub_sign "+span_soup.GetNamedTag("sub_sign_"+i));
 		}
 
 	GSO2[0,] = null; 
@@ -1080,7 +1086,6 @@ public bool Switch_span(bool obligatory)		// повернуть перегон в сторону этого с
 
 	int n = span_soup.GetNamedTagAsInt("Extra_sign",0);
 	int i;
-	bool faulty_span = false;
 	zxSignal zxs;
 
 
@@ -1111,7 +1116,7 @@ public bool Switch_span(bool obligatory)		// повернуть перегон в сторону этого с
 				zxs.x_mode = zxs.Type & ST_FLOAT_BLOCK;
 				}
 			else
-				faulty_span = true;
+				Interface.Exception("Initiate span in signal "+privateName+"@"+stationName+": incorrect sub_sign "+span_soup.GetNamedTag("sub_sign_"+i));
 			}
 
 		}
@@ -1119,8 +1124,8 @@ public bool Switch_span(bool obligatory)		// повернуть перегон в сторону этого с
 
 	zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
 
-	if(!zxsm or faulty_span)
-		Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
+	if(!zxsm)
+		Interface.Exception("Initiate span in signal "+privateName+"@"+stationName+": incorrect end_sign "+span_soup.GetNamedTag("end_sign"));
 
 
 	zxsm.Deswitch_span();
