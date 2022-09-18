@@ -980,6 +980,8 @@ public Soup GetProperties(void)
 	}
 
 
+
+
 void ReUpdateSignals()
 	{
 	int i;
@@ -996,11 +998,40 @@ void ReUpdateSignals()
 
 		if(sign.Type & zxSignal.ST_IN)
 			{
-			if(!sign.wrong_dir)
+			Sleep(0.0);
+
+
+			zxSignal zxs;
+			int s_n = sign.span_soup.GetNamedTagAsInt("Extra_sign",0);
+			int j;
+
+			for(j=0;j<s_n;j++)
 				{
-				sign.Switch_span(false);
-				Sleep(0.0);
+				zxs = cast<zxSignal> (Router.GetGameObject(sign.span_soup.GetNamedTag("sub_sign_"+j)));
+				if(zxs)
+					{
+					if(sign.wrong_dir)
+						{
+						zxs.MainState = zxs.MainStateALS = zxIndication.STATE_Rx;
+						zxs.wrong_dir = true;
+						zxs.SetSignal(true);
+						}
+					else if(zxs.wrong_dir or (zxs.MainState == zxIndication.STATE_Rx))
+						{
+						zxs.MainState = zxs.MainStateALS = zxIndication.STATE_R;
+						zxs.wrong_dir = false;
+						zxs.SetSignal(true);
+						}
+					}
 				}
+
+			zxSignal zxsm = cast<zxSignal> (Router.GetGameObject(sign.span_soup.GetNamedTag("end_sign")));
+
+			if(zxsm)
+				zxsm.wrong_dir = !sign.wrong_dir;
+
+			if(!sign.wrong_dir)
+				sign.CheckPrevSignals(false);
 			}
 
 		if((i % 5) == 0)

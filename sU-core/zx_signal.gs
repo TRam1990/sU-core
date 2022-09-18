@@ -3686,44 +3686,6 @@ void OldSpanHandler(Message msg)
 	}
 
 
-bool span_recheck_process = false;
-
-thread void ExtraSpanRechecker()
-	{
-	if(span_recheck_process or wrong_dir)
-		return;
-
-	span_recheck_process = true;
-
-
-	Sleep(5);
-
-	if(wrong_dir)
-		{
-		span_recheck_process = false;
-		return;
-		}
-	
-	int n = span_soup.GetNamedTagAsInt("Extra_sign",0);
-	int i;
-	zxSignal zxs;
-
-
-	for(i=0;i<n;i++)
-		{
-		zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
-		if(zxs)
-			{
-			zxs.wrong_dir = false;
-			zxs.UpdateState(0, -1);
-			}
-		}
-
-	span_recheck_process = false;
-	}
-
-
-
 
 void GetDefaultSignalLimits()
 {
@@ -4054,13 +4016,7 @@ public void SetProperties(Soup soup)
 
 
 	if(Type & ST_IN)
-		{
 		AddHandler(me,"SetSpanDirection","","OldSpanHandler");
-
-		if((TrainzScript.GetTrainzVersion() >= 4.0) and !wrong_dir and span_soup and span_soup.GetNamedTagAsBool("Inited",false))
-			ExtraSpanRechecker();
-
-		}
 
 
 
