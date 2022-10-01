@@ -110,7 +110,15 @@ public string GetDescriptionHTML(void)
 			int i;
 
 			for(i = 0; i < signal_number; i++)
-				str=str + signal_soup.GetNamedTag(i+"")+"<br>";
+				{
+				zxSignal sign = cast<zxSignal>Router.GetGameObject(signal_soup.GetNamedTagAsGameObjectID(i+""));
+				if (sign) {
+					str=str + sign.GetLocalisedName() +"<br>";
+				}
+				else {
+					str=str+"<i>none</i>";
+				}
+				}
 			}
 
 		}
@@ -137,7 +145,7 @@ void  LinkPropertyValue (string id)
 			{
 			if( MO.isclass(zxSignal) and GSTS.GetFacingRelativeToSearchDirection() == true and  (!((cast<zxSignal>MO).Type & zxSignal.ST_UNLINKED)) and (!((cast<zxSignal>MO).MainState == 19)) )
 				{
-				signal_soup.SetNamedTag(""+signal_number, MO.GetName());
+				signal_soup.SetNamedTag(""+signal_number, MO.GetGameObjectID());
 				signal_number++;
 				}
 
@@ -195,7 +203,7 @@ thread void InitSignals()
 
 		for(i = 0; i < signal_number; i++)
 			{
-			zxSignal temp = cast<zxSignal>(Router.GetGameObject( signal_soup.GetNamedTag(i+"") ));
+			zxSignal temp = cast<zxSignal>(Router.GetGameObject( signal_soup.GetNamedTagAsGameObjectID(i+"") ));
 			
 			if(temp)
 				{

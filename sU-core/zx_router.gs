@@ -580,7 +580,7 @@ class zxRouterBase isclass Trackside
 StringTable ST;
 string privateName="";
 bool IsInited=false;
-string signal_name="";
+GameObjectID signalId;
 
 bool isMacht;
 
@@ -604,8 +604,8 @@ public void ShowName(bool reset);
 
 void UpdateMU(Message msg)
 {
-	if(signal_name!="" and !RouterO.OwnerSignal)
-		RouterO.OwnerSignal= cast<zxSignal>Router.GetGameObject(signal_name);
+	if(signalId and !RouterO.OwnerSignal)
+		RouterO.OwnerSignal= cast<zxSignal>Router.GetGameObject(signalId);
 		
 
 	RouterO.UpdateMU();
@@ -618,8 +618,8 @@ void OffMU(Message msg)
 
 void PermUpdate(Message msg)
 	{
-	if(signal_name!="" and !RouterO.OwnerSignal)
-		RouterO.OwnerSignal= cast<zxSignal>Router.GetGameObject(signal_name);
+	if(signalId and !RouterO.OwnerSignal)
+		RouterO.OwnerSignal= cast<zxSignal>Router.GetGameObject(signalId);
 
 	if(!RouterO.OwnerSignal)
 		RouterO.PermUpdate();
@@ -678,10 +678,10 @@ public void SetProperties(Soup db)
 	privateName = db.GetNamedTag("privateName");
 	ShowName(false);
 
-	signal_name = db.GetNamedTag("Signal");
-	if(signal_name!="")
+	signalId = db.GetNamedTagAsGameObjectID("Signal");
+	if(signalId)
 		{
-		RouterO.OwnerSignal= cast<zxSignal>Router.GetGameObject(signal_name);
+		RouterO.OwnerSignal= cast<zxSignal>Router.GetGameObject(signalId);
 		}
 
 
@@ -719,7 +719,7 @@ public Soup GetProperties(void)
 	sp.SetNamedTag("privateName",privateName);
 	sp.SetNamedTag("Inited",true);
 
-	sp.SetNamedTag("Signal",signal_name);
+	sp.SetNamedTag("Signal",signalId);
 
 
 	sp.SetNamedTag("displacement",displacement);
@@ -1025,7 +1025,16 @@ public string GetContent(void)
 	s=s+hw.MakeLink("live://property/link_to",ST.GetString("link_to_signal"));
 	s=s+hw.EndCell();
 	s=s+hw.StartCell("bgcolor='#AAAAAA'");
-	s=s+signal_name;
+	zxSignal sign;
+	if (signalId) {
+		sign = cast<zxSignal>Router.GetGameObject(signalId);
+	}
+	if (sign) {
+		s=s+sign.GetLocalisedName();
+	}
+	else {
+		s=s+"<i>none</i>";
+	}
 	s=s+hw.EndCell();
 	s=s+hw.EndRow();
 
@@ -1213,11 +1222,11 @@ public void LinkPropertyValue(string id)
 
 		if(RouterO.OwnerSignal)
 			{
-			signal_name=RouterO.OwnerSignal.GetName();
+			signalId=RouterO.OwnerSignal.GetGameObjectID();
 			RouterO.OwnerSignal.SetLinkedMU(me);
 			}
 		else
-			signal_name="";
+			signalId=null;
 
 		RouterO.UpdateMU();
 		}

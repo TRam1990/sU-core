@@ -1,6 +1,6 @@
 ﻿
 username                                "sU core"
-trainz-build                            3.7
+trainz-build                            4.5
 kind                                    "library"
 category-era                            "1960s;1970s;1980s;1990s;2000s"
 category-region                         "BY;RU;SU;UA"

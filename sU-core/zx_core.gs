@@ -124,9 +124,10 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 				int i;
 				for(i=0;i<N;i++)
 					{
-					zxSignal TMP = cast<zxSignal>(Router.GetGameObject(curr_sign.protect_soup.GetNamedTag(i+"")));
+					GameObjectID tmpId = curr_sign.protect_soup.GetNamedTagAsGameObjectID(i+"");
+					zxSignal TMP;
 
-					if(TMP)
+					if(tmpId and (TMP = cast<zxSignal>(Router.GetGameObject(tmpId))))
 						{
 						TMP.barrier_closed = false;
 						UpdateSignState(TMP,0,-1);
@@ -147,9 +148,10 @@ void SignalControlHandler(Message msg)//приём заданий на открытость-закрытость с
 				int i;
 				for(i=0;i<N;i++)
 					{
-					zxSignal TMP = cast<zxSignal>(Router.GetGameObject(curr_sign.protect_soup.GetNamedTag(i+"")));
+					GameObjectID tmpId = curr_sign.protect_soup.GetNamedTagAsGameObjectID(i+"");
+					zxSignal TMP;
 
-					if(TMP)
+					if(tmpId and (TMP = cast<zxSignal>(Router.GetGameObject(tmpId))))
 						{
 						TMP.barrier_closed = true;
 						UpdateSignState(TMP,0,-1);
@@ -224,7 +226,7 @@ void LogTrainIdS()
 
 		int j;
 		for(j=0;j<sig_linked.TC_id.size();j++)
-			log1=log1+" "+sig_linked.TC_id[j];
+			log1=log1+" "+sig_linked.TC_id[j].GetDebugString();
 
 		Interface.Log("signal! "+sig_linked.GetName()+log1);
 		}
@@ -458,6 +460,7 @@ void TrainCatcher(zxSignal entered_sign, Train curr_train)
 	if(train_nmb<0)
 		{
 		TrainContainer train_con = new TrainContainer();
+		train_con.trainId = curr_train.GetGameObjectID();
 
 		train_nmb = train_arr.AddElement(train_id,cast<GSObject>train_con);
 		if(train_nmb<0)
@@ -485,7 +488,7 @@ void TrainCatcher(zxSignal entered_sign, Train curr_train)
 		train_con.speed_object=new int[0];
 
 
-		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetId());
+		(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetGameObjectID());
 
 		Sniff(curr_train, "Train", "StartedMoving", true);
 		Sniff(curr_train, "Train", "StoppedMoving", true);
@@ -519,7 +522,7 @@ void TrainCatcher(zxSignal entered_sign, Train curr_train)
 
 			train_con.HighSpeed=high_speed;
 
-			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetId());
+			(cast<zxSignalLink>(Signals.DBSE[number].Object)).sign.AddTrainId(curr_train.GetGameObjectID());
 
 			LowerMaxLimits(train_con, priority);
 			}
@@ -563,8 +566,8 @@ void RemoveTrain(Message msg)
 		Interface.Exception("A train contains a bad vehicle!");
 		return;
 		}
-	int train_id = curr_train.GetId();
-	int train_nmb=train_arr.Find(train_id);
+	GameObjectID train_id = curr_train.GetGameObjectID();
+	int train_nmb=train_arr.Find(curr_train.GetId());
 
 	if(train_nmb>=0)	// поезд, стоящий на светофоре, ещё не удалён
 		{
@@ -616,8 +619,8 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int si
 
 			if(!tr1)
 				{
-				int train_id1 = entered_sign.TC_id[i];
-				int train_nmb1=train_arr.Find( train_id1);
+				GameObjectID train_id1 = entered_sign.TC_id[i];
+				int train_nmb1=train_arr.Find( Router.GetGameObject(train_id1).GetId());
 
 				UpdateSignState(entered_sign,5,-1);
 
@@ -652,6 +655,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int si
 
 	int train_id = train_arr.DBSE[train_nmb].a;
 	TrainContainer train_con = cast<TrainContainer>(train_arr.DBSE[train_nmb].Object);
+	GameObjectID trainGameObjectId = train_con.trainId;
 
 	if(sign_numb < 0)
 		{
@@ -690,7 +694,7 @@ void TrainCleaner(zxSignal entered_sign, Train curr_train, int train_nmb, int si
 			train_con.state[sign_numb,sign_numb+1]=null;
 
 
-			entered_sign.RemoveTrainId(train_id);
+			entered_sign.RemoveTrainId(trainGameObjectId);
 
 
 		//	Interface.Print("train "+train_arr.DBSE[train_nmb].a+" left from "+entered_sign.GetName());
@@ -812,6 +816,7 @@ void TrainSpeedTriggerCatcher(Message msg)
 		{
 
 		TrainContainer train_con = new TrainContainer();
+		train_con.trainId = curr_train.GetGameObjectID();
 
 		train_nmb= train_arr.AddElement(train_id,cast<GSObject>train_con);
 		if(train_nmb<0)
@@ -1007,8 +1012,8 @@ void ReUpdateSignals()
 
 			for(j=0;j<s_n;j++)
 				{
-				zxs = cast<zxSignal> (Router.GetGameObject(sign.span_soup.GetNamedTag("sub_sign_"+j)));
-				if(zxs)
+				GameObjectID zxsId = sign.span_soup.GetNamedTagAsGameObjectID("sub_sign_"+j);
+				if(zxsId and (zxs = cast<zxSignal> (Router.GetGameObject(zxsId))))
 					{
 					if(sign.wrong_dir)
 						{
@@ -1025,9 +1030,10 @@ void ReUpdateSignals()
 					}
 				}
 
-			zxSignal zxsm = cast<zxSignal> (Router.GetGameObject(sign.span_soup.GetNamedTag("end_sign")));
+			GameObjectID zxsmId = sign.span_soup.GetNamedTagAsGameObjectID("end_sign");
+			zxSignal zxsm;
 
-			if(zxsm)
+			if(zxsmId and (zxsm = cast<zxSignal> (Router.GetGameObject(zxsmId))))
 				zxsm.wrong_dir = !sign.wrong_dir;
 
 			if(!sign.wrong_dir)
@@ -1353,7 +1359,7 @@ thread void CheckTrainList(int series)			// проверка поездов, подъезжающих к све
 
 					if( new_state != state)
 						{
-						priority = (cast<Train> (Router.GetGameObject(train_arr.DBSE[i].a) ) ).GetTrainPriorityNumber();
+						priority = (cast<Train> (Router.GetGameObject(TC.trainId) ) ).GetTrainPriorityNumber();
 
 						if(priority > 1)
 							priority = 2;
@@ -1398,7 +1404,7 @@ thread void CheckTrainList(int series)			// проверка поездов, подъезжающих к све
 						}
 
 					if(new_state == 0 and state == 0)
-						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject(train_arr.DBSE[i].a) ) ), i, j, false );
+						TrainCleaner(sig1, (cast<Train> (Router.GetGameObject(TC.trainId) ) ), i, j, false );
 					else
 						{
 						TC.state[j]=new_state;
@@ -1480,7 +1486,8 @@ void SetClient()
 
 	for(i = train_arr.N - 1; i >= 0; i--)
 		{
-		Train curr_train = cast<Train>(Router.GetGameObject(train_arr.DBSE[i].a));
+		TrainContainer train_con = cast<TrainContainer>(train_arr.DBSE[i].Object);
+		Train curr_train = cast<Train>(Router.GetGameObject(train_con.trainId));
 
 		if(curr_train)
 			{
@@ -1489,7 +1496,6 @@ void SetClient()
 			Sniff(curr_train, "Train", "Cleanup", false);
 			}
 		
-		TrainContainer train_con = cast<TrainContainer>(train_arr.DBSE[i].Object);
 
 		train_con.signal[0, ] = null;
 		train_con.state[0, ] = null;
@@ -1562,7 +1568,7 @@ void SetChangeSoup(Soup sp)
 
 		signal_link.sign.SetSpeedLimit( sp.GetNamedTagAsFloat("limit"+i, -1) );
 
-		signal_link.sign.SetSignalState( sp.GetNamedTagAsInt("default_state"+i,2) , "");
+		signal_link.sign.SetSignalState(null, sp.GetNamedTagAsInt("default_state"+i,2) , "");
 
 		signal_link.sign.train_open = sp.GetNamedTagAsBool("train_open"+i,false);
 		signal_link.sign.shunt_open = sp.GetNamedTagAsBool("shunt_open"+i,false);
@@ -1638,7 +1644,7 @@ void SendNewSignalSpeed(string sig_name, float speed)
 	}
 
 
-void SendNewRepeaterSpeed(string rep_name, float speed)
+void SendNewRepeaterSpeed(GameObjectID rep_id, float speed)
 	{
 	if(!MP_started)
 		return;
@@ -1646,20 +1652,20 @@ void SendNewRepeaterSpeed(string rep_name, float speed)
 
 	Soup Temp_soup = Constructors.NewSoup();
 
-	Temp_soup.SetNamedTag("id",rep_name);
+	Temp_soup.SetNamedTag("id",rep_id);
 	Temp_soup.SetNamedTag("limit",speed);
 
 	SendMessagesToClients(Temp_soup, "sU_SetRepSpeed");
 	}
 
-void SendLimitSpeed(string rep_name, float speed, bool train_pass)
+void SendLimitSpeed(GameObjectID rep_id, float speed, bool train_pass)
 	{
 	if(!MP_started)
 		return;
 
 	Soup Temp_soup = Constructors.NewSoup();
 
-	Temp_soup.SetNamedTag("id",rep_name);
+	Temp_soup.SetNamedTag("id",rep_id);
 	Temp_soup.SetNamedTag("limit",speed);
 	Temp_soup.SetNamedTag("train_pass",train_pass);
 
@@ -1690,7 +1696,7 @@ void MultiplayerClientHandler1(Message msg)
 
 		signal_link.sign.SetSpeedLimit( sp.GetNamedTagAsFloat("limit", -1) );
 
-		signal_link.sign.SetSignalState( sp.GetNamedTagAsInt("default_state",2) , "");
+		signal_link.sign.SetSignalState(null, sp.GetNamedTagAsInt("default_state",2) , "");
 
 		signal_link.sign.train_open = sp.GetNamedTagAsFloat("train_open",false);
 		signal_link.sign.shunt_open = sp.GetNamedTagAsFloat("shunt_open",false);
@@ -1724,14 +1730,14 @@ void MultiplayerClientHandler1(Message msg)
 		}
 	else if(type == "sU_SetRepSpeed")
 		{
-		zxSpeedBoard sp_board = cast<zxSpeedBoard>( Router.GetGameObject( sp.GetNamedTag("id") ) );
+		zxSpeedBoard sp_board = cast<zxSpeedBoard>( Router.GetGameObject( sp.GetNamedTagAsGameObjectID("id") ) );
 		sp_board.SetSpeedLimit(sp.GetNamedTagAsFloat("limit",-1));  //SetNewSpeed  , false
 		}
 
 
 	else if(type == "sU_SetLimitSpeed")
 		{
-		zxSpeedLimit sp_limit = cast<zxSpeedLimit>( Router.GetGameObject( sp.GetNamedTag("id") ) );
+		zxSpeedLimit sp_limit = cast<zxSpeedLimit>( Router.GetGameObject( sp.GetNamedTagAsGameObjectID("id") ) );
 		sp_limit.SetSpeedLimit(sp.GetNamedTagAsFloat("limit",-1));	//SetLimitFor  , sp.GetNamedTagAsBool("train_pass"), false
 		}
 
@@ -2355,7 +2361,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 						temp_speed_board.SetSpeedLimit(curr_limit);
 	
 						if(MP_started)
-							SendNewRepeaterSpeed(MO.GetName(), curr_limit);
+							SendNewRepeaterSpeed(MO.GetGameObjectID(), curr_limit);
 						}
 					}
 	
@@ -2394,7 +2400,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 					temp_speed_limit.SetSpeedLimit(curr_limit);
 
 					if(MP_started)
-						SendLimitSpeed(MO.GetName(), curr_limit, prior == 1);
+						SendLimitSpeed(MO.GetGameObjectID(), curr_limit, prior == 1);
 
 					}
 				}
@@ -2484,7 +2490,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 					temp_speed_limit.SetSpeedLimit(curr_limit);
 
 					if(MP_started)
-						SendLimitSpeed(MO.GetName(), curr_limit, prior == 1);
+						SendLimitSpeed(MO.GetGameObjectID(), curr_limit, prior == 1);
 
 					}
 
@@ -2707,11 +2713,11 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 			for(i=0;i<prot_size;i++)
 				{
-				string sign_name = sig1.protect_soup.GetNamedTag(i+"");
+				GameObjectID signId = sig1.protect_soup.GetNamedTagAsGameObjectID(i+"");
 
-				if(sign_name != sig1.GetName())
+				if(signId and !signId.DoesMatch(sig1.GetGameObjectID()))
 					{
-					zxSignal TMP = cast<zxSignal>(Router.GetGameObject(sign_name));
+					zxSignal TMP = cast<zxSignal>(Router.GetGameObject(signId));
 					if(TMP)
 						{
 						TMP.protect_soup.Clear();
@@ -2781,11 +2787,11 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 			for(i=0;i<N;i++)
 				{
-				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTagAsGameObjectID(i+"")));
 				if(!temp)
 					delta++;
 				else if(delta != 0)
-					tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTag(i+""));
+					tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTagAsGameObjectID(i+""));
 				}
 
 			N = N - delta;
@@ -2798,7 +2804,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 			for(i=0;i<N;i++)
 				{
-				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTagAsGameObjectID(i+"")));
 				
 				if(temp.protect_soup)
 					temp.protect_soup.Clear();
@@ -2823,7 +2829,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			sig1.protect_soup.Clear();
 
 			
-			sig1.protect_soup.SetNamedTag( "0" , sig1.GetName() );
+			sig1.protect_soup.SetNamedTag( "0" , sig1.GetGameObjectID() );
 			sig1.protect_soup.SetNamedTag( "number" , 1 );
 			}
 
@@ -2846,12 +2852,12 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		for(i=0;i<N;i++)
 			{
-			zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+			zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTagAsGameObjectID(i+"")));
 
-			if(!temp or (tempsoup.GetNamedTag(i+"") == sig1.GetName()))
+			if(!temp or (tempsoup.GetNamedTagAsGameObjectID(i+"").DoesMatch(sig1.GetGameObjectID())))
 				delta++;
 			else if(delta != 0)
-				tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTag(i+""));
+				tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTagAsGameObjectID(i+""));
 			}
 
 		N = N - delta;
@@ -2864,7 +2870,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			{
 			for(i=0;i<N;i++)
 				{
-				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTagAsGameObjectID(i+"")));
 
 				temp.protect_soup.Clear();
 				temp.protect_soup.Copy(tempsoup);
@@ -2896,12 +2902,12 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 
 		for(i=0;i<N;i++)
 			{
-			zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+			zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTagAsGameObjectID(i+"")));
 
 			if(!temp)
 				delta++;
 			else
-				tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTag(i+""));
+				tempsoup.SetNamedTag( (i-delta)+"" , tempsoup.GetNamedTagAsGameObjectID(i+""));
 			}
 
 		N = N - delta;
@@ -2914,7 +2920,7 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 			{
 			for(i=0;i<N;i++)
 				{
-				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTag(i+"")));
+				zxSignal temp = cast<zxSignal>(Router.GetGameObject(tempsoup.GetNamedTagAsGameObjectID(i+"")));
 
 				temp.protect_soup.Clear();
 				temp.protect_soup.Copy(tempsoup);

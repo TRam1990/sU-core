@@ -6,7 +6,7 @@ class zxSpeedBoard_main isclass zxSpeedBoard
 {
 StringTable ST;
 
-string Sig_name;
+GameObjectID Sig_id;
 
 Library  mainLib;
 GSObject[] GSO;
@@ -17,7 +17,7 @@ public void UpdateSpeedboard(bool set_limit)
 	max_speed_pass = prev_speed_pass;
 	max_speed_cargo = prev_speed_cargo;
 
-	if(max_speed_pass < next_speed_pass)		// наибольшее из ограничений
+	if(max_speed_pass < next_speed_pass)		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 		max_speed_pass = next_speed_pass;
 
 	if(max_speed_cargo < next_speed_cargo)
@@ -45,7 +45,14 @@ public string GetDescriptionHTML(void)
         
 	str=str+HTMLWindow.MakeLink("live://property/reset",ST.GetString("reset"))+"<br><br>";
 
-	str=str+ ST.GetString("linked_sing")+Sig_name;
+	str=str+ ST.GetString("linked_sing");
+	zxSignal sign = cast<zxSignal>Router.GetGameObject(Sig_id);
+	if (sign) {
+		str=str+sign.GetLocalisedName();
+	}
+	else {
+		str=str+"<i>none</i>";
+	}
 
 	str=str+"<br></body></html>";
         return str;
@@ -60,9 +67,9 @@ void  LinkPropertyValue (string id)
 {
 	if(id=="reset")
 		{
-		if(Sig_name!="")
+		if(Sig_id)
 			{
-			zxSignal zxS = cast<zxSignal>Router.GetGameObject(Sig_name);
+			zxSignal zxS = cast<zxSignal>Router.GetGameObject(Sig_id);
 			if(zxS)
 				zxS.SetzxSpeedBoard(null);
 			}
@@ -78,7 +85,7 @@ void  LinkPropertyValue (string id)
 		if(MO)
 			{
 			(cast<zxSignal>MO).SetzxSpeedBoard(me);
-			Sig_name = MO.GetName();
+			Sig_id = MO.GetGameObjectID();
 			}
 
 		}
@@ -99,7 +106,7 @@ public void  SetProperties (Soup soup)
 	next_speed_cargo=soup.GetNamedTagAsFloat("next_speed_cargo",22.22);
 
 
-	Sig_name=soup.GetNamedTag("Sig_name");
+	Sig_id=soup.GetNamedTagAsGameObjectID("Sig_name");
 
 
 	SetSpeedLimit( next_speed_cargo );
@@ -117,7 +124,7 @@ public Soup  GetProperties (void)
 	ret.SetNamedTag("next_speed_pass",next_speed_pass);
 	ret.SetNamedTag("next_speed_cargo",next_speed_cargo);
 
-	ret.SetNamedTag("Sig_name",Sig_name);
+	ret.SetNamedTag("Sig_name",Sig_id);
 	return ret;	
 }
 

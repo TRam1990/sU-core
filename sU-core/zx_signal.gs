@@ -39,8 +39,8 @@ float def_displ;
 float vert_displ;
 float along_displ;
 
-string zxSP_name;
-string MU_name;
+GameObjectID zxSP_id;
+GameObjectID MU_id;
 
 
 bool isMacht = false;
@@ -177,10 +177,10 @@ bool SetOwnSignalState(bool set_auto_state)
 			SetBUArrow( !(MainState == 0 or MainState == zxIndication.STATE_R or MainState == zxIndication.STATE_Rx or MainState == zxIndication.STATE_B) );
 
 
-		if(MU_name != "")
+		if(MU_id)
 			{
 			if(!linkedMU)
-				linkedMU= cast<Trackside>Router.GetGameObject(MU_name);
+				linkedMU= cast<Trackside>Router.GetGameObject(MU_id);
 
 			if(linkedMU)
 				{
@@ -222,11 +222,11 @@ bool SetOwnSignalState(bool set_auto_state)
 		if(set_auto_state)
 			{
 			if(MainState == zxIndication.STATE_R or MainState == 0)
-				SetSignalState(RED, "");
+				SetSignalState(null, RED, "");
 			else if((MainState > zxIndication.STATE_R and MainState < zxIndication.STATE_GY) or MainState == zxIndication.STATE_YYY or MainState == zxIndication.STATE_YW or MainState == zxIndication.STATE_YbW or MainState == zxIndication.STATE_YYW or MainState == zxIndication.STATE_YbYW)
-				SetSignalState(YELLOW, "");
+				SetSignalState(null, YELLOW, "");
 			else
-				SetSignalState(GREEN, "");
+				SetSignalState(null, GREEN, "");
 			}
 
 		// задание номинальных скоростей светофора
@@ -414,12 +414,12 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				else {
 					MainStateALS = 0;
 				}
-				SetSignalState(RED, "");
+				SetSignalState(null, RED, "");
 				}
 			else
 				{
 				MainState = zxIndication.STATE_Y;
-				SetSignalState(GREEN, "");
+				SetSignalState(null, GREEN, "");
 				}
 
 
@@ -437,7 +437,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 			}
 		else
 			{
-			SetSignalState(GREEN, "");
+			SetSignalState(null, GREEN, "");
 
 			if(!(Type & ST_UNLINKED) or x_mode)
 				LC.applaySignalState(me, null, 0, false);
@@ -476,7 +476,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				shunt_open = false;
 				MainState = zxIndication.STATE_R;
 				MainStateALS = 0;
-				SetSignalState(RED, "");
+				SetSignalState(null, RED, "");
 				SetSignal(false);
 				CheckPrevSignals(false);
 
@@ -488,7 +488,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 				if(!train_open and !shunt_open)
 					{
 					MainState = MainStateALS = zxIndication.STATE_R;
-					SetSignalState(RED, "");
+					SetSignalState(null, RED, "");
 					CheckPrevSignals(false);
 					SetSignal(false);
 
@@ -501,7 +501,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 						{
 						if(mainLib.LibraryCall("find_any_next_signal",null,GSO)=="true")
 							{
-							SetSignalState(GREEN, "");	
+							SetSignalState(null, GREEN, "");	
 							MainState = MainStateALS = zxIndication.STATE_W;
 							}
 						else
@@ -509,7 +509,7 @@ public void UpdateState(int reason, int priority)  	// обновление состояния свет
 						}
 					else
 						{
-						SetSignalState(GREEN, "");
+						SetSignalState(null, GREEN, "");
 
 						string[] track_params = new string[2];
 						mainLib.LibraryCall("find_next_signal",track_params,GSO);
@@ -730,7 +730,7 @@ public void UnlinkedUpdate(zxSignal nextSign)
 			else {
 				MainState = MainStateALS = 0;
 			}
-			SetSignalState(GREEN, "");
+			SetSignalState(null, GREEN, "");
 			SetSignal(false);
 
 			if(IsServer)
@@ -761,12 +761,12 @@ public void SetzxSpeedBoard(MapObject newSP)
 	if(!newSP)
 		{
 		zxSP=null;
-		zxSP_name="";
+		zxSP_id=null;
 		return;
 		}
 
 	zxSP=cast<zxSpeedBoard>newSP;
-	zxSP_name=zxSP.GetName();
+	zxSP_id=zxSP.GetGameObjectID();
 	}
 
 
@@ -775,12 +775,12 @@ public void SetLinkedMU(Trackside MU2)
 	if(!MU2)
 		{
 		linkedMU=null;
-		MU_name="";
+		MU_id=null;
 		return;
 		}
 
 	linkedMU=MU2;
-	MU_name=linkedMU.GetName();
+	MU_id=linkedMU.GetGameObjectID();
 	}
 
 
@@ -1007,9 +1007,10 @@ public void Deswitch_span()
 
 	for(i=0;i<n;i++)
 		{
-		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
+		GameObjectID zxsId = span_soup.GetNamedTagAsGameObjectID("sub_sign_"+i);
+		zxSignal zxs;
 		
-		if(zxs)
+		if(zxsId and (zxs = cast<zxSignal>(Router.GetGameObject(zxsId))))
 			{
 			zxs.MainState = zxs.MainStateALS = zxIndication.STATE_Rx;
 			zxs.wrong_dir = true;
@@ -1023,7 +1024,7 @@ public void Deswitch_span()
 				}
 			}
 		else
-			Interface.Exception("Initiate span in signal "+privateName+"@"+stationName+": incorrect sub_sign "+span_soup.GetNamedTag("sub_sign_"+i));
+			Interface.Exception("Initiate span in signal "+privateName+"@"+stationName+": incorrect sub_sign "+span_soup.GetNamedTagAsGameObjectID("sub_sign_"+i).GetDebugString());
 		}
 
 	GSO2[0,] = null; 
@@ -1032,7 +1033,8 @@ public void Deswitch_span()
 
 	if(n>0)
 		{
-		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+(n-1))));
+		GameObjectID zxsId = span_soup.GetNamedTagAsGameObjectID("sub_sign_"+(n-1));
+		zxSignal zxs = cast<zxSignal> (Router.GetGameObject(zxsId));
 		zxs.CheckPrevSignals(false);
 		}
 	else
@@ -1093,8 +1095,8 @@ public bool Switch_span(bool obligatory)		// повернуть перегон в сторону этого с
 		{
 		for(i=0;i<n;i++)
 			{
-			zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
-			if(zxs)
+			GameObjectID zxsId = span_soup.GetNamedTagAsGameObjectID("sub_sign_"+i);
+			if(zxsId and (zxs = cast<zxSignal> (Router.GetGameObject(zxsId))))
 				{
 				zxs.MainState = zxIndication.STATE_R;
 				zxs.wrong_dir = false;
@@ -1108,24 +1110,29 @@ public bool Switch_span(bool obligatory)		// повернуть перегон в сторону этого с
 		{
 		for(i=0;i<n;i++)
 			{
-			zxs = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("sub_sign_"+i)));
-			if(zxs)
+			GameObjectID zxsId = span_soup.GetNamedTagAsGameObjectID("sub_sign_"+i);
+			zxs;
+			if(zxsId and (zxs = cast<zxSignal> (Router.GetGameObject(zxsId))))
 				{
 				zxs.MainState = zxIndication.STATE_R;
 				zxs.wrong_dir = false;
 				zxs.x_mode = zxs.Type & ST_FLOAT_BLOCK;
 				}
 			else
-				Interface.Exception("Initiate span in signal "+privateName+"@"+stationName+": incorrect sub_sign "+span_soup.GetNamedTag("sub_sign_"+i));
+				Interface.Exception("Initiate span in signal "+privateName+"@"+stationName+": incorrect sub_sign "+span_soup.GetNamedTagAsGameObjectID("sub_sign_"+i).GetDebugString());
 			}
 
 		}
 
 
-	zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
+	GameObjectID zxsmId = span_soup.GetNamedTagAsGameObjectID("end_sign");
+	zxSignal_main zxsm;
+	if (zxsmId) {
+		zxsm = cast<zxSignal_main> (Router.GetGameObject(zxsmId));
+	}
 
 	if(!zxsm)
-		Interface.Exception("Initiate span in signal "+privateName+"@"+stationName+": incorrect end_sign "+span_soup.GetNamedTag("end_sign"));
+		Interface.Exception("Initiate span in signal "+privateName+"@"+stationName+": incorrect end_sign "+span_soup.GetNamedTagAsGameObjectID("end_sign").GetDebugString());
 
 
 	zxsm.Deswitch_span();
@@ -1190,7 +1197,7 @@ public void GenerateSpan(bool recurs)
 			{
 			if(GSTS.GetFacingRelativeToSearchDirection() == false)
 				{
-				span_soup.SetNamedTag("sub_sign_"+Extra_sign,MO.GetName());
+				span_soup.SetNamedTag("sub_sign_"+Extra_sign,MO.GetGameObjectID());
 				(cast<zxSignal_main>MO).stationName = stationName;
 				if((cast<zxSignal_main>MO).predvhod)
 					{
@@ -1225,7 +1232,7 @@ public void GenerateSpan(bool recurs)
 
 	span_soup.SetNamedTag("Extra_sign",Extra_sign);
 
-	span_soup.SetNamedTag("end_sign",MO.GetName());
+	span_soup.SetNamedTag("end_sign",MO.GetGameObjectID());
 	span_soup.SetNamedTag("end_sign_n",zx_oth.privateName);
 	span_soup.SetNamedTag("end_sign_s",zx_oth.stationName);
 
@@ -1755,12 +1762,12 @@ public string GetProtectTable()
 
 	for(i=0;i<N;i++)
 		{
-		zxSignal TMP = cast<zxSignal>(Router.GetGameObject(protect_soup.GetNamedTag(i+"")));
+		zxSignal TMP = cast<zxSignal>(Router.GetGameObject(protect_soup.GetNamedTagAsGameObjectID(i+"")));
 
 		if(TMP)
 	       		s=s+hw.MakeRow(
 					hw.MakeCell(TMP.privateName,"colspan=2")+
-					hw.MakeCell(hw.MakeLink("live://property/remove_protect_sign/"+protect_soup.GetNamedTag(i+""),"X"),"align='center' width='5%'")       		
+					hw.MakeCell(hw.MakeLink("live://property/remove_protect_sign/"+i,"X"),"align='center' width='5%'")       		
 		       			,"bgcolor=#888888"
 	       			);
 
@@ -2763,7 +2770,11 @@ public void LinkPropertyValue(string id)
 		}
 	else if(id=="spanTrackFromOther")
 		{
-		zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
+		GameObjectID zxsmId = span_soup.GetNamedTagAsGameObjectID("end_sign");
+		zxSignal_main zxsm;
+		if (zxsmId) {
+			zxsm = cast<zxSignal_main> (Router.GetGameObject(zxsmId));
+		}
 
 		if(!zxsm)
 			Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
@@ -3115,7 +3126,7 @@ public void LinkPropertyValue(string id)
 			}
 		else if(str_a[0]=="remove_protect_sign")
 			{
-			zxSignal TMP = cast<zxSignal>(Router.GetGameObject(str_a[1]));
+			zxSignal TMP = cast<zxSignal>(Router.GetGameObject(protect_soup.GetNamedTagAsGameObjectID(str_a[1])));
 
 			if(TMP)
 				{
@@ -3455,7 +3466,7 @@ public void ChangeText(Message msg)
 
 		if(tok2[0]=="spanTrackFromOther")
 			{
-			zxSignal zxs2 = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
+			zxSignal zxs2 = cast<zxSignal> (Router.GetGameObject(span_soup.GetNamedTagAsGameObjectID("end_sign")));
 			zxs2.Switch_span(false);
 			}
 		if(tok2[0]=="log_databases")
@@ -3672,7 +3683,7 @@ void OldSpanHandler(Message msg)
 
 	if((privateName == str_a[0]) and (stationName == str_a[1]))
 		{
-		zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTag("end_sign")));
+		zxSignal_main zxsm = cast<zxSignal_main> (Router.GetGameObject(span_soup.GetNamedTagAsGameObjectID("end_sign")));
 
 		if(!zxsm)
 			Interface.Exception("Initiate span in signal "+privateName+"@"+stationName);
@@ -3778,7 +3789,7 @@ void GetDefaultSignalLimits()
 
 public void SetProperties(Soup soup)
 	{
-	//inherited(soup);
+	inherited(soup);
 	if(!ever_inited)
 		{
 		default_init = false;
@@ -4020,17 +4031,17 @@ public void SetProperties(Soup soup)
 
 
 
-	zxSP_name = soup.GetNamedTag("zxSPName");
-	if(zxSP_name != "")
+	zxSP_id = soup.GetNamedTagAsGameObjectID("zxSPName");
+	if(zxSP_id)
 		{
-		zxSP= cast<zxSpeedBoard>Router.GetGameObject(zxSP_name);
+		zxSP= cast<zxSpeedBoard>Router.GetGameObject(zxSP_id);
 		}
 
 
-	MU_name = soup.GetNamedTag("MU_name");
-	if(MU_name != "")
+	MU_id = soup.GetNamedTagAsGameObjectID("MU_name");
+	if(MU_id)
 		{
-		linkedMU= cast<Trackside>Router.GetGameObject(MU_name);
+		linkedMU= cast<Trackside>Router.GetGameObject(MU_id);
 		}
 
 
@@ -4069,10 +4080,10 @@ public void SetProperties(Soup soup)
 		if((Type &  (ST_IN | ST_OUT)) and !train_open)
 			{
 			MainState = MainStateALS = zxIndication.STATE_R;
-			SetSignalState(RED, "");
+			SetSignalState(null, RED, "");
 			}
 		else
-			SetSignalState(GREEN, "");
+			SetSignalState(null, GREEN, "");
 
 		if(MainState == zxIndication.STATE_RWb)
 			(cast<bb_RWb>LC.sgn_st[zxIndication.STATE_RWb].l).white_lens = kbm_mode;
@@ -4101,7 +4112,7 @@ public Soup GetProperties(void)
 		}
 
 
-	Soup retSoup = Constructors.NewSoup();
+	Soup retSoup = inherited();
 	retSoup.SetNamedTag("train_open",train_open);
 	retSoup.SetNamedTag("shunt_open",shunt_open);
 	retSoup.SetNamedTag("barrier_closed",barrier_closed);
@@ -4223,19 +4234,19 @@ public Soup GetProperties(void)
 
 
 
-	if(zxSP_name != "")
+	if(zxSP_id)
 		{
-		zxSP= cast<zxSpeedBoard>Router.GetGameObject(zxSP_name);
+		zxSP= cast<zxSpeedBoard>Router.GetGameObject(zxSP_id);
 		if(zxSP)
-			retSoup.SetNamedTag("zxSPName", zxSP_name);
+			retSoup.SetNamedTag("zxSPName", zxSP_id);
 		}
 
 
-	if(MU_name != "")
+	if(MU_id)
 		{
-		linkedMU= cast<Trackside>Router.GetGameObject(MU_name);
+		linkedMU= cast<Trackside>Router.GetGameObject(MU_id);
 		if(linkedMU)
-			retSoup.SetNamedTag("MU_name", MU_name);
+			retSoup.SetNamedTag("MU_name", MU_id);
 		}
 
 	return retSoup;

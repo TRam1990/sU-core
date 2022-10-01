@@ -8,6 +8,7 @@ include "zx_indication.gs"
 
 class TrainContainer isclass GSObject
 {
+	public GameObjectID trainId;
 	public bool IsStopped;		// стоящий
 
 	public int[] signal;		// внутренний идентификатор светофора
@@ -127,7 +128,7 @@ class zxSignal isclass Signal, ALSN_Provider
 	public zxSignal Cur_next;
 	public zxSignal Cur_prev;
 
-	public int[] TC_id = new int[0];
+	public GameObjectID[] TC_id = new GameObjectID[0];
 
 	public Browser mn = null;
 
@@ -160,31 +161,31 @@ class zxSignal isclass Signal, ALSN_Provider
 	public zxExtraSignalData extra_data;
 
 
-	public void AddTrainId(int id)			// добавление и удаление наехавших поездов
+	public void AddTrainId(GameObjectID id)			// добавление и удаление наехавших поездов
 		{
 		int i;
 		bool exist=false;
 		int old_id_size = TC_id.size();
 		for(i=0;i<old_id_size;i++)
 			{
-			if(TC_id[i]==id)
+			if(TC_id[i].DoesMatch(id))
 				exist=true;
 			}
 		if(exist)
 			return;
 
-		TC_id[old_id_size,old_id_size]=new int[1];
+		TC_id[old_id_size,old_id_size]=new GameObjectID[1];
 		TC_id[old_id_size]=id;
 		}
 
 
-	public void RemoveTrainId(int id)
+	public void RemoveTrainId(GameObjectID id)
 		{
 		int i=0;
 		int n=-1;
 		while(i<TC_id.size() and n<0)
 			{
-			if(TC_id[i]==id)
+			if(TC_id[i].DoesMatch(id))
 				n=i;
 			i++;
 			}
