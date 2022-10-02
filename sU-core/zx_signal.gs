@@ -39,7 +39,9 @@ float def_displ;
 float vert_displ;
 float along_displ;
 
+string zxSP_name;
 GameObjectID zxSP_id;
+string MU_name;
 GameObjectID MU_id;
 
 
@@ -761,11 +763,13 @@ public void SetzxSpeedBoard(MapObject newSP)
 	if(!newSP)
 		{
 		zxSP=null;
+		zxSP_name="";
 		zxSP_id=null;
 		return;
 		}
 
 	zxSP=cast<zxSpeedBoard>newSP;
+	zxSP_name=zxSP.GetLocalisedName();
 	zxSP_id=zxSP.GetGameObjectID();
 	}
 
@@ -775,11 +779,13 @@ public void SetLinkedMU(Trackside MU2)
 	if(!MU2)
 		{
 		linkedMU=null;
+		MU_name="";
 		MU_id=null;
 		return;
 		}
 
 	linkedMU=MU2;
+	MU_name=linkedMU.GetLocalisedName();
 	MU_id=linkedMU.GetGameObjectID();
 	}
 
@@ -4032,16 +4038,24 @@ public void SetProperties(Soup soup)
 
 
 	zxSP_id = soup.GetNamedTagAsGameObjectID("zxSPName");
-	if(zxSP_id)
+	if(zxSP_id and (zxSP = cast<zxSpeedBoard>Router.GetGameObject(zxSP_id)))
 		{
-		zxSP= cast<zxSpeedBoard>Router.GetGameObject(zxSP_id);
+		zxSP_name = zxSP.GetLocalisedName();
+		}
+	else
+		{
+		zxSP_name = "";
 		}
 
 
 	MU_id = soup.GetNamedTagAsGameObjectID("MU_name");
-	if(MU_id)
+	if(MU_id and (linkedMU = cast<Trackside>Router.GetGameObject(MU_id)))
 		{
-		linkedMU= cast<Trackside>Router.GetGameObject(MU_id);
+		MU_name = linkedMU.GetLocalisedName();
+		}
+	else
+		{
+		MU_name = "";
 		}
 
 

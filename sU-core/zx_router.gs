@@ -580,6 +580,7 @@ class zxRouterBase isclass Trackside
 StringTable ST;
 string privateName="";
 bool IsInited=false;
+string signal_name = "";
 GameObjectID signalId;
 
 bool isMacht;
@@ -679,9 +680,13 @@ public void SetProperties(Soup db)
 	ShowName(false);
 
 	signalId = db.GetNamedTagAsGameObjectID("Signal");
-	if(signalId)
+	if(signalId and (RouterO.OwnerSignal = cast<zxSignal>Router.GetGameObject(signalId)))
 		{
-		RouterO.OwnerSignal= cast<zxSignal>Router.GetGameObject(signalId);
+		signal_name = RouterO.OwnerSignal.GetLocalisedName();
+		}
+	else
+		{
+		signal_name = "";
 		}
 
 
@@ -1223,10 +1228,14 @@ public void LinkPropertyValue(string id)
 		if(RouterO.OwnerSignal)
 			{
 			signalId=RouterO.OwnerSignal.GetGameObjectID();
+			signal_name = RouterO.OwnerSignal.GetLocalisedName();
 			RouterO.OwnerSignal.SetLinkedMU(me);
 			}
 		else
+			{
 			signalId=null;
+			signal_name = "";
+			}
 
 		RouterO.UpdateMU();
 		}
