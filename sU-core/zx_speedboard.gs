@@ -17,7 +17,7 @@ public void UpdateSpeedboard(bool set_limit)
 	max_speed_pass = prev_speed_pass;
 	max_speed_cargo = prev_speed_cargo;
 
-	if(max_speed_pass < next_speed_pass)		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	if(max_speed_pass < next_speed_pass)		// наибольшее из ограничений
 		max_speed_pass = next_speed_pass;
 
 	if(max_speed_cargo < next_speed_cargo)
@@ -46,13 +46,16 @@ public string GetDescriptionHTML(void)
 	str=str+HTMLWindow.MakeLink("live://property/reset",ST.GetString("reset"))+"<br><br>";
 
 	str=str+ ST.GetString("linked_sing");
-	zxSignal sign = cast<zxSignal>Router.GetGameObject(Sig_id);
-	if (sign) {
-		str=str+sign.GetLocalisedName();
-	}
-	else {
-		str=str+"<i>none</i>";
-	}
+
+	string str2="<i>none</i>";
+	if(Sig_id)
+		{
+		zxSignal sign = cast<zxSignal>Router.GetGameObject(Sig_id);
+		if (sign)
+			str2=sign.GetLocalisedName();
+		}
+
+	str=str+str2;
 
 	str=str+"<br></body></html>";
         return str;
