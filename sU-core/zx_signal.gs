@@ -1226,7 +1226,7 @@ public void GenerateSpan(bool recurs)
 			}
 		MO = GSTS.SearchNext();
 		}
-	if(!MO or GSTS.GetFacingRelativeToSearchDirection())
+	if(!MO or !GSTS.GetFacingRelativeToSearchDirection())
 		return;
 
 	if(TempMO)
