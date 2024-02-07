@@ -1226,7 +1226,7 @@ public void GenerateSpan(bool recurs)
 			}
 		MO = GSTS.SearchNext();
 		}
-	if(!MO)
+	if(!MO or GSTS.GetFacingRelativeToSearchDirection())
 		return;
 
 	if(TempMO)
@@ -2992,8 +2992,11 @@ public void LinkPropertyValue(string id)
 
 			if(str_a[1]=="IN")
 				{
-				if(Type & ST_IN)
+				if(Type & ST_IN) {
 					Type = Type - ST_IN;
+					span_soup = null;
+					wrong_dir = false;
+				}
 				else
 					Type = Type + ST_IN;
 				}
