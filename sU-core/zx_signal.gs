@@ -2972,7 +2972,7 @@ public void LinkPropertyValue(string id)
 		}
 	}
 	else if (id == "distanceG_u") {
-		++distanceY;
+		++distanceG;
 	}
 	else
 		{
