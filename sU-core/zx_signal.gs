@@ -1021,6 +1021,7 @@ public void Deswitch_span()
 			zxs.MainState = zxs.MainStateALS = zxIndication.STATE_Rx;
 			zxs.wrong_dir = true;
 			zxs.x_mode = false;
+			zxs.stationName = stationName;
 			zxs.SetSignal(true);
 
 			if(IsServer)
@@ -1107,6 +1108,7 @@ public bool Switch_span(bool obligatory)		// повернуть перегон в сторону этого с
 				zxs.MainState = zxIndication.STATE_R;
 				zxs.wrong_dir = false;
 				zxs.x_mode = zxs.Type & ST_FLOAT_BLOCK;
+				zxs.stationName = stationName;
 
 				zxs.UpdateState(0, -1);
 				}
@@ -1123,6 +1125,7 @@ public bool Switch_span(bool obligatory)		// повернуть перегон в сторону этого с
 				zxs.MainState = zxIndication.STATE_R;
 				zxs.wrong_dir = false;
 				zxs.x_mode = zxs.Type & ST_FLOAT_BLOCK;
+				zxs.stationName = stationName;
 				}
 			else
 				Interface.Exception("Initiate span in signal "+privateName+"@"+stationName+": incorrect sub_sign "+span_soup.GetNamedTagAsGameObjectID("sub_sign_"+i).GetDebugString());

@@ -1015,6 +1015,7 @@ void ReUpdateSignals()
 				GameObjectID zxsId = sign.span_soup.GetNamedTagAsGameObjectID("sub_sign_"+j);
 				if(zxsId and (zxs = cast<zxSignal> (Router.GetGameObject(zxsId))))
 					{
+					zxs.stationName = sign.stationName;
 					if(sign.wrong_dir)
 						{
 						zxs.MainState = zxs.MainStateALS = zxIndication.STATE_Rx;
