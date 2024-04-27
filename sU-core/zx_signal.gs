@@ -2905,8 +2905,7 @@ public void LinkPropertyValue(string id)
 
 		MU.UpdateMU();
 		}
-
-	if(id=="protect_delete")
+	else if(id=="protect_delete")
 		{
 		mainLib.LibraryCall("delete_protect",null,GSO);
 		}
@@ -3127,6 +3126,11 @@ public void LinkPropertyValue(string id)
 				}
 			else
 				code_freq = tmp_fr;
+			
+			string[] obj_p = new string[1];
+			obj_p[0] = code_freq;
+			mainLib.LibraryCall("freq_edited_set", obj_p, null);
+			obj_p[0] = null;
 			}
 		else if(str_a[0]=="code_dev")
 			{
@@ -3230,6 +3234,15 @@ public string GetPropertyValue(string id)
  		}
 	else if(id=="priority")
 		ret=def_path_priority;
+	else if ("head_rot" == id) {
+		ret = head_rot / DegToRad;
+	}
+	else if ("head_krepl_rot" == id) {
+		ret = head_krepl_rot / DegToRad;
+	}
+	else if ("twait" == id) {
+		ret = MU.timeToWait;
+	}
 	else if (id == "distanceRY") {
 		ret = distanceRY;
 	}
@@ -3238,6 +3251,12 @@ public string GetPropertyValue(string id)
 	}
 	else if (id == "distanceG") {
 		ret = distanceG;
+	}
+	else {
+		string[] str_a = Str.Tokens(id, "/");
+		if ("speed" == str_a[0]) {
+			ret = speed_soup.GetNamedTag(str_a[1] + str_a[2]);
+		}
 	}
 	return ret;
 
@@ -3724,8 +3743,8 @@ void GetDefaultSignalLimits()
 	speed_soup.SetNamedTag("p2",0);
 	speed_soup.SetNamedTag("c2",0);
 
-	speed_soup.SetNamedTag("p3",25);
-	speed_soup.SetNamedTag("c3",25);
+	speed_soup.SetNamedTag("p3",20);
+	speed_soup.SetNamedTag("c3",20);
 
 	speed_soup.SetNamedTag("p4",40);
 	speed_soup.SetNamedTag("c4",40);
@@ -3754,8 +3773,8 @@ void GetDefaultSignalLimits()
 	speed_soup.SetNamedTag("p12",80);
 	speed_soup.SetNamedTag("c12",80);
 
-	speed_soup.SetNamedTag("p13",25);
-	speed_soup.SetNamedTag("c13",25);
+	speed_soup.SetNamedTag("p13",20);
+	speed_soup.SetNamedTag("c13",20);
 
 	speed_soup.SetNamedTag("p14",120);
 	speed_soup.SetNamedTag("c14",80);
@@ -3775,8 +3794,8 @@ void GetDefaultSignalLimits()
 	speed_soup.SetNamedTag("p19",0);
 	speed_soup.SetNamedTag("c19",0);
 
-	speed_soup.SetNamedTag("p20",25);
-	speed_soup.SetNamedTag("c20",25);
+	speed_soup.SetNamedTag("p20",40);
+	speed_soup.SetNamedTag("c20",40);
 
 	speed_soup.SetNamedTag("p21",40);
 	speed_soup.SetNamedTag("c21",40);
@@ -4071,8 +4090,12 @@ public void SetProperties(Soup soup)
 
 	if (((Type & ST_SHUNT) or (Type & ST_UNLINKED)) and !x_mode)
 		code_freq = soup.GetNamedTagAsInt("code_freq",0);
-	else
-		code_freq = soup.GetNamedTagAsInt("code_freq",2);
+	else {
+		code_freq = soup.GetNamedTagAsInt("code_freq", -1);
+		if (-1 == code_freq) {
+			code_freq = Str.ToInt(mainLib.LibraryCall("freq_edited_get", null, null));
+		}
+	}
 
 
 	code_dev = soup.GetNamedTagAsInt("code_dev");
