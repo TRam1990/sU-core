@@ -35,6 +35,7 @@ public define float vel_presision = 0.01;
 
 string err;
 string last_edited_station = "";
+string last_edited_freq = "2";
 
 bool IsInited=false;
 bool All_added=false;
@@ -1015,6 +1016,7 @@ void ReUpdateSignals()
 				GameObjectID zxsId = sign.span_soup.GetNamedTagAsGameObjectID("sub_sign_"+j);
 				if(zxsId and (zxs = cast<zxSignal> (Router.GetGameObject(zxsId))))
 					{
+					zxs.stationName = sign.stationName;
 					if(sign.wrong_dir)
 						{
 						zxs.MainState = zxs.MainStateALS = zxIndication.STATE_Rx;
@@ -2662,6 +2664,14 @@ public string  LibraryCall(string function, string[] stringParam, GSObject[] obj
 		return last_edited_station;
 		}
 
+	else if ("freq_edited_set" == function) {
+		last_edited_freq = stringParam[0];
+
+		return "";
+	}
+	else if ("freq_edited_get" == function) {
+		return last_edited_freq;
+	}
 
 	else if(function=="limit_speed_copy")
 		{
